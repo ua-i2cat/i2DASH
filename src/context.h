@@ -6,23 +6,29 @@
 
 
 typedef struct {
-    int segment_nb;
-    int fragment_nb;
-    int frame_nb;
+    int segment_number;
+    int fragment_number;
+    int frame_number;
 
     /** segment duration in ms */
     int segment_duration;
 
-    int frames_per_fragment;
-    int frames_per_segment;
-
+    int frames_per_sample;
+    int samples_per_fragment;
+    int fragments_per_segment;
+    
     float frame_rate;
 
     GF_ISOFile *file;
     GF_ISOSample *sample;
 
+    char * destination_path;
+
+    AVCodecContext *avcodeccontext;
+
 } i2DASHContext;
 
+i2DASHError i2dash_context_reconfigure(i2DASHContext *context, int seg_nb, int frag_nb, int frame_nb, int seg_dur, float fps, char * dest_path, AVCodecContext * avccont);
 
 /**
  * @brief   initializes an i2DASHContext structure.

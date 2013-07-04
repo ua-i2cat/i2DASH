@@ -11,6 +11,7 @@ i2DASHError i2dash_context_initiliaze(i2DASHContext *context)
     context->segment_duration = 1000;
     context->frames_per_fragment = 24;
     context->frames_per_segment = 24;
+    context->frames_per_sample = 1;
     context->frame_rate = 24.0;
 
     context->file = NULL;
