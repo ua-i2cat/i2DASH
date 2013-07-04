@@ -1,3 +1,4 @@
+CC = clang
 CFLAGS=-g -O2 -Wall -Wextra -Isrc -rdynamic -DDEBUG $(OPTFLAGS)
 LIBS=-ldl $(OPTLIBS)
 PREFIX?=/usr/local
@@ -23,7 +24,7 @@ $(TARGET): build $(OBJECTS)
 	ranlib $@
 
 $(SO_TARGET): $(TARGET) $(OBJECTS)
-	$(CC) -shared -o $@ $(OBJECTS)
+	$(CC) -o src/context.o src/i2dash.o src/main.o src/sample.o -Lsrc/libav -lgpac -lavcodec -lswscale -lavformat
 
 build:
 	@mkdir -p build

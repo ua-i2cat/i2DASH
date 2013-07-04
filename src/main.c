@@ -1,8 +1,10 @@
 #include "i2dash.h"
+#include "context.h"
+#include "sample.h"
+#include "libav/include/libavcodec/avcodec.h"
+#include "libav/include/libavformat/avformat.h"
+#include "libav/include/libswscale/swscale.h"
 
-#include <libav/include/libavcodec/avcodec.h>
-#include <libav/include/libavformat/avformat.h>
-#include <libav/include/libswscale/swscale.h>
 #include <stdio.h>
 
 
@@ -152,20 +154,22 @@ int main(int argc, char *argv[])
 
     init_error = i2dash_context_initiliaze(context);
     if(init_error != i2DASH_OK){
-       return i2DASH_ERROR;
+      printf("ERROR: i2dash_add_sample_frame./n");
+      return -1;
     }
 
     context->avcodeccontext = pCodecCtx;
 
     add_error = i2dash_add_sample_frame(context, pFrameRGB);
-    if(add_error == i2DASH_OK){
-        return 0;
-    } return -1;
-}
-
- /*// Free the packet that was allocated by av_read_frame
-    av_free_packet(&packet);
+    if(add_error != i2DASH_OK){
+        printf("ERROR: i2dash_add_sample_frame./n");
+        return -1;
     }
+
+    printf("OK");
+
+    // Free the packet that was allocated by av_read_frame
+    av_free_packet(&packet);
 
     // Free the RGB image
     av_free(buffer);
@@ -178,4 +182,7 @@ int main(int argc, char *argv[])
     avcodec_close(pCodecCtx);
 
     // Close the video file
-    avformat_close_input(&pFormatCtx);*/
+    avformat_close_input(&pFormatCtx);
+
+  return 0;
+}

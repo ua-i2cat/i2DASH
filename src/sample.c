@@ -25,6 +25,7 @@ i2DASHError i2dash_add_sample_frame(i2DASHContext *context, AVFrame *frame)
 {
     uint8_t * buf =  NULL;
     int buf_len = 0;
+    i2DASHError add_error;
 
     AVCodecContext * avcodec_ctx = context->avcodeccontext;
 
@@ -37,7 +38,9 @@ i2DASHError i2dash_add_sample_frame(i2DASHContext *context, AVFrame *frame)
         return i2DASH_ERROR;
     }
 
-    if (i2dash_add_sample_buffer(context, buf, buf_len) != i2DASH_OK){
+    add_error = i2dash_add_sample_buffer(context, buf, buf_len);
+
+    if (add_error != i2DASH_OK){
         return i2DASH_ERROR;
     }
 
