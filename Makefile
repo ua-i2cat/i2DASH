@@ -1,58 +1,25 @@
-CC = clang
-CFLAGS=-g -O2 -Wall -Wextra -Isrc -rdynamic -DDEBUG $(OPTFLAGS)
-LIBS=-ldl $(OPTLIBS)
-PREFIX?=/usr/local
+CC = gcc
+CFLAGS = -g -Wall -I$(INC_PATH)
+LDFLAGS = -lgpac -lavcodec -lswscale -lavformat
 
-SOURCES=$(wildcard src/**/*.c src/*.c)
-OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
+SRC_PATH = src
+OBJ_PATH = obj
+INC_PATH = include
 
-TEST_SRC=$(wildcard tests/*_tests.c)
-TESTS=$(patsubst %.c,%,$(TEST_SRC))
+OBJS = $(addprefix $(OBJ_PATH)/, context.o main.o sample.o i2dash.o)
+PROG = i2test
 
-TARGET=build/libi2dash.a
-SO_TARGET=$(patsubst %.a,%.so,$(TARGET))
+vpath %c $(SRC_PATH)
+vpath %o $(OBJ_PATH)
+vpath %h $(INC_PATH)
 
-# The Target Build
-all: $(TARGET) $(SO_TARGET) tests
+all: $(PROG)
 
-dev: CFLAGS=-g -Wall -Isrc -Wall -Wextra $(OPTFLAGS)
-dev: all
+$(PROG): $(OBJS)
+	$(CC) $(CFLAGS) -o ./bin/$@ $(OBJS) $(LDFLAGS)
 
-$(TARGET): CFLAGS += -fPIC
-$(TARGET): build $(OBJECTS)
-	ar rcs $@ $(OBJECTS)
-	ranlib $@
+$(OBJ_PATH)/%.o: %.c
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(SO_TARGET): $(TARGET) $(OBJECTS)
-	$(CC) -o src/context.o src/i2dash.o src/main.o src/sample.o -Lsrc/libav -lgpac -lavcodec -lswscale -lavformat
-
-build:
-	@mkdir -p build
-	@mkdir -p bin
-
-# The Unit Tests
-.PHONY: tests
-tests: CFLAGS += $(TARGET)
-tests: $(TESTS)
-	sh ./tests/runtests.sh
-
-valgrind:
-	VALGRIND="valgrind --log-file=/tmp/valgrind-%p.log" $(MAKE)
-
-# The Cleaner
 clean:
-	rm -rf build $(OBJECTS) $(TESTS)
-	rm -f tests/tests.log
-	find . -name "*.gc*" -exec rm {} \;
-	rm -rf `find . -name "*.dSYM" -print`
-
-# The Install
-install: all
-	install -d $(DESTDIR)/$(PREFIX)/lib/
-	install $(TARGET) $(DESTDIR)/$(PREFIX)/lib/
-
-# The Checker
-BADFUNCS='[^_.>a-zA-Z0-9](str(n?cpy|n?cat|xfrm|n?dup|str|pbrk|tok|_)|stpn?cpy|a?sn?printf|byte_)'
-check:
-	@echo Files with potentially dangerous functions.
-	@egrep $(BADFUNCS) $(SOURCES) || true
+	rm -f $(OBJS) ./bin/$(PROG)

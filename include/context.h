@@ -3,7 +3,7 @@
 
 #include <gpac/isomedia.h>
 #include "error.h"
-#include "libav/include/libavcodec/avcodec.h"
+#include <libavcodec/avcodec.h>
 
 typedef struct {
 

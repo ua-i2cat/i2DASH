@@ -1,9 +1,9 @@
 #include "i2dash.h"
 #include "context.h"
 #include "sample.h"
-#include "libav/include/libavcodec/avcodec.h"
-#include "libav/include/libavformat/avformat.h"
-#include "libav/include/libswscale/swscale.h"
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
 
 #include <stdio.h>
 

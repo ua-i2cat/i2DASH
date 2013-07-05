@@ -1,7 +1,7 @@
 #ifndef _SAMPLE_H_
 #define _SAMPLE_H_
 
-#include "libav/include/libavcodec/avcodec.h"
+#include <libavcodec/avcodec.h>
 #include "context.h"
 
 
