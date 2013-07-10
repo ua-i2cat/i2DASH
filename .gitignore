@@ -2,5 +2,5 @@
 bin
 build
 doc
-
+*.bak
 src/libav

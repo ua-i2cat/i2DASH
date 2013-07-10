@@ -92,6 +92,9 @@ int main(int argc, char *argv[])
 
     // Allocate video frame
     pFrame=avcodec_alloc_frame();
+    
+  // Allocate an AVFrame structure
+  pFrameRGB=avcodec_alloc_frame();
     if(pFrameRGB==NULL)
     return -1;
 
@@ -145,13 +148,13 @@ int main(int argc, char *argv[])
         );
 
         // Save the frame to disk
-        if(++i<=1)
+        if(++i<=5)
           SaveFrame(pFrameRGB, pCodecCtx->width, pCodecCtx->height,
                     i);
             }
         }
     }
-
+     printf("START: sample./n");
     init_error = i2dash_context_initiliaze(context);
     if(init_error != i2DASH_OK){
       printf("ERROR: i2dash_add_sample_frame./n");
