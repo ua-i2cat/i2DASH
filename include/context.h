@@ -6,14 +6,6 @@
 #include <libavcodec/avcodec.h>
 
 typedef struct {
-
-    AVCodecContext *avcodeccontext;
-
-    FILE *p_file;
- 
-    GF_ISOFile *file;
-    GF_ISOSample *sample;
-
     int segment_number;
     int fragment_number;
     int frame_number;
@@ -26,7 +18,12 @@ typedef struct {
     int fragments_per_segment;
     
     float frame_rate;
+    AVCodecContext *avcodeccontext;
 
+    FILE *p_file;
+ 
+    GF_ISOFile *file;
+    GF_ISOSample *sample;
 } i2DASHContext;
 
 i2DASHError i2dash_context_reconfigure(i2DASHContext *context, int seg_nb, int frag_nb, int frame_nb, int seg_dur, float fps, char * dest_path, AVCodecContext * avccont);

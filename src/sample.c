@@ -23,15 +23,20 @@ i2DASHError i2dash_add_sample_buffer(i2DASHContext *context, uint8_t * buf, int 
 
 i2DASHError i2dash_add_sample_frame(i2DASHContext *context, AVFrame *frame)
 {
+    AVCodecContext * avcodec_ctx = context->avcodeccontext;
     uint8_t * buf =  NULL;
-    int buf_len = 0;
+    printf("width %d, height %d\n", avcodec_ctx->width, avcodec_ctx->height);
+    int buf_len = 9 * avcodec_ctx->width * avcodec_ctx->height + 10000;
+    buf = (uint8_t *) av_malloc(buf_len);
     i2DASHError add_error;
 
-    AVCodecContext * avcodec_ctx = context->avcodeccontext;
+    
 
     frame->pts = context->frame_number;
 
     int encoded_frame_size = avcodec_encode_video(avcodec_ctx, buf, buf_len, frame);
+    printf("encoded frame size: %d\n", encoded_frame_size);
+    printf("buf_len: %d\n", buf_len);
 
     if(encoded_frame_size < 0){
         fprintf(stderr, "Error occured while encoding video frame.\n");

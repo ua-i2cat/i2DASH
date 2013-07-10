@@ -128,48 +128,63 @@ int main(int argc, char *argv[])
     i=0;
     while(av_read_frame(pFormatCtx, &packet)>=0) {
     // Is this a packet from the video stream?
-    if(packet.stream_index==videoStream) {
-      // Decode video frame
-      avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,
+        if(packet.stream_index==videoStream) {
+            // Decode video frame
+            avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,
                            &packet);
 
-      // Did we get a video frame?
-      if(frameFinished) {
-        // Convert the image from its native format to RGB
-        sws_scale
-        (
-            sws_ctx,
-            (uint8_t const * const *)pFrame->data,
-            pFrame->linesize,
-            0,
-            pCodecCtx->height,
-            pFrameRGB->data,
-            pFrameRGB->linesize
-        );
+            // Did we get a video frame?
+            if(frameFinished) {
+            // Convert the image from its native format to RGB
+                sws_scale
+                (
+                    sws_ctx,
+                    (uint8_t const * const *)pFrame->data,
+                    pFrame->linesize,
+                    0,
+                    pCodecCtx->height,
+                    pFrameRGB->data,
+                    pFrameRGB->linesize
+                );
 
-        // Save the frame to disk
-        if(++i<=5)
-          SaveFrame(pFrameRGB, pCodecCtx->width, pCodecCtx->height,
-                    i);
+            // Save the frame to disk
+                if(++i<=5){
+                    SaveFrame(pFrameRGB, pCodecCtx->width, pCodecCtx->height, i);
+                    printf("START: sample %d\n", i);
+                    
+                    printf("Context sizeof %d\n", sizeof(i2DASHContext));
+                    context=malloc(sizeof(i2DASHContext));
+                    
+                    init_error = i2dash_context_initiliaze(context);                    
+                    if(init_error != i2DASH_OK){
+                        printf("ERROR: i2dash_add_sample_frame.\n");
+                        return -1;
+                    }                    
+                    printf("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, samples_per_fragment %d, fragments_per_segment %d, frame_rate %f,\n",
+                        context->segment_number, 
+                        context->fragment_number, context->frame_number,
+                        context->segment_duration,
+                        context->frames_per_sample,
+                        context->samples_per_fragment,
+                        context->fragments_per_segment,
+                       context->frame_rate
+                    );
+                    printf("Context initialized.\n");
+                                        
+                    context->avcodeccontext = pCodecCtx;
+                    printf("AVCodecContext loaded \n");
+
+                    add_error = i2dash_add_sample_frame(context, pFrame);
+                    if(add_error != i2DASH_OK){
+                        printf("ERROR: i2dash_add_sample_frame.\n");
+                        return -1;
+                    }
+                    printf("OK");
+                }
             }
         }
     }
-     printf("START: sample./n");
-    init_error = i2dash_context_initiliaze(context);
-    if(init_error != i2DASH_OK){
-      printf("ERROR: i2dash_add_sample_frame./n");
-      return -1;
-    }
-
-    context->avcodeccontext = pCodecCtx;
-
-    add_error = i2dash_add_sample_frame(context, pFrameRGB);
-    if(add_error != i2DASH_OK){
-        printf("ERROR: i2dash_add_sample_frame./n");
-        return -1;
-    }
-
-    printf("OK");
+    
 
     // Free the packet that was allocated by av_read_frame
     av_free_packet(&packet);
