@@ -56,19 +56,22 @@ int main(int argc, char *argv[])
     // Register all formats and codecs
     av_register_all();
 
+    printf("opening input.\n");
     // Open video file
     if(avformat_open_input(&pFormatCtx, argv[1], NULL, NULL)!=0)
        return -1; // Couldn't open file
 
+    printf("Retrieve stream information.\n");
     // Retrieve stream information
     if(avformat_find_stream_info(pFormatCtx, NULL)<0)
      return -1; // Couldn't find stream information
-
+    printf("Dump information.\n");
      // Dump information about file onto standard error
      av_dump_format(pFormatCtx, 0, argv[1], 0);
 
-    // Find the first video stream
+     // Find the first video stream
     videoStream=-1;
+     printf("Find the first video stream.\n");
       for(i=0; i<pFormatCtx->nb_streams; i++)
         if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
           videoStream=i;
@@ -76,10 +79,10 @@ int main(int argc, char *argv[])
     }
     if(videoStream==-1)
     return -1; // Didn't find a video stream
-
+    printf("Get a pointer...\n");
     // Get a pointer to the codec context for the video stream
     pCodecCtx=pFormatCtx->streams[videoStream]->codec;
-
+    printf("Find a decoder.\n");
     // Find the decoder for the video stream
     pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
     if(pCodec==NULL) {
@@ -125,9 +128,11 @@ int main(int argc, char *argv[])
                  pCodecCtx->width, pCodecCtx->height);
 
     // Read frames and save first five frames to disk
+    printf("Start reading frames.\n");
     i=0;
     while(av_read_frame(pFormatCtx, &packet)>=0) {
     // Is this a packet from the video stream?
+        printf("Reading frame %d.\n", i);
         if(packet.stream_index==videoStream) {
             // Decode video frame
             avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,
@@ -167,14 +172,14 @@ int main(int argc, char *argv[])
                         context->frames_per_sample,
                         context->samples_per_fragment,
                         context->fragments_per_segment,
-                       context->frame_rate
+                        context->frame_rate
                     );
                     printf("Context initialized.\n");
                                         
                     context->avcodeccontext = pCodecCtx;
                     printf("AVCodecContext loaded \n");
 
-                    add_error = i2dash_add_sample_frame(context, pFrame);
+                    add_error = i2dash_add_sample_frame(context, pFrameRGB);
                     if(add_error != i2DASH_OK){
                         printf("ERROR: i2dash_add_sample_frame.\n");
                         return -1;
