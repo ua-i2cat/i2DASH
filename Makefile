@@ -7,7 +7,7 @@ OBJ_PATH = obj
 INC_PATH = include
 BIN_PATH = bin
 
-OBJS = $(addprefix $(OBJ_PATH)/, context.o main.o sample.o i2dash.o)
+OBJS = $(addprefix $(OBJ_PATH)/, context.o main.o sample.o i2dash.o debug.o)
 PROG = i2test
 
 vpath %c $(SRC_PATH)
