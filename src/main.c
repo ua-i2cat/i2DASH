@@ -39,15 +39,9 @@ int main(int argc, char *argv[])
     int             i, videoStream;
     AVCodecContext  *pCodecCtx = NULL;
     AVCodec         *pCodec = NULL;
-    AVFrame         *pFrame = NULL; 
-    AVFrame         *pFrameRGB = NULL;
     AVPacket        packet;
-    int             frameFinished;
-    int             numBytes;
-    uint8_t         *buffer = NULL;
 
     AVDictionary    *optionsDict = NULL;
-    struct SwsContext      *sws_ctx = NULL;
 
     if(argc < 2) {
      printf("Please provide a movie file\n");
@@ -102,113 +96,56 @@ int main(int argc, char *argv[])
     if(avcodec_open2(pCodecCtx, pCodec, &optionsDict)<0)
        return -1; // Could not open codec
 
-    // Allocate video frame
-    pFrame=avcodec_alloc_frame();
-    
-    // Allocate an AVFrame structure
-     pFrameRGB=avcodec_alloc_frame();
-    if(pFrameRGB==NULL)
-    return -1;
-
-    // Determine required buffer size and allocate buffer
-    numBytes=avpicture_get_size(PIX_FMT_RGB24, pCodecCtx->width,
-                              pCodecCtx->height);
-    buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
-
-    sws_ctx =
-        sws_getContext
-        (
-            pCodecCtx->width,
-            pCodecCtx->height,
-            pCodecCtx->pix_fmt,
-            pCodecCtx->width,
-            pCodecCtx->height,
-            PIX_FMT_RGB24,
-            SWS_BILINEAR,
-            NULL,
-            NULL,
-            NULL
-    );
-
-    // Assign appropriate parts of buffer to image planes in pFrameRGB
-    // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
-    // of AVPicture
-    avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24,
-                 pCodecCtx->width, pCodecCtx->height);
-
     // Read frames and save first five frames to disk
     printf("Start reading frames.\n");
+    
+    context=malloc(sizeof(i2DASHContext));
+    printf("Context sizeof %d\n", sizeof(i2DASHContext));
+    
+    init_error = i2dash_context_initiliaze(context);                    
+    if(init_error != i2DASH_OK){
+        printf("ERROR: i2dash_add_sample_frame.\n");
+        return -1;
+    }
+    printf("Context initialized.\n");
+                        
+    printf("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, samples_per_fragment %d, fragments_per_segment %d, frame_rate %f,\n",
+        context->segment_number, 
+        context->fragment_number, context->frame_number,
+        context->segment_duration,
+        context->frames_per_sample,
+        context->samples_per_fragment,
+        context->fragments_per_segment,
+        context->frame_rate
+    );
+                        
+    context->avcodeccontext = pCodecCtx;
+    printf("AVCodecContext loaded \n");
+    
     i=0;
     while(av_read_frame(pFormatCtx, &packet)>=0) {
     // Is this a packet from the video stream?
         printf("Reading frame %d.\n", i);
         if(packet.stream_index==videoStream) {
-            // Decode video frame
-            avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished,
-                           &packet);
-
-            // Did we get a video frame?
-            if(frameFinished) {
-            // Convert the image from its native format to RGB
-                sws_scale
-                (
-                    sws_ctx,
-                    (uint8_t const * const *)pFrame->data,
-                    pFrame->linesize,
-                    0,
-                    pCodecCtx->height,
-                    pFrameRGB->data,
-                    pFrameRGB->linesize
-                );
+            
 
             // Save the frame to disk
-                if(++i<=5){
-                    SaveFrame(pFrameRGB, pCodecCtx->width, pCodecCtx->height, i);
-                    printf("START: sample %d\n", i);
-                    
-                    printf("Context sizeof %d\n", sizeof(i2DASHContext));
-                    context=malloc(sizeof(i2DASHContext));
-                    
-                    init_error = i2dash_context_initiliaze(context);                    
-                    if(init_error != i2DASH_OK){
-                        printf("ERROR: i2dash_add_sample_frame.\n");
-                        return -1;
-                    }                    
-                    printf("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, samples_per_fragment %d, fragments_per_segment %d, frame_rate %f,\n",
-                        context->segment_number, 
-                        context->fragment_number, context->frame_number,
-                        context->segment_duration,
-                        context->frames_per_sample,
-                        context->samples_per_fragment,
-                        context->fragments_per_segment,
-                        context->frame_rate
-                    );
-                    printf("Context initialized.\n");
-                                        
-                    context->avcodeccontext = pCodecCtx;
-                    printf("AVCodecContext loaded \n");
-
-                    add_error = i2dash_add_sample_frame(context, pFrameRGB);
-                    if(add_error != i2DASH_OK){
-                        printf("ERROR: i2dash_add_sample_frame.\n");
-                        return -1;
-                    }
-                    printf("OK");
-                }
+            if(++i <= 5) {
+                break;
             }
+
+            printf("START: sample %d\n", i);
+            add_error = i2dash_add_sample_buffer(context, packet.data, packet.size);
+            if(add_error != i2DASH_OK) {
+                    printf("ERROR: i2dash_add_sample_frame.\n");
+                    return -1;
+            }
+            printf("OK");
         }
+        // Free the packet that was allocated by av_read_frame
+        av_free_packet(&packet);
     }
     
-
-    // Free the packet that was allocated by av_read_frame
-    av_free_packet(&packet);
-
-    // Free the RGB image
-    av_free(buffer);
-    av_free(pFrameRGB);
-
-    // Free the YUV frame
-    av_free(pFrame);
 
     // Close the codec
     avcodec_close(pCodecCtx);
