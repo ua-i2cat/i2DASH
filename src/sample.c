@@ -3,8 +3,8 @@
 
 i2DASHError i2dash_add_sample_buffer(i2DASHContext *context, uint8_t * buf, int buf_len)
 {    
-    AVCodecContext * avcodec_ctx = context->avcodeccontext;
-    printf("AVCodecContecxt loaded.\n");
+    // AVCodecContext * avcodec_ctx = context->avcodeccontext;
+    // printf("AVCodecContext loaded.\n");
 
     GF_BitStream * out_bs = gf_bs_new(NULL, 2 * buf_len, GF_BITSTREAM_WRITE);
     printf("Created new GF_BitStream with our data.\n");
@@ -14,16 +14,15 @@ i2DASHError i2dash_add_sample_buffer(i2DASHContext *context, uint8_t * buf, int 
         gf_bs_write_data(out_bs, (const char*) buf, buf_len);
     }
     printf("Start: input data -> isomSample.\n");
-    // TODO FIX: gf_bs_get_content
     gf_bs_get_content(out_bs, &context->sample->data,
                     &context->sample->dataLength);
     printf("Finish: input data -> isomSample.\n");
 
-    context->sample->DTS = avcodec_ctx->coded_frame->pts;
-    printf("DTS: %d", (int)context->sample->DTS);
+    // context->sample->DTS = avcodec_ctx->coded_frame->pts;
+    // printf("DTS: %d", (int)context->sample->DTS);
 
-    context->sample->IsRAP = avcodec_ctx->coded_frame->key_frame;
-    printf("IsRAP: %d", context->sample->IsRAP);
+    // context->sample->IsRAP = avcodec_ctx->coded_frame->key_frame;
+    // printf("IsRAP: %d", context->sample->IsRAP);
 
     return i2DASH_OK;
 }

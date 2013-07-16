@@ -14,7 +14,7 @@ i2DASHError i2dash_context_initialize(i2DASHContext *context)
     context->fragments_per_segment = 1;
     context->frame_rate = 24.0;
     context->file = NULL;
-    context->sample = NULL;
+    context->sample = gf_isom_sample_new();
 
     return i2DASH_OK;
 }
