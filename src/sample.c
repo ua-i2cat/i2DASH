@@ -24,25 +24,29 @@ i2DASHError i2dash_add_sample_buffer(i2DASHContext *context, uint8_t * buf, int 
 i2DASHError i2dash_add_sample_frame(i2DASHContext *context, AVFrame *frame)
 {
     AVCodecContext *avcodec_ctx = context->avcodeccontext;
-    uint8_t *buf =  NULL;
+    AVPacket packet;
+    i2DASHError add_error;
+    // int encoded_frame_size;
+    int packet_ok = 0;
+    //uint8_t *buf =  NULL;
     printf("width %d, height %d\n", avcodec_ctx->width, avcodec_ctx->height);
     int buf_len = 9 * avcodec_ctx->width * avcodec_ctx->height + 10000;
-    buf = (uint8_t *) av_malloc(buf_len);
-    i2DASHError add_error;
+    //buf = (uint8_t *) av_malloc(buf_len);
     printf("buffer initialized\n");
     frame->pts = context->frame_number;
-    printf("pts %d\n", frame->pts);
+    printf("pts %d\n", (int)frame->pts);
     
-    int encoded_frame_size = avcodec_encode_video(avcodec_ctx, buf, buf_len, frame);
+    int error = avcodec_encode_video2(avcodec_ctx, &packet, frame, &packet_ok);
+    // int encoded_frame_size = avcodec_encode_video(avcodec_ctx, buf, buf_len, frame);
     printf("did encoded_frame_size");
-    if(encoded_frame_size < 0){
+    if(error < 0){
         fprintf(stderr, "Error occured while encoding video frame.\n");
         return i2DASH_ERROR;
     }
-    printf("encoded frame size: %d\n", encoded_frame_size);
-    printf("buf_len: %d\n", buf_len);
+    printf("packet_ok: %d\n", packet_ok);
+    printf("packet size: %d\n", packet.size);
 
-    add_error = i2dash_add_sample_buffer(context, buf, buf_len);
+    add_error = i2dash_add_sample_buffer(context, packet.data, packet.size);
 
     if (add_error != i2DASH_OK){
         return i2DASH_ERROR;
