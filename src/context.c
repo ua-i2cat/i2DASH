@@ -1,7 +1,7 @@
 #include "context.h"
 
 
-i2DASHError i2dash_context_initiliaze(i2DASHContext *context)
+i2DASHError i2dash_context_initialize(i2DASHContext *context)
 {
     context->segment_number = 0;
     context->fragment_number = 0;

@@ -2,8 +2,9 @@
 #define _CONTEXT_H_
 
 #include <gpac/isomedia.h>
-#include "error.h"
 #include <libavcodec/avcodec.h>
+
+#include "error.h"
 
 typedef struct {
     int segment_number;

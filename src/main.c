@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     context = malloc(sizeof(i2DASHContext));
     printf("Context sizeof %d\n", sizeof(i2DASHContext));
     
-    if (i2dash_context_initiliaze(context) != i2DASH_OK) {                    
+    if (i2dash_context_initialize(context) != i2DASH_OK) {                    
         printf("ERROR: i2dash_add_sample_frame.\n");
         return -1;
     }
