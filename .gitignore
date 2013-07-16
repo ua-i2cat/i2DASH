@@ -1,6 +1,8 @@
 *.o
+
 bin
 build
 doc
-*.bak
-src/libav
+
+*.mp4
+*.ppm
