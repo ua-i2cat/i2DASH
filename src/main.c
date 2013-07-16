@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
     
     int count = 0;
     while(av_read_frame(pFormatCtx, &packet)>=0) {
-        printf("Reading frame %d.\n", i);
+        printf("Reading frame %d.\n", count);
         if(packet.stream_index==videoStream) {
             
 

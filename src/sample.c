@@ -7,23 +7,25 @@
 i2DASHError i2dash_add_sample(i2DASHContext *context, uint8_t * buf,
                               int buf_len, int dts, int key_frame)
 {    
-    //GF_BitStream * out_bs = gf_bs_new(NULL, 2 * buf_len, GF_BITSTREAM_WRITE);
+    context->sample = gf_isom_sample_new();
     
-    //i2dash_debug_msg("Created new GF_BitStream with our data");
-
-    //if(buf_len != 0){
-    //    gf_bs_write_u32(out_bs, buf_len);
-    //    gf_bs_write_data(out_bs, (const char*) buf, buf_len);
-    //}
-
-    //gf_bs_get_content(out_bs, &context->sample->data,
-    //                &context->sample->dataLength);
+    GF_BitStream * out_bs = gf_bs_new(NULL, 2 * buf_len, GF_BITSTREAM_WRITE);
     
-    if (memcpy(context->sample->data, buf, buf_len) != NULL) {
-        i2dash_debug_msg("OK: input data -> isomSample.\n");
+    i2dash_debug_msg("Created new GF_BitStream with our data");
+
+    if(buf_len != 0) {
+        gf_bs_write_u32(out_bs, buf_len);
+        gf_bs_write_data(out_bs, (const char*) buf, buf_len);
     }
+
+    gf_bs_get_content(out_bs, &context->sample->data,
+                      &context->sample->dataLength);
+
+    // if (memcpy(context->sample->data, buf, buf_len) != NULL) {
+    //     i2dash_debug_msg("OK: input data -> isomSample.\n");
+    // }
     
-    context->sample->dataLength = buf_len;
+    // context->sample->dataLength = buf_len;
     context->sample->DTS = dts;
     context->sample->IsRAP = key_frame;
 
