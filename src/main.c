@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            printf("START: sample %d\n", i);
+            printf("START: sample %d\n", count);
             i2DASHError err = i2dash_add_sample_buffer(context,
                                                        packet.data,
                                                        packet.size);
