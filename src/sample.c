@@ -1,28 +1,31 @@
 #include "sample.h"
+#include "debug.h"
+
+#include <string.h>
 
 
-i2DASHError i2dash_add_sample_buffer(i2DASHContext *context, uint8_t * buf, int buf_len)
+i2DASHError i2dash_add_sample(i2DASHContext *context, uint8_t * buf,
+                              int buf_len, int dts, int key_frame)
 {    
-    // AVCodecContext * avcodec_ctx = context->avcodeccontext;
-    // printf("AVCodecContext loaded.\n");
+    //GF_BitStream * out_bs = gf_bs_new(NULL, 2 * buf_len, GF_BITSTREAM_WRITE);
+    
+    //i2dash_debug_msg("Created new GF_BitStream with our data");
 
-    GF_BitStream * out_bs = gf_bs_new(NULL, 2 * buf_len, GF_BITSTREAM_WRITE);
-    printf("Created new GF_BitStream with our data.\n");
+    //if(buf_len != 0){
+    //    gf_bs_write_u32(out_bs, buf_len);
+    //    gf_bs_write_data(out_bs, (const char*) buf, buf_len);
+    //}
 
-    if(buf_len != 0){
-        gf_bs_write_u32(out_bs, buf_len);
-        gf_bs_write_data(out_bs, (const char*) buf, buf_len);
+    //gf_bs_get_content(out_bs, &context->sample->data,
+    //                &context->sample->dataLength);
+    
+    if (memcpy(context->sample->data, buf, buf_len) != NULL) {
+        i2dash_debug_msg("OK: input data -> isomSample.\n");
     }
-    printf("Start: input data -> isomSample.\n");
-    gf_bs_get_content(out_bs, &context->sample->data,
-                    &context->sample->dataLength);
-    printf("Finish: input data -> isomSample.\n");
-
-    // context->sample->DTS = avcodec_ctx->coded_frame->pts;
-    // printf("DTS: %d", (int)context->sample->DTS);
-
-    // context->sample->IsRAP = avcodec_ctx->coded_frame->key_frame;
-    // printf("IsRAP: %d", context->sample->IsRAP);
+    
+    context->sample->dataLength = buf_len;
+    context->sample->DTS = dts;
+    context->sample->IsRAP = key_frame;
 
     return i2DASH_OK;
 }
@@ -53,7 +56,7 @@ i2DASHError i2dash_add_sample_frame(i2DASHContext *context, AVFrame *frame)
     printf("packet_ok: %d\n", packet_ok);
     printf("packet size: %d\n", packet.size);
 
-    add_error = i2dash_add_sample_buffer(context, packet.data, packet.size);
+    add_error = i2dash_add_sample(context, packet.data, packet.size, 0, 0); // TODO
 
     if (add_error != i2DASH_OK){
         return i2DASH_ERROR;

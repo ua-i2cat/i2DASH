@@ -121,9 +121,8 @@ int main(int argc, char *argv[])
             }
 
             printf("START: sample %d\n", count);
-            i2DASHError err = i2dash_add_sample_buffer(context,
-                                                       packet.data,
-                                                       packet.size);
+            i2DASHError err = i2dash_add_sample(context, packet.data,
+                                                packet.size, 0, 0); // TODO
             if (err != i2DASH_OK) {
                     printf("ERROR: i2dash_add_sample_frame.\n");
                     return -1;
