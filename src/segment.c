@@ -26,7 +26,11 @@ i2DASHError i2dash_segment_open(i2DASHContext *context)
 
 i2DASHError i2dash_segment_write(i2DASHContext *context, const char *buffer, int buffer_len)
 {
-    return i2DASH_ERROR;
+    i2DASHError ret = i2dash_fragment_write(context, buffer, buffer_len, 0, 0);
+    if (ret != i2DASH_OK) {
+        i2dash_debug_err("i2dash_fragment_write");
+    }
+    return ret;
 }
 
 i2DASHError i2dash_segment_close(i2DASHContext *context)
