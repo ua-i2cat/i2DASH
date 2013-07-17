@@ -6,9 +6,10 @@
 #include "sample.h"
 
 
-i2DASHError i2dash_fragment_open(i2DASHContext *context, GF_ISOFile *file);
+i2DASHError i2dash_fragment_open(i2DASHContext *context);
 
-i2DASHError i2dash_fragment_add_sample();
+i2DASHError i2dash_fragment_write(i2DASHContext *context, uint8_t * buf,
+                          int buf_len, int dts, int key_frame);
 
 i2DASHError i2dash_fragment_close();
 
