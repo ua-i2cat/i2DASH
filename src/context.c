@@ -23,9 +23,11 @@ i2DASHContext *i2dash_context_new(const char *path)
     context->segment_marker = 0;
 
     context->segment_duration = 1000;
+
     context->frames_per_sample = 1;
-    context->samples_per_fragment = 1;
+    context->samples_per_fragment = 24;
     context->fragments_per_segment = 1;
+
     context->frame_rate = 24.0;
     context->file = file;
     context->sample = NULL;
