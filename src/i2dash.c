@@ -1,4 +1,6 @@
 #include "i2dash.h"
+#include "segment.h"
+
 
 i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len)
 {   
@@ -12,13 +14,13 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
     else if (next_frame_number % context->frames_per_segment == 0) {
         if (i2dash_segment_close(context) != i2DASH_OK) {
             return i2DASH_ERROR;
-        };
+        }
         if (i2dash_segment_open(context) != i2DASH_OK) {
             return i2DASH_ERROR;
         }
     }
 
-    i2DASHError ret = i2dash_segment_write_frame(context, buffer, buffer_len);
+    i2DASHError ret = i2dash_segment_write(context, buffer, buffer_len);
     if (ret == i2DASH_OK) {
         context->frame_number = next_frame_number;
     }
