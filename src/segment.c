@@ -22,7 +22,7 @@ i2DASHError i2dash_segment_open(i2DASHContext *context)
     return i2DASH_OK;
 }
 
-i2DASHError i2dash_segment_write_frame(i2DASHContext *context, char *buffer, int buffer_len)
+i2DASHError i2dash_segment_write(i2DASHContext *context, char *buffer, int buffer_len)
 {
     
 }

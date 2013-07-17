@@ -1,6 +1,6 @@
 #include "i2dash.h"
 
-i2DASHError i2dash_write_frame(i2DASHContext *context, const char *buffer, int buffer_len)
+i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len)
 {   
     int next_frame_number = context->frame_number + 1;
 

@@ -16,6 +16,6 @@
  * @return i2DASH_OK if no error was found.
  * @return i2DASH_ERROR otherwise.
  */
-i2DASHError i2dash_write_frame(i2DASHContext *context, const char *buffer, int buffer_len);
+i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len);
 
 #endif

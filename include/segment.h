@@ -2,7 +2,7 @@
 #define _SEGMENT_H_
 
 i2DASHError i2dash_segment_open(i2DASHContext *context);
-i2DASHError i2dash_segment_write_frame(i2DASHContext *context, char *buffer, int buffer_len);
+i2DASHError i2dash_segment_write(i2DASHContext *context, char *buffer, int buffer_len);
 i2DASHError i2dash_segment_close(i2DASHContext *context);
 
 #endif
