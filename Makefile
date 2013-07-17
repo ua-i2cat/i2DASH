@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -I$(INC_PATH)
+CFLAGS = -g -DDEBUG -Wall -I$(INC_PATH)
 LDFLAGS = -lm -lgpac -lavcodec -lswscale -lavformat -lavutil
 
 SRC_PATH = src

@@ -1,4 +1,6 @@
 #include "segment.h"
+#include "fragment.h"
+#include "debug.h"
 #include "error.h"
 #include <string.h>
 

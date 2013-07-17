@@ -8,20 +8,25 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, uint8_t * buf,
                               int buf_len, int dts, int key_frame)
 {    
     GF_Err ret;
-
+    
     context->sample = gf_isom_sample_new();
+    assert(context->sample != NULL);
+    i2dash_debug_msg("new sample");
     
     GF_BitStream * out_bs = gf_bs_new(NULL, 2 * buf_len, GF_BITSTREAM_WRITE);
-    
-    i2dash_debug_msg("Created new GF_BitStream with our data");
+    i2dash_debug_msg("new bitstream");
 
     if(buf_len != 0) {
+        i2dash_debug_msg("buf_len != 0");
         gf_bs_write_u32(out_bs, buf_len);
+        i2dash_debug_msg("gf_bs_write_u32 done");
         gf_bs_write_data(out_bs, (const char*) buf, buf_len);
+        i2dash_debug_msg("gf_bs_write_data done");
     }
 
     gf_bs_get_content(out_bs, &context->sample->data,
                       &context->sample->dataLength);
+    i2dash_debug_msg("gf_bs_get_content done");
 
     context->sample->DTS = dts;
     context->sample->IsRAP = key_frame;
@@ -30,23 +35,18 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, uint8_t * buf,
                     context->sample, 1, 1, 0, 0, 0);
         
     if (ret != GF_OK) {
-        fprintf(stderr, "%s: gf_isom_fragment_add_sample\n",
-                        gf_error_to_string(ret));
+        i2dash_debug_err("gf_isom_fragment_add_sample: %s",
+                         gf_error_to_string(ret));
         return i2DASH_ERROR;
     }
     
     gf_isom_sample_del(&context->sample);
 
     if (ret != GF_OK) {
-        fprintf(stderr, "%s: isom_sample_del\n",
+        i2dash_debug_err("isom_sample_del: %s",
                         gf_error_to_string(ret));
         return i2DASH_ERROR;
     }
-    // if (memcpy(context->sample->data, buf, buf_len) != NULL) {
-    //     i2dash_debug_msg("OK: input data -> isomSample.\n");
-    // }
-    
-    // context->sample->dataLength = buf_len;
     
     return i2DASH_OK;
 }
