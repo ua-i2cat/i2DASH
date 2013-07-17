@@ -14,6 +14,8 @@ typedef struct {
     /** segment duration in ms */
     int segment_duration;
 
+    int segment_marker;
+
     int frames_per_sample;
     int samples_per_fragment;
     int fragments_per_segment;
