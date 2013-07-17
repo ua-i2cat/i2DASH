@@ -21,6 +21,8 @@ typedef struct {
     int fragments_per_segment;
     int frames_per_fragment;
     int frames_per_segment;
+
+    uint64_t fragment_dts;
     
     float frame_rate;
     AVCodecContext *avcodeccontext;

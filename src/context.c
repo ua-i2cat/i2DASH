@@ -33,6 +33,8 @@ i2DASHContext *i2dash_context_new(const char *path)
     context->frames_per_fragment = 24;
     context->frames_per_segment = 24;
 
+    context->fragment_dts = (uint64_t)0;
+
     context->frame_rate = 24.0;
     context->file = file;
     context->sample = NULL;
