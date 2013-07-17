@@ -1,6 +1,7 @@
 #include "debug.h"
 #include "fragment.h"
 
+
 i2DASHError i2dash_fragment_open(i2DASHContext *context)
 {
     GF_Err ret;
@@ -38,13 +39,24 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, uint8_t * buf,
             return i2DASH_ERROR;
         }
 
-        err = i2dash_sample_add(&context, &buf, buf_len, dts, key_frame);
+        ret = gf_isom_set_traf_base_media_decode_time(context->file, 1,
+                                                    context->fragment_dts);
 
-        if(err != i2DASH_OK) {
-            // TODO define handle error
-            printf("i2DASHError: i2dash_sample_add\n");
-            return i2DASH_ERROR;
-        }
+        context->fragment_dts += context->samples_per_fragment;
+    }
+
+    err = i2dash_sample_add(&context, &buf, buf_len, dts, key_frame);
+
+    if(err != i2DASH_OK) {
+        // TODO define handle error
+        printf("i2DASHError: i2dash_sample_add\n");
+        return i2DASH_ERROR;
     }
     return i2DASH_OK;
+}
+
+i2DASHError i2dash_fragment_close()
+{
+
+
 }
