@@ -30,6 +30,22 @@ typedef struct {
 i2DASHError i2dash_context_reconfigure(i2DASHContext *context, int seg_nb, int frag_nb, int frame_nb, int seg_dur, float fps, char * dest_path, AVCodecContext * avccont);
 
 /**
+ *@brief    initialize an i2DASHContext.
+ *
+ *@note     default segment duration: 1000ms.
+ *@note     default frame rate: 24fps.
+ *@note     by default, one fragment per segment.
+ *@return   a pointer to the new i2DASHContext. NULL if the call was not succesful.
+ */
+i2DASHContext *i2dash_context_new(void);
+
+/**
+ *@brief    free the resources assigned to a i2DASHContext.
+ *@post     the provided pointer's memory address should be considered as unallocated memory.
+ */
+void i2dash_context_free(i2DASHContext *context);
+
+/**
  * @brief   initializes an i2DASHContext structure.
  *
  * @note    default segment duration: 1000ms.

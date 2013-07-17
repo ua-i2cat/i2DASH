@@ -1,5 +1,35 @@
 #include "context.h"
+#include <stdlib.h>
 
+
+i2DASHContext *i2dash_context_new(void)
+{
+    i2DASHContext *context = malloc(sizeof(i2DASHContext));
+
+    if (context == NULL) {
+        return NULL;
+    }
+
+    context->segment_number = 0;
+    context->fragment_number = 0;
+    context->frame_number = 1;
+    
+    context->segment_duration = 1000;
+    context->frames_per_sample = 1;
+    context->samples_per_fragment = 1;
+    context->fragments_per_segment = 1;
+    context->frame_rate = 24.0;
+    context->file = NULL;
+    context->sample = NULL;
+
+    return context;
+}
+
+void i2dash_context_free(i2DASHContext *context)
+{
+    /* free resources */
+    free(context);
+}
 
 i2DASHError i2dash_context_initialize(i2DASHContext *context)
 {

@@ -87,8 +87,7 @@ int main(int argc, char *argv[])
     // Read frames and save first five frames to disk
     printf("Start reading frames.\n");
     
-    context = malloc(sizeof(i2DASHContext));
-    printf("Context sizeof %d\n", sizeof(i2DASHContext));
+    context = i2dash_context_new();
     
     if (i2dash_context_initialize(context) != i2DASH_OK) {                    
         printf("ERROR: i2dash_add_sample_frame.\n");
@@ -138,6 +137,8 @@ int main(int argc, char *argv[])
 
     // Close the video file
     avformat_close_input(&pFormatCtx);
+
+    i2dash_context_free(context);
 
     return 0;
 }
