@@ -20,14 +20,8 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, uint8_t * buf,
         gf_bs_write_data(out_bs, (const char*) buf, buf_len);
     }
 
-    ret = gf_bs_get_content(out_bs, &context->sample->data,
+    gf_bs_get_content(out_bs, &context->sample->data,
                       &context->sample->dataLength);
-
-    if (ret != GF_OK) {
-        fprintf(stderr, "%s: gf_bs_get_content\n",
-                        gf_error_to_string(ret));
-        return i2DASH_ERROR;
-    }
 
     context->sample->DTS = dts;
     context->sample->IsRAP = key_frame;
