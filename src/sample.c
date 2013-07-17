@@ -58,7 +58,7 @@ i2DASHError i2dash_sample_add_frame(i2DASHContext *context, AVFrame *frame)
     printf("packet_ok: %d\n", packet_ok);
     printf("packet size: %d\n", packet.size);
 
-    add_error = i2dash_add_sample(context, packet.data, packet.size, 0, 0); // TODO
+    add_error = i2dash_sample_add(context, packet.data, packet.size, 0, 0); // TODO
 
     if (add_error != i2DASH_OK){
         return i2DASH_ERROR;
