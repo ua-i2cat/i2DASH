@@ -16,7 +16,7 @@ i2DASHContext *i2dash_context_new(const char *path)
         return NULL;
     }
 
-    context->path = path;
+    context->path = (char *)path;
 
     context->segment_number = 0;
     context->fragment_number = 0;
