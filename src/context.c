@@ -2,10 +2,16 @@
 #include <stdlib.h>
 
 
-i2DASHContext *i2dash_context_new(void)
+i2DASHContext *i2dash_context_new(const char *path)
 {
+    // GF_ISOM_WRITE_EDIT -> new file
+    // 3rd param NULL -> will use the system's tmp folder
+    GF_ISOFile *file = gf_isom_open(path, GF_ISOM_WRITE_EDIT, NULL);
+    if (file == NULL) {
+        return NULL;
+    }
+    
     i2DASHContext *context = malloc(sizeof(i2DASHContext));
-
     if (context == NULL) {
         return NULL;
     }
@@ -19,34 +25,29 @@ i2DASHContext *i2dash_context_new(void)
     context->samples_per_fragment = 1;
     context->fragments_per_segment = 1;
     context->frame_rate = 24.0;
-    context->file = NULL;
+    context->file = file;
     context->sample = NULL;
 
     return context;
 }
 
-void i2dash_context_free(i2DASHContext *context)
+i2DASHError i2dash_context_free(i2DASHContext *context)
 {
+    i2DASHError ret = i2DASH_OK;
+    if (context->file != NULL) {
+        if (gf_isom_close(context->file) != GF_OK) {
+            ret = i2DASH_ERROR;
+        }
+    }
+
+    if (context->sample != NULL) {
+        gf_isom_sample_del(&context->sample);
+    }
+    
     /* free resources */
     free(context);
-}
 
-i2DASHError i2dash_context_initialize(i2DASHContext *context)
-{
-    context->segment_number = 0;
-    context->fragment_number = 0;
-    context->frame_number = 1;
-    
-    // Default values (segment duration in ms)
-    context->segment_duration = 1000;
-    context->frames_per_sample = 1;
-    context->samples_per_fragment = 1;
-    context->fragments_per_segment = 1;
-    context->frame_rate = 24.0;
-    context->file = NULL;
-    context->sample = NULL;
-
-    return i2DASH_OK;
+    return ret;
 }
 
 i2DASHError i2dash_context_update_frame_rate(i2DASHContext *context, float frame_rate)

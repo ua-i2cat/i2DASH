@@ -30,34 +30,30 @@ typedef struct {
 i2DASHError i2dash_context_reconfigure(i2DASHContext *context, int seg_nb, int frag_nb, int frame_nb, int seg_dur, float fps, char * dest_path, AVCodecContext * avccont);
 
 /**
- * @brief    initialize an i2DASHContext.
+ * @brief       initialize an i2DASHContext.
  *
- * @note     default segment duration: 1000ms.
- * @note     default frame rate: 24fps.
- * @note     by default, one fragment per segment.
- * @return   a pointer to the new i2DASHContext. NULL if the call was not succesful.
+ * @param path  path to a new file 
+ * @note        default segment duration: 1000ms.
+ * @note        default frame rate: 24fps.
+ * @note        by default, one fragment per segment.
+ * @return      on success, a pointer to the new i2DASHContext.
+ * @return      NULL if the call was not succesful.
  */
-i2DASHContext *i2dash_context_new(void);
+i2DASHContext *i2dash_context_new(const char *path);
 
 /**
- * @brief    free the resources assigned to a i2DASHContext.
- * @post     the provided pointer's memory address should be considered as unallocated memory.
+ * @brief   closes the ISOM file (and writes it to disk) and free the
+ *          resources assigned to a i2DASHContext.
+ * @post    the provided pointer's memory address should be considered
+ *          as unallocated memory.
+ * @return  i2DASH_OK if the file was correctly closed.
+ * @return  i2DASH_ERROR if something may have gone wrong.
  */
-void i2dash_context_free(i2DASHContext *context);
-
-/**
- * @brief   initializes an i2DASHContext structure.
- *
- * @note    default segment duration: 1000ms.
- * @note    default frame rate: 24fps.
- * @note    by default, one fragment per segment.
- * @deprecated
- */
-i2DASHError i2dash_context_initialize(i2DASHContext *context);
+i2DASHError i2dash_context_free(i2DASHContext *context);
 
 /**
  * @brief   updates the frame rate and the related parameters inside the
- *          <em>context</em> structure.
+ *          context structure.
  * @param   context pointer the context structure to update
  * @param   frame_rate new frame rate to consider
  * @return  i2DASH_BAD_PARAM if the <em>frame_rate</em> is not valid (no

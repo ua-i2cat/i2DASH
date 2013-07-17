@@ -12,6 +12,14 @@
 
 int main(int argc, char *argv[])
 {
+    if (argc != 3) {
+        printf("usage: %s <input> <output>\n", argv[0]);
+        return -1;
+    }
+
+    char *input_path = argv[1];
+    char *output_path = argv[2];
+
     i2DASHContext *context = NULL;
    
     AVFormatContext *pFormatCtx = NULL;
@@ -22,18 +30,13 @@ int main(int argc, char *argv[])
 
     AVDictionary *optionsDict = NULL;
 
-    if(argc < 2) {
-        printf("Please provide a movie file\n");
-        return -1;
-    }
-
     // Register all formats and codecs
     av_register_all();
 
     printf("opening input.\n");
     
     // Open video file
-    if(avformat_open_input(&pFormatCtx, argv[1], NULL, NULL)!=0) {
+    if(avformat_open_input(&pFormatCtx, input_path, NULL, NULL)!=0) {
         return -1; // Couldn't open file
     }
 
@@ -47,7 +50,7 @@ int main(int argc, char *argv[])
     printf("Dump information.\n");
    
     // Dump information about file onto standard error
-    av_dump_format(pFormatCtx, 0, argv[1], 0);
+    av_dump_format(pFormatCtx, 0, input_path, 0);
 
     // Find the first video stream
     videoStream=-1;
@@ -87,10 +90,10 @@ int main(int argc, char *argv[])
     // Read frames and save first five frames to disk
     printf("Start reading frames.\n");
     
-    context = i2dash_context_new();
+    context = i2dash_context_new(output_path);
     
-    if (i2dash_context_initialize(context) != i2DASH_OK) {                    
-        printf("ERROR: i2dash_add_sample_frame.\n");
+    if (context == NULL) {                    
+        printf("ERROR: i2dash_context_new.\n");
         return -1;
     }
     printf("Context initialized.\n");
