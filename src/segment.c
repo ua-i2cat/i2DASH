@@ -12,7 +12,7 @@ i2DASHError i2dash_segment_open(i2DASHContext *context)
     }
 
     // GF_TRUE -> write on disk instead of memory
-    i2DASHError err = gf_isom_start_segment(context->file, segment_path, GF_TRUE);
+    GF_Err err = gf_isom_start_segment(context->file, segment_path, GF_TRUE);
     if (err != GF_OK) {
         return i2DASH_ERROR;
     }
