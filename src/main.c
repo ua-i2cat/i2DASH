@@ -117,16 +117,16 @@ int main(int argc, char *argv[])
         if(packet.stream_index==videoStream) {
             
 
-            if(count++ > 5) {
+            if(count++ > 10) {
                 av_free_packet(&packet);
                 break;
             }
 
             printf("START: sample %d\n", count);
-            i2DASHError err = i2dash_sample_add(context, packet.data,
-                                                packet.size, 0, 0); // TODO
+            i2DASHError err = i2dash_write(context, (char *)packet.data,
+                                           packet.size);
             if (err != i2DASH_OK) {
-                    printf("ERROR: i2dash_add_sample_frame.\n");
+                    printf("ERROR: i2dash_write.\n");
                     return -1;
             }
             printf("OK");
