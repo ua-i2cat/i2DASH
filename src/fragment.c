@@ -55,8 +55,19 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, uint8_t * buf,
     return i2DASH_OK;
 }
 
-i2DASHError i2dash_fragment_close()
+i2DASHError i2dash_fragment_close(i2DASHContext *context)
 {
+    GF_Err ret;
 
-    return i2DASH_ERROR;
+    if(context->frame_number % context->frames_per_fragment ==
+                                context->frames_per_fragment - 1) {
+        ret = gf_isom_flush_fragments(context->file, 1);
+        if(ret != GF_OK) {
+            fprintf(stderr, "%s: gf_isom_flush_fragments\n",
+                            gf_error_to_string(ret));
+            return i2DASH_ERROR;
+        }
+        printf("OK: gf_isom_flush_fragments.\n");
+    }
+    return i2DASH_OK;
 }
