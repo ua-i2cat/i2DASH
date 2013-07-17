@@ -16,6 +16,8 @@ i2DASHContext *i2dash_context_new(const char *path)
         return NULL;
     }
 
+    context->path = path;
+
     context->segment_number = 0;
     context->fragment_number = 0;
     context->frame_number = 1;
@@ -27,6 +29,9 @@ i2DASHContext *i2dash_context_new(const char *path)
     context->frames_per_sample = 1;
     context->samples_per_fragment = 24;
     context->fragments_per_segment = 1;
+
+    context->frames_per_fragment = 24;
+    context->frames_per_segment = 24;
 
     context->frame_rate = 24.0;
     context->file = file;

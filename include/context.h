@@ -19,11 +19,15 @@ typedef struct {
     int frames_per_sample;
     int samples_per_fragment;
     int fragments_per_segment;
+    int frames_per_fragment;
+    int frames_per_segment;
     
     float frame_rate;
     AVCodecContext *avcodeccontext;
 
     FILE *p_file;
+
+    char *path;
  
     GF_ISOFile *file;
     GF_ISOSample *sample;
