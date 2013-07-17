@@ -18,7 +18,7 @@ all: $(PROG)
 
 $(PROG): $(OBJS)
 	@mkdir -p bin
-	$(CC) $(CFLAGS) -o ./bin/$@ $(OBJS) $(LDFLAGS)
+	$(CC) $(CFLAGS) $+ -o ./bin/$@ $(LDFLAGS)
 
 $(OBJ_PATH)/%.o: %.c
 	@mkdir -p $(OBJ_PATH)
