@@ -9,22 +9,21 @@ i2DASHError i2dash_fragment_open(i2DASHContext *context)
     
     ret = gf_isom_setup_track_fragment(file, 1, 1, 1, 0, 0, 0, 0);
     if(ret != GF_OK) {
-        fprintf(stderr, "%s: gf_isom_avc_set_inband_config\n",
+        i2dash_debug_err("gf_isom_avc_set_inband_config: %s",
                                 gf_error_to_string(ret));
         return i2DASH_ERROR;
     }
 
     ret = gf_isom_finalize_for_fragment(file, 1);
     if (ret != GF_OK) {
-        fprintf(stderr, "%s: gf_isom_finalize_for_fragment\n",
+        i2dash_debug_err("gf_isom_finalize_for_fragment: %s",
                         gf_error_to_string(ret));
         return i2DASH_ERROR;
     }
-
     return i2DASH_OK;
 }
 
-i2DASHError i2dash_fragment_write(i2DASHContext *context, uint8_t * buf,
+i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
                           int buf_len, int dts, int key_frame)
 {
     GF_Err ret;
@@ -34,7 +33,7 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, uint8_t * buf,
         ret = gf_isom_start_fragment(context->file, 1);
 
         if (ret != GF_OK) {
-            fprintf(stderr, "%s: gf_isom_start_fragment\n",
+            i2dash_debug_err("gf_isom_start_fragment: %s",
                             gf_error_to_string(ret));
             return i2DASH_ERROR;
         }
@@ -49,7 +48,7 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, uint8_t * buf,
 
     if(err != i2DASH_OK) {
         // TODO define handle error
-        printf("i2DASHError: i2dash_sample_add\n");
+        i2dash_debug_err("i2dash_sample_add");
         return i2DASH_ERROR;
     }
     return i2DASH_OK;
@@ -63,11 +62,11 @@ i2DASHError i2dash_fragment_close(i2DASHContext *context)
                                 context->frames_per_fragment - 1) {
         ret = gf_isom_flush_fragments(context->file, 1);
         if(ret != GF_OK) {
-            fprintf(stderr, "%s: gf_isom_flush_fragments\n",
-                            gf_error_to_string(ret));
+            i2dash_debug_err("gf_isom_flush_fragments: %s",
+                         gf_error_to_string(ret));
             return i2DASH_ERROR;
         }
-        printf("OK: gf_isom_flush_fragments.\n");
+        i2dash_debug_msg("gf_isom_flush_fragments");
     }
     return i2DASH_OK;
 }
