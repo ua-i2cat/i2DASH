@@ -31,6 +31,5 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
     else {
         i2dash_debug_err("i2dash_segment_write");
     }
-
     return ret;
 }

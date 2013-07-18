@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
     av_register_all();
 
     i2dash_debug_msg("opening input");
-    
     // Open video file
     if(avformat_open_input(&pFormatCtx, input_path, NULL, NULL)!=0) {
         return -1; // Couldn't open file
@@ -68,12 +67,10 @@ int main(int argc, char *argv[])
     }
     
     i2dash_debug_msg("Get a pointer...");
-    
     // Get a pointer to the codec context for the video stream
     pCodecCtx=pFormatCtx->streams[videoStream]->codec;
 
     i2dash_debug_msg("Find a decoder.");
-
     // Find the decoder for the video stream
     pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
     if(pCodec==NULL) {
@@ -91,7 +88,6 @@ int main(int argc, char *argv[])
     i2dash_debug_msg("Start reading frames.");
     
     context = i2dash_context_new(output_path);
-    
     if (context == NULL) {                    
         i2dash_debug_err("i2dash_context_new");
         return -1;

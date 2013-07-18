@@ -28,8 +28,14 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
                       &context->sample->dataLength);
     i2dash_debug_msg("gf_bs_get_content done");
 
+    int j;
+    for(j=0;j<50;j++){
+        i2dash_debug_msg("sample: %c", context->sample->data[j]);
+    }
     context->sample->DTS = dts;
+    i2dash_debug_msg("context->sample->DTS: %d", (int)context->sample->DTS);
     context->sample->IsRAP = key_frame;
+    i2dash_debug_msg("context->sample->IsRAP: %d", (int)context->sample->IsRAP);
 
     ret = gf_isom_fragment_add_sample(context->file, 1,
                     context->sample, 1, 1, 0, 0, 0);
