@@ -31,15 +31,19 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
 
     if(context->frame_number % context->frames_per_fragment == 0){
         ret = gf_isom_start_fragment(context->file, 1);
-
         if (ret != GF_OK) {
             i2dash_debug_err("gf_isom_start_fragment: %s",
                             gf_error_to_string(ret));
             return i2DASH_ERROR;
-        }
+        } i2dash_debug_msg("gf_isom_start_fragment");
 
         ret = gf_isom_set_traf_base_media_decode_time(context->file, 1,
                                                     context->fragment_dts);
+        if (ret != GF_OK) {
+            i2dash_debug_err("gf_isom_set_traf_base_media_decode_time: %s",
+                            gf_error_to_string(ret));
+            return i2DASH_ERROR;
+        } i2dash_debug_msg("gf_isom_set_traf_base_media_decode_time");
 
         context->fragment_dts += context->frames_per_fragment;
     }

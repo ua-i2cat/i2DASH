@@ -1,4 +1,5 @@
 #include "context.h"
+#include "debug.h"
 #include <stdlib.h>
 
 
@@ -6,8 +7,9 @@ i2DASHContext *i2dash_context_new(const char *path)
 {
     // GF_ISOM_WRITE_EDIT -> new file
     // 3rd param NULL -> will use the system's tmp folder
-    GF_ISOFile *file = gf_isom_open(path, GF_ISOM_WRITE_EDIT, NULL);
+    GF_ISOFile *file = gf_isom_open(path, GF_ISOM_OPEN_WRITE, NULL);
     if (file == NULL) {
+        i2dash_debug_err("gf_isom_open: %s", path);
         return NULL;
     }
     
