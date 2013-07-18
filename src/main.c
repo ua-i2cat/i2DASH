@@ -33,28 +33,26 @@ int main(int argc, char *argv[])
     // Register all formats and codecs
     av_register_all();
 
-    printf("opening input.\n");
-    
+    i2dash_debug_msg("opening input");
     // Open video file
     if(avformat_open_input(&pFormatCtx, input_path, NULL, NULL)!=0) {
         return -1; // Couldn't open file
     }
 
-    printf("Retrieve stream information.\n");
+    i2dash_debug_msg("Retrieve stream information");
     
     // Retrieve stream information
     if(avformat_find_stream_info(pFormatCtx, NULL) < 0) {
         return -1; // Couldn't find stream information
     }
     
-    printf("Dump information.\n");
-   
+    i2dash_debug_msg("Dump information.");
     // Dump information about file onto standard error
     av_dump_format(pFormatCtx, 0, input_path, 0);
 
     // Find the first video stream
     videoStream=-1;
-    printf("Find the first video stream.\n");
+    i2dash_debug_msg("Find the first video stream.");
    
     int i;
     for(i = 0; i < pFormatCtx-> nb_streams; i++) {
@@ -68,37 +66,35 @@ int main(int argc, char *argv[])
         return -1; // Didn't find a video stream
     }
     
-    printf("Get a pointer...\n");
-    
+    i2dash_debug_msg("Get a pointer...");
     // Get a pointer to the codec context for the video stream
     pCodecCtx=pFormatCtx->streams[videoStream]->codec;
 
-    printf("Find a decoder.\n");
-
+    i2dash_debug_msg("Find a decoder.");
     // Find the decoder for the video stream
     pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
     if(pCodec==NULL) {
-      fprintf(stderr, "Unsupported codec!\n");
+      i2dash_debug_err("Unsupported codec!");
       return -1; // Codec not found
     }
 
     // Open codec
     if(avcodec_open2(pCodecCtx, pCodec, &optionsDict) < 0) {
-       return -1; // Could not open codec
+       i2dash_debug_err("Could not open codec");
+       return -1;
     }
 
     // Read frames and save first five frames to disk
-    printf("Start reading frames.\n");
+    i2dash_debug_msg("Start reading frames.");
     
     context = i2dash_context_new(output_path);
-    
     if (context == NULL) {                    
-        printf("ERROR: i2dash_context_new.\n");
+        i2dash_debug_err("i2dash_context_new");
         return -1;
     }
-    printf("Context initialized.\n");
+    i2dash_debug_msg("Context initialized.");
                         
-    printf("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, samples_per_fragment %d, fragments_per_segment %d, frame_rate %f,\n",
+    i2dash_debug_msg("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, samples_per_fragment %d, fragments_per_segment %d, frame_rate %f",
         context->segment_number, 
         context->fragment_number, context->frame_number,
         context->segment_duration,
@@ -109,27 +105,25 @@ int main(int argc, char *argv[])
     );
                         
     context->avcodeccontext = pCodecCtx;
-    printf("AVCodecContext loaded \n");
+    i2dash_debug_msg("AVCodecContext loaded");
     
     int count = 0;
     while(av_read_frame(pFormatCtx, &packet)>=0) {
-        printf("Reading frame %d.\n", count);
+        i2dash_debug_msg("Reading frame %d", count);
         if(packet.stream_index==videoStream) {
-            
-
-            if(count++ > 5) {
+            if(count++ > 10) {
                 av_free_packet(&packet);
                 break;
             }
 
-            printf("START: sample %d\n", count);
-            i2DASHError err = i2dash_sample_add(context, packet.data,
-                                                packet.size, 0, 0); // TODO
+            i2dash_debug_msg("START: sample %d", count);
+            i2DASHError err = i2dash_write(context, (const char *)packet.data,
+                                           packet.size);
             if (err != i2DASH_OK) {
-                    printf("ERROR: i2dash_add_sample_frame.\n");
+                    i2dash_debug_err("i2dash_write");
                     return -1;
             }
-            printf("OK");
+            i2dash_debug_msg("OK");
         }
         // Free the packet that was allocated by av_read_frame
         av_free_packet(&packet);

@@ -1,18 +1,25 @@
 #include "segment.h"
+#include "fragment.h"
+#include "debug.h"
 #include "error.h"
+#include <string.h>
 
 
 i2DASHError i2dash_segment_open(i2DASHContext *context)
 {
-    const char segment_path[256];
-    int ret = sprintf(segment_path, (const char *)"%s.%d.m4s",
-                      context->path, context->segment_number + 1);
+    char segment_path[256];
+    bzero(segment_path, 256);
+
+    int ret = sprintf(segment_path, "%s.%d.m4s",
+                      (const char *)context->path,
+                      context->segment_number + 1);
     if (ret < 0) {
         return i2DASH_ERROR;
     }
 
     // GF_TRUE -> write on disk instead of memory
-    i2DASHError err = gf_isom_start_segment(context->file, segment_path, GF_TRUE);
+    GF_Err err = gf_isom_start_segment(context->file, segment_path,
+                                       GF_TRUE);
     if (err != GF_OK) {
         return i2DASH_ERROR;
     }
@@ -21,7 +28,11 @@ i2DASHError i2dash_segment_open(i2DASHContext *context)
 
 i2DASHError i2dash_segment_write(i2DASHContext *context, const char *buffer, int buffer_len)
 {
-    return i2DASH_ERROR;
+    i2DASHError ret = i2dash_fragment_write(context, buffer, buffer_len, 0, 0);
+    if (ret != i2DASH_OK) {
+        i2dash_debug_err("i2dash_fragment_write");
+    }
+    return ret;
 }
 
 i2DASHError i2dash_segment_close(i2DASHContext *context)
