@@ -30,7 +30,7 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
     i2DASHError err;
 
     if(context->frame_number % context->frames_per_fragment == 0){
-        ret = gf_isom_start_fragment(context->file, 1);
+        ret = gf_isom_start_fragment(context->file, GF_TRUE);
         if (ret != GF_OK) {
             i2dash_debug_err("gf_isom_start_fragment: %s",
                             gf_error_to_string(ret));
@@ -51,8 +51,13 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
     err = i2dash_sample_add(context, buf, buf_len, dts, key_frame);
 
     if(err != i2DASH_OK) {
-        // TODO define handle error
         i2dash_debug_err("i2dash_sample_add");
+        return i2DASH_ERROR;
+    }
+    
+    err = i2dash_fragment_close(context);
+    if(err != i2DASH_OK) {
+        i2dash_debug_err("i2dash_fragment_close");
         return i2DASH_ERROR;
     }
     return i2DASH_OK;

@@ -94,13 +94,13 @@ int main(int argc, char *argv[])
     }
     i2dash_debug_msg("Context initialized.");
                         
-    i2dash_debug_msg("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, samples_per_fragment %d, fragments_per_segment %d, frame_rate %f",
+    i2dash_debug_msg("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, frames_per_fragment %d, frames_per_segment %d, frame_rate %f",
         context->segment_number, 
         context->fragment_number, context->frame_number,
         context->segment_duration,
         context->frames_per_sample,
-        context->samples_per_fragment,
-        context->fragments_per_segment,
+        context->frames_per_fragment,
+        context->frames_per_segment,
         context->frame_rate
     );
                         
@@ -108,6 +108,8 @@ int main(int argc, char *argv[])
     i2dash_debug_msg("AVCodecContext loaded");
     
     int count = 0;
+    i2DASHError err;
+
     while(av_read_frame(pFormatCtx, &packet)>=0) {
         i2dash_debug_msg("Reading frame %d", count);
         if(packet.stream_index==videoStream) {
@@ -117,13 +119,20 @@ int main(int argc, char *argv[])
             }
 
             i2dash_debug_msg("START: sample %d", count);
-            i2DASHError err = i2dash_write(context, (const char *)packet.data,
+            err = i2dash_write(context, (const char *)packet.data,
                                            packet.size);
             if (err != i2DASH_OK) {
                     i2dash_debug_err("i2dash_write");
                     return -1;
             }
-            i2dash_debug_msg("OK");
+
+            i2dash_debug_msg("CLOSE: segment %d", count);
+
+            err = i2dash_close(context);
+            if (err != i2DASH_OK) {
+                    i2dash_debug_err("i2dash_close");
+                    return -1;
+            }
         }
         // Free the packet that was allocated by av_read_frame
         av_free_packet(&packet);

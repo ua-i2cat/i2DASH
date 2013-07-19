@@ -39,6 +39,8 @@ i2DASHError i2dash_segment_open(i2DASHContext *context)
 
     i2dash_debug_msg("gf_isom_start_segment");
 
+    i2dash_debug_msg("i2dash_segment_open");
+
     return i2DASH_OK;
 }
 
@@ -57,6 +59,7 @@ i2DASHError i2dash_segment_write(i2DASHContext *context, const char *buffer, int
 i2DASHError i2dash_segment_close(i2DASHContext *context)
 {
     GF_Err err = GF_OK;
+
     err = gf_isom_close_segment(context->file, 0, 0, 0, 0, 0, 1,
                                 context->segment_marker, NULL, NULL);
     if (err != GF_OK) {
@@ -93,10 +96,10 @@ i2DASHError i2dash_first_segment_create(i2DASHContext *context)
 
     avccfg->configurationVersion = 1;
 
-    // TODO gf_isom_new_track timescale (p_video_codec_ctx->time_base.den)
-    // 25 placebo
+    // gf_isom_new_track timescale (p_video_codec_ctx->time_base.den)
+    // time_base.den is the frame rate.
     u32 track = gf_isom_new_track(context->file, 1, GF_ISOM_MEDIA_VISUAL,
-           25);
+           context->frame_rate);
     if(!track) {
         i2dash_debug_err("gf_isom_new_track: %d", (int)track);
         return i2DASH_ERROR;

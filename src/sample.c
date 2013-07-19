@@ -52,8 +52,8 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
         return i2DASH_ERROR;
     }
     
-    gf_isom_sample_del(&context->sample);
-    i2dash_debug_msg("gf_isom_sample_del");
+    // gf_isom_sample_del(&context->sample);
+    // i2dash_debug_msg("gf_isom_sample_del");
     
     return i2DASH_OK;
 }
