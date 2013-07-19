@@ -33,26 +33,21 @@ int main(int argc, char *argv[])
     // Register all formats and codecs
     av_register_all();
 
-    i2dash_debug_msg("opening input");
     // Open video file
     if(avformat_open_input(&pFormatCtx, input_path, NULL, NULL)!=0) {
         return -1; // Couldn't open file
     }
-
-    i2dash_debug_msg("Retrieve stream information");
-    
+   
     // Retrieve stream information
     if(avformat_find_stream_info(pFormatCtx, NULL) < 0) {
         return -1; // Couldn't find stream information
     }
     
-    i2dash_debug_msg("Dump information.");
     // Dump information about file onto standard error
     av_dump_format(pFormatCtx, 0, input_path, 0);
 
     // Find the first video stream
     videoStream=-1;
-    i2dash_debug_msg("Find the first video stream.");
    
     int i;
     for(i = 0; i < pFormatCtx-> nb_streams; i++) {
@@ -66,11 +61,9 @@ int main(int argc, char *argv[])
         return -1; // Didn't find a video stream
     }
     
-    i2dash_debug_msg("Get a pointer...");
     // Get a pointer to the codec context for the video stream
     pCodecCtx=pFormatCtx->streams[videoStream]->codec;
 
-    i2dash_debug_msg("Find a decoder.");
     // Find the decoder for the video stream
     pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
     if(pCodec==NULL) {
@@ -84,15 +77,12 @@ int main(int argc, char *argv[])
        return -1;
     }
 
-    // Read frames and save first five frames to disk
-    i2dash_debug_msg("Start reading frames.");
-    
+    // Read frames and save first five frames to disk    
     context = i2dash_context_new(output_path);
     if (context == NULL) {                    
         i2dash_debug_err("i2dash_context_new");
         return -1;
     }
-    i2dash_debug_msg("Context initialized.");
                         
     i2dash_debug_msg("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, frames_per_fragment %d, frames_per_segment %d, frame_rate %f",
         context->segment_number, 
@@ -118,19 +108,10 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            i2dash_debug_msg("START: sample %d", count);
             err = i2dash_write(context, (const char *)packet.data,
                                            packet.size);
             if (err != i2DASH_OK) {
                     i2dash_debug_err("i2dash_write");
-                    return -1;
-            }
-
-            i2dash_debug_msg("CLOSE: segment %d", count);
-
-            err = i2dash_close(context);
-            if (err != i2DASH_OK) {
-                    i2dash_debug_err("i2dash_close");
                     return -1;
             }
         }

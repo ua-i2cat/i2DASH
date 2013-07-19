@@ -11,27 +11,22 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
     
     context->sample = gf_isom_sample_new();
     assert(context->sample != NULL);
-    i2dash_debug_msg("new sample");
     
     GF_BitStream * out_bs = gf_bs_new(NULL, 2 * buf_len, GF_BITSTREAM_WRITE);
-    i2dash_debug_msg("new bitstream");
 
     if(buf_len != 0) {
-        i2dash_debug_msg("buf_len != 0");
         gf_bs_write_u32(out_bs, buf_len);
-        i2dash_debug_msg("gf_bs_write_u32 done");
         gf_bs_write_data(out_bs, (const char*) buf, buf_len);
-        i2dash_debug_msg("gf_bs_write_data done");
     }
 
     gf_bs_get_content(out_bs, &context->sample->data,
                       &context->sample->dataLength);
-    i2dash_debug_msg("gf_bs_get_content done");
 
     int j;
-    for(j=0;j<50;j++){
-        i2dash_debug_msg("sample: %c", context->sample->data[j]);
+    for(j=0;j<5;j++){
+        i2dash_debug_msg("sample data: %c", context->sample->data[j]);
     }
+    
     context->sample->DTS = dts;
     i2dash_debug_msg("context->sample->DTS: %d", (int)context->sample->DTS);
     context->sample->IsRAP = key_frame;

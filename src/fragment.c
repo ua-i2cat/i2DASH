@@ -35,7 +35,7 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
             i2dash_debug_err("gf_isom_start_fragment: %s",
                             gf_error_to_string(ret));
             return i2DASH_ERROR;
-        } i2dash_debug_msg("gf_isom_start_fragment");
+        }
 
         ret = gf_isom_set_traf_base_media_decode_time(context->file, 1,
                                                     context->fragment_dts);
@@ -43,23 +43,17 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
             i2dash_debug_err("gf_isom_set_traf_base_media_decode_time: %s",
                             gf_error_to_string(ret));
             return i2DASH_ERROR;
-        } i2dash_debug_msg("gf_isom_set_traf_base_media_decode_time");
+        }
 
         context->fragment_dts += context->frames_per_fragment;
     }
-
-    err = i2dash_sample_add(context, buf, buf_len, dts, key_frame);
-
-    if(err != i2DASH_OK) {
-        i2dash_debug_err("i2dash_sample_add");
-        return i2DASH_ERROR;
-    }
     
-    err = i2dash_fragment_close(context);
-    if(err != i2DASH_OK) {
-        i2dash_debug_err("i2dash_fragment_close");
+    if(i2dash_sample_add(context, buffer, buffer_len, 0, 0) != i2DASH_OK) {
+        i2dash_debug_err("i2dash_sample_add: KO");
         return i2DASH_ERROR;
     }
+    i2dash_debug_msg("i2dash_sample_add: OK");
+    
     return i2DASH_OK;
 }
 
@@ -75,7 +69,6 @@ i2DASHError i2dash_fragment_close(i2DASHContext *context)
                          gf_error_to_string(ret));
             return i2DASH_ERROR;
         }
-        i2dash_debug_msg("gf_isom_flush_fragments");
     }
     return i2DASH_OK;
 }
