@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
        return -1;
     }
 
-    // Read frames and save first five frames to disk    
+    // new i2dash context
     context = i2dash_context_new(output_path);
     if (context == NULL) {                    
         i2dash_debug_err("i2dash_context_new");
