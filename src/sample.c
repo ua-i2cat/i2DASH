@@ -7,8 +7,6 @@
 i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
                               int buf_len, int dts, int key_frame)
 {    
-    GF_Err ret;
-    
     context->sample = gf_isom_sample_new();
     assert(context->sample != NULL);
     
@@ -32,7 +30,7 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
     context->sample->IsRAP = key_frame;
     i2dash_debug_msg("context->sample->IsRAP: %d", (int)context->sample->IsRAP);
 
-    ret = gf_isom_fragment_add_sample(context->file, 1,
+    GF_Err ret = gf_isom_fragment_add_sample(context->file, 1,
                     context->sample, 1, 1, 0, 0, 0);
 
     // TODO fix bad_param
@@ -46,10 +44,7 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
                          gf_error_to_string(ret));
         return i2DASH_ERROR;
     }
-    
-    // gf_isom_sample_del(&context->sample);
-    // i2dash_debug_msg("gf_isom_sample_del");
-    
+
     return i2DASH_OK;
 }
 
