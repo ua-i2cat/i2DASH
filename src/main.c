@@ -95,7 +95,6 @@ int main(int argc, char *argv[])
     );
                         
     context->avcodeccontext = pCodecCtx;
-    i2dash_debug_msg("AVCodecContext loaded");
     
     int count = 0;
     i2DASHError err;

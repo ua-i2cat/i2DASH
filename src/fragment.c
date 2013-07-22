@@ -27,7 +27,6 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
                           int buf_len, int dts, int key_frame)
 {
     GF_Err ret;
-    i2DASHError err;
 
     if(context->frame_number % context->frames_per_fragment == 0){
         ret = gf_isom_start_fragment(context->file, GF_TRUE);
@@ -47,8 +46,8 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
 
         context->fragment_dts += context->frames_per_fragment;
     }
-    
-    if(i2dash_sample_add(context, buffer, buffer_len, 0, 0) != i2DASH_OK) {
+
+    if(i2dash_sample_add(context, buf, buf_len, 0, 0) != i2DASH_OK) {
         i2dash_debug_err("i2dash_sample_add: KO");
         return i2DASH_ERROR;
     }

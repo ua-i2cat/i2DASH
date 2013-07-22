@@ -1,11 +1,11 @@
 #include "i2dash.h"
 #include "segment.h"
+#include "fragment.h"
 #include "debug.h"
 
 
 i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len)
 {   
-    i2DASHError ret;
 
     int next_frame_number = context->frame_number + 1;
 
@@ -59,19 +59,3 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
     return i2DASH_OK;
 }
 
-
-/*
-
-Theoretical body:
-    
-    i2dash_segment_open
-    i2dash_fragment_open
-
-    i2dash_sample_add
-
-    i2dash_fragment_close
-    i2dash_segment_close
-
-*/
-
-//i2dash_context_free
