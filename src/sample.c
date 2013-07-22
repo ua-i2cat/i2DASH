@@ -16,7 +16,7 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
 
     if(buf_len != 0) {
         gf_bs_write_u32(out_bs, buf_len);
-        gf_bs_write_data(out_bs, (const char*) buf, buf_len);
+        gf_bs_write_data(out_bs, (const char*)buf, buf_len);
     }
 
     gf_bs_get_content(out_bs, &context->sample->data,
@@ -26,7 +26,7 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
     for(j=0;j<5;j++){
         i2dash_debug_msg("sample data: %c", context->sample->data[j]);
     }
-    
+
     context->sample->DTS = dts;
     i2dash_debug_msg("context->sample->DTS: %d", (int)context->sample->DTS);
     context->sample->IsRAP = key_frame;

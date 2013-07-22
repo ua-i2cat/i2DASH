@@ -86,7 +86,8 @@ int main(int argc, char *argv[])
                         
     i2dash_debug_msg("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, frames_per_fragment %d, frames_per_segment %d, frame_rate %f",
         context->segment_number, 
-        context->fragment_number, context->frame_number,
+        context->fragment_number, 
+        context->frame_number,
         context->segment_duration,
         context->frames_per_sample,
         context->frames_per_fragment,

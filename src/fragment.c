@@ -47,6 +47,15 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
         context->fragment_dts += context->frames_per_fragment;
     }
 
+    // prueba
+    ret = gf_isom_start_fragment(context->file, 1);
+        if (ret != GF_OK) {
+            i2dash_debug_err("gf_isom_start_fragment: %s",
+                            gf_error_to_string(ret));
+            return i2DASH_ERROR;
+        }
+    // fin prueba
+
     if(i2dash_sample_add(context, buf, buf_len, 0, 0) != i2DASH_OK) {
         i2dash_debug_err("i2dash_sample_add: KO");
         return i2DASH_ERROR;
