@@ -7,9 +7,8 @@
 i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len)
 {   
 
-    int next_frame_number = context->frame_number + 1;
-
     // for more than one sample
+    //int next_frame_number = context->frame_number + 1;
     /*
     if (context->frame_number == 0) {
         if (i2dash_segment_open(context) != i2DASH_OK) {
@@ -50,7 +49,7 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
         i2dash_debug_msg("i2dash_fragment_open: OK");
     }
     */
-
+    // Considering only one sample... testing purposes
     // new segment
     if(i2dash_segment_new(context) != i2DASH_OK){
         i2dash_debug_err("i2dash_segment_new: KO");
@@ -79,7 +78,10 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
         i2dash_debug_err("i2dash_fragment_close: KO");
         return i2DASH_ERROR;
     }
-
+    if(i2dash_segment_close(context) != i2DASH_OK){
+        i2dash_debug_err("i2dash_segment_close: KO");
+        return i2DASH_ERROR;
+    }
     return i2DASH_OK;
 }
 

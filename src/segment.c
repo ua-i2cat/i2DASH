@@ -36,15 +36,6 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
         return i2DASH_ERROR;
     }
 
-    err = gf_isom_avc_config_new(context->file, 1, avccfg, NULL, NULL, 
-                                    &description_index);
-    if (err != GF_OK) {
-        i2dash_debug_err("gf_isom_avc_config_new: %s",
-                gf_error_to_string(ret));
-        return i2DASH_ERROR;
-    }
-
-    /*
     avccfg = gf_odf_avc_cfg_new();
 
     if (!avccfg) {
@@ -53,7 +44,14 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
     }
 
     avccfg->configurationVersion = 1;
-    */
+
+    err = gf_isom_avc_config_new(context->file, 1, avccfg, NULL, NULL, 
+                                    &description_index);
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_isom_avc_config_new: %s",
+                gf_error_to_string(ret));
+        return i2DASH_ERROR;
+    }
 
     gf_odf_avc_cfg_del(avccfg);
 
@@ -100,18 +98,6 @@ i2DASHError i2dash_segment_start(i2DASHContext *context)
 
     return i2DASH_OK;
 }
-
-/*
-i2DASHError i2dash_segment_write(i2DASHContext *context, const char *buffer, int buffer_len)
-{
-
-    i2DASHError ret = i2dash_fragment_write(context, buffer, buffer_len, 0, 0);
-    if (ret != i2DASH_OK) {
-        i2dash_debug_err("i2dash_fragment_write");
-    }
-    return ret;
-}
-*/
 
 i2DASHError i2dash_segment_close(i2DASHContext *context)
 {
