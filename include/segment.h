@@ -4,9 +4,9 @@
 #include "error.h"
 #include "context.h"
 
-i2DASHError i2dash_segment_open(i2DASHContext *context);
+i2DASHError i2dash_segment_new(i2DASHContext *context);
+i2DASHError i2dash_segment_start(i2DASHContext *context);
 i2DASHError i2dash_segment_write(i2DASHContext *context, const char *buffer, int buffer_len);
 i2DASHError i2dash_segment_close(i2DASHContext *context);
-i2DASHError i2dash_first_segment_create(i2DASHContext *context);
 
 #endif
