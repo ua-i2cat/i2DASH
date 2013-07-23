@@ -30,9 +30,11 @@ typedef struct {
     FILE *p_file;
 
     char *path;
+    char *segment_path;
  
     GF_ISOFile *file;
     GF_ISOSample *sample;
+    GF_AVCConfig *avccfg;
 } i2DASHContext;
 
 i2DASHError i2dash_context_reconfigure(i2DASHContext *context, int seg_nb, int frag_nb, int frame_nb, int seg_dur, float fps, char * dest_path, AVCodecContext * avccont);

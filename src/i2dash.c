@@ -49,6 +49,7 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
         i2dash_debug_msg("i2dash_fragment_open: OK");
     }
     */
+    
     // Considering only one sample... testing purposes
     // new segment
     if(i2dash_segment_new(context) != i2DASH_OK){

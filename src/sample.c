@@ -49,6 +49,7 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
 }
 
 // Won't work!
+/*
 i2DASHError i2dash_sample_add_frame(i2DASHContext *context, AVFrame *frame)
 {
     AVCodecContext *avcodec_ctx = context->avcodeccontext;
@@ -81,3 +82,4 @@ i2DASHError i2dash_sample_add_frame(i2DASHContext *context, AVFrame *frame)
     }
     return i2DASH_OK;
 }
+*/
