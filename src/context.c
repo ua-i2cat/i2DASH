@@ -5,6 +5,16 @@
 
 i2DASHContext *i2dash_context_new(const char *path)
 {
+    GF_AVCConfig *avccfg;
+
+    avccfg = gf_odf_avc_cfg_new();
+    if (!avccfg) {
+        i2dash_debug_err("Cannot create AVCConfig");
+        return NULL;
+    }    
+
+    avccfg->configurationVersion = 1;
+
     // GF_ISOM_WRITE_EDIT -> new file
     // 3rd param NULL -> will use the system's tmp folder
     GF_ISOFile *file = gf_isom_open(path, GF_ISOM_OPEN_WRITE, NULL);
@@ -17,6 +27,8 @@ i2DASHContext *i2dash_context_new(const char *path)
     if (context == NULL) {
         return NULL;
     }
+
+    context->avccfg = avccfg;
 
     context->path = (char *)path;
 

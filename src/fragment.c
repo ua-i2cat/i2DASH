@@ -2,11 +2,11 @@
 #include "fragment.h"
 
 
-i2DASHError i2dash_fragment_open(i2DASHContext *context)
+i2DASHError i2dash_fragment_setup(i2DASHContext *context)
 {
     GF_Err ret;
     GF_ISOFile *file = context->file;
-    
+
     ret = gf_isom_setup_track_fragment(file, 1, 1, 1, 0, 0, 0, 0);
     if(ret != GF_OK) {
         i2dash_debug_err("gf_isom_avc_set_inband_config: %s",
@@ -20,6 +20,9 @@ i2DASHError i2dash_fragment_open(i2DASHContext *context)
                         gf_error_to_string(ret));
         return i2DASH_ERROR;
     }
+
+    context->fragment_dts = 0;
+    
     return i2DASH_OK;
 }
 
@@ -27,9 +30,9 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
                           int buf_len, int dts, int key_frame)
 {
     GF_Err ret;
-
+    // first conditional
     if(context->frame_number % context->frames_per_fragment == 0){
-        ret = gf_isom_start_fragment(context->file, GF_TRUE);
+        ret = gf_isom_start_fragment(context->file, 1);
         if (ret != GF_OK) {
             i2dash_debug_err("gf_isom_start_fragment: %s",
                             gf_error_to_string(ret));
@@ -47,15 +50,7 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
         context->fragment_dts += context->frames_per_fragment;
     }
 
-    // prueba
-    ret = gf_isom_start_fragment(context->file, 1);
-        if (ret != GF_OK) {
-            i2dash_debug_err("gf_isom_start_fragment: %s",
-                            gf_error_to_string(ret));
-            return i2DASH_ERROR;
-        }
-    // fin prueba
-
+    // TODO while(i<frames_per_fragment)
     if(i2dash_sample_add(context, buf, buf_len, 0, 0) != i2DASH_OK) {
         i2dash_debug_err("i2dash_sample_add: KO");
         return i2DASH_ERROR;
