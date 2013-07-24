@@ -5,7 +5,7 @@
 #include <string.h>
 
 
-i2DASHError i2dash_segment_new(i2DASHContext *context)
+i2DASHError i2dash_segment_new(i2DASHContext *context, char *segment_path)
 {
     GF_Err err;
     //GF_AVCConfig *avccfg;
@@ -13,7 +13,7 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
     u32 description_index;
     u32 timescale = context->frame_rate;
 
-    i2dash_debug_msg("init segment: %s", context->segment_path);
+    i2dash_debug_msg("init segment: %s", segment_path);
 
     context->avccfg = gf_odf_avc_cfg_new();
     if (!context->avccfg) {
@@ -26,10 +26,10 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
     // GF_ISOM_WRITE_EDIT -> new file
     // 3rd param NULL -> will use the system's tmp folder
     
-    if(context->segment_path != NULL) {
-        context->file = gf_isom_open(context->segment_path, GF_ISOM_OPEN_WRITE, NULL);
+    if(segment_path != NULL) {
+        context->file = gf_isom_open(segment_path, GF_ISOM_OPEN_WRITE, NULL);
         if (context->file == NULL) {
-            i2dash_debug_err("gf_isom_open: %s", context->segment_path);
+            i2dash_debug_err("gf_isom_open: %s", segment_path);
             return i2DASH_ERROR;
         }
     }
@@ -86,13 +86,13 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
     return i2DASH_OK;
 }
 
-i2DASHError i2dash_segment_start(i2DASHContext *context)
+i2DASHError i2dash_segment_start(i2DASHContext *context, char *segment_path)
 {
     // GF_TRUE -> write on disk instead of memory
 
-    i2dash_debug_msg("segment_path: %s", context->segment_path);
+    i2dash_debug_msg("segment_path: %s", segment_path);
 
-    GF_Err err = gf_isom_start_segment(context->file, context->segment_path, 1);
+    GF_Err err = gf_isom_start_segment(context->file, segment_path, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_start_segment: %s", 
                             gf_error_to_string(err));

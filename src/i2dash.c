@@ -24,9 +24,9 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
             return i2DASH_ERROR;
         }
 
-        context->segment_path = segment_path;
+        //context->segment_path = segment_path;
 
-        if (i2dash_segment_new(context) != i2DASH_OK) {
+        if (i2dash_segment_new(context, segment_path) != i2DASH_OK) {
             i2dash_debug_err("i2dash_segment_new: KO");
             return i2DASH_ERROR;
         }
@@ -37,16 +37,13 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
             return i2DASH_ERROR;
         }
         i2dash_debug_msg("i2dash_fragment_setup: OK");
-        printf("i2dash_fragment_setup: %s\n", context->segment_path);
 
         // start segmentation
-        if(i2dash_segment_start(context) != i2DASH_OK){
+        if(i2dash_segment_start(context, segment_path) != i2DASH_OK){
             i2dash_debug_err("i2dash_segment_start: KO");
             return i2DASH_ERROR;
         }
         i2dash_debug_msg("i2dash_segment_start: OK");
-
-        printf("i2dash_fragment_setup: %s\n", context->segment_path);
 
         context->segment_number++;
 
@@ -79,9 +76,9 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
             i2dash_debug_err("segment: %d", context->segment_number);
             return i2DASH_ERROR;
         }
-        context->segment_path = segment_path;
+        //context->segment_path = segment_path;
         // start segmentation
-        if(i2dash_segment_start(context) != i2DASH_OK){
+        if(i2dash_segment_start(context, segment_path) != i2DASH_OK){
             i2dash_debug_err("i2dash_segment_start: KO");
             return i2DASH_ERROR;
         }

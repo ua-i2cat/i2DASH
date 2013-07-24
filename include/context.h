@@ -31,7 +31,7 @@ typedef struct {
     FILE *p_file;
 
     char *path;
-    char *segment_path;
+    //char *segment_path;
  
     GF_ISOFile *file;
     GF_ISOSample *sample;

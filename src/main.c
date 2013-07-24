@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     while(av_read_frame(pFormatCtx, &packet)>=0) {
         i2dash_debug_msg("Reading frame %d", count);
         if(packet.stream_index==videoStream) {
-            if(count++ > 10) {
+            if(count++ > 1248) {
                 av_free_packet(&packet);
                 break;
             }
