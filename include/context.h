@@ -2,6 +2,7 @@
 #define _CONTEXT_H_
 
 #include <gpac/isomedia.h>
+#include <gpac/internal/isomedia_dev.h>
 #include <libavcodec/avcodec.h>
 
 #include "error.h"

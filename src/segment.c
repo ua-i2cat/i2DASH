@@ -15,10 +15,10 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
     char segment_path[256];
     bzero(segment_path, 256);
 
-    int ret = sprintf(segment_path, "%s_init.mp4",
+    int ret = sprintf(segment_path, "%s.mp4",
                       (const char *)context->path);
     if (ret < 0) {
-        i2dash_debug_err("segment init");
+        i2dash_debug_err("segment");
         return i2DASH_ERROR;
     }
     /*// set timescale

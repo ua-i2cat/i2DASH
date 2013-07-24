@@ -34,7 +34,7 @@ i2DASHContext *i2dash_context_new(const char *path)
 
     context->segment_number = 0;
     context->fragment_number = 0;
-    context->frame_number = 1;
+    context->frame_number = 0;
     
     context->segment_marker = 0;
 

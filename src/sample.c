@@ -33,12 +33,6 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
     GF_Err ret = gf_isom_fragment_add_sample(context->file, 1,
                     context->sample, 1, 1, 0, 0, 0);
 
-    // TODO fix bad_param
-    /*
-        !movie->moof
-        !(movie->FragmentsFlags & GF_ISOM_FRAG_WRITE_READY)
-    */
-
     if (ret != GF_OK) {
         i2dash_debug_err("gf_isom_fragment_add_sample: %s",
                          gf_error_to_string(ret));
