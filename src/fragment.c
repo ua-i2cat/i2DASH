@@ -53,9 +53,6 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
         context->fragment_dts += context->frames_per_fragment;
     }
 
-    printf("before add sample\n");
-
-    // TODO while(i<frames_per_fragment)
     if(i2dash_sample_add(context, buf, buf_len, 0, 0) != i2DASH_OK) {
         i2dash_debug_err("i2dash_sample_add: KO");
         return i2DASH_ERROR;

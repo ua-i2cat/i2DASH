@@ -8,19 +8,32 @@
 i2DASHError i2dash_segment_new(i2DASHContext *context)
 {
     GF_Err err;
+    //GF_AVCConfig *avccfg;
 
     u32 description_index;
     u32 timescale = context->frame_rate;
 
-    char segment_path[256];
-    bzero(segment_path, 256);
+    i2dash_debug_msg("init segment: %s", context->segment_path);
 
-    int ret = sprintf(segment_path, "%s.mp4",
-                      (const char *)context->path);
-    if (ret < 0) {
-        i2dash_debug_err("segment");
+    context->avccfg = gf_odf_avc_cfg_new();
+    if (!context->avccfg) {
+        i2dash_debug_err("Cannot create AVCConfig");
         return i2DASH_ERROR;
+    }    
+
+    context->avccfg->configurationVersion = 1;
+
+    // GF_ISOM_WRITE_EDIT -> new file
+    // 3rd param NULL -> will use the system's tmp folder
+    
+    if(context->segment_path != NULL) {
+        context->file = gf_isom_open(context->segment_path, GF_ISOM_OPEN_WRITE, NULL);
+        if (context->file == NULL) {
+            i2dash_debug_err("gf_isom_open: %s", context->segment_path);
+            return i2DASH_ERROR;
+        }
     }
+
     /*// set timescale
     err = gf_isom_set_timescale(context->file, timescale);
     if (err != GF_OK) {
@@ -39,7 +52,7 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
     err = gf_isom_set_track_enabled(context->file, 1, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_set_track_enabled: %s",
-                gf_error_to_string(ret));
+                gf_error_to_string(err));
         return i2DASH_ERROR;
     }
     /*
@@ -57,7 +70,7 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
                                     &description_index);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_avc_config_new: %s",
-                        gf_error_to_string(ret));
+                        gf_error_to_string(err));
         return i2DASH_ERROR;
     }
 
@@ -66,7 +79,7 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
     err = gf_isom_avc_set_inband_config(context->file, track, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_avc_set_inband_config: %s",
-                        gf_error_to_string(ret));
+                        gf_error_to_string(err));
         return i2DASH_ERROR;
     }
 
@@ -75,22 +88,14 @@ i2DASHError i2dash_segment_new(i2DASHContext *context)
 
 i2DASHError i2dash_segment_start(i2DASHContext *context)
 {
-    char segment_path[256];
-    bzero(segment_path, 256);
-
-    int ret = sprintf(segment_path, "%s.%d.m4s",
-                      (const char *)context->path,
-                      context->segment_number + 1);
-    if (ret < 0) {
-        i2dash_debug_err("segment open");
-        return i2DASH_ERROR;
-    }
-
     // GF_TRUE -> write on disk instead of memory
-    GF_Err err = gf_isom_start_segment(context->file, segment_path, 1);
+
+    i2dash_debug_msg("segment_path: %s", context->segment_path);
+
+    GF_Err err = gf_isom_start_segment(context->file, context->segment_path, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_start_segment: %s", 
-                            gf_error_to_string(ret));
+                            gf_error_to_string(err));
         return i2DASH_ERROR;
     }
 
@@ -101,11 +106,11 @@ i2DASHError i2dash_segment_close(i2DASHContext *context)
 {
     //GF_Err ret = GF_OK;
 
-    GF_Err ret = gf_isom_close_segment(context->file, 0, 0, 0, 0, 0, 1,
+    GF_Err err = gf_isom_close_segment(context->file, 0, 0, 0, 0, 0, 1,
                                 context->segment_marker, NULL, NULL);
-    if (ret != GF_OK) {
+    if (err != GF_OK) {
         i2dash_debug_err("gf_isom_close_segment: %s", 
-                            gf_error_to_string(ret));
+                            gf_error_to_string(err));
         return i2DASH_ERROR;
     }
 

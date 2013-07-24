@@ -5,6 +5,7 @@
 
 i2DASHContext *i2dash_context_new(const char *path)
 {
+    /*
     GF_AVCConfig *avccfg;
 
     avccfg = gf_odf_avc_cfg_new();
@@ -22,13 +23,13 @@ i2DASHContext *i2dash_context_new(const char *path)
         i2dash_debug_err("gf_isom_open: %s", path);
         return NULL;
     }
-    
+    */
     i2DASHContext *context = malloc(sizeof(i2DASHContext));
     if (context == NULL) {
         return NULL;
     }
 
-    context->avccfg = avccfg;
+    //context->avccfg = avccfg;
 
     context->path = (char *)path;
 
@@ -50,7 +51,7 @@ i2DASHContext *i2dash_context_new(const char *path)
     context->fragment_dts = (uint64_t)0;
 
     context->frame_rate = 24.0;
-    context->file = file;
+    //context->file = file;
     context->sample = NULL;
 
     return context;

@@ -20,11 +20,12 @@ i2DASHError i2dash_sample_add(i2DASHContext *context, const char *buf,
     gf_bs_get_content(out_bs, &context->sample->data,
                       &context->sample->dataLength);
 
+    /*
     int j;
     for(j=0;j<5;j++){
         i2dash_debug_msg("sample data: %c", context->sample->data[j]);
     }
-
+    */
     context->sample->DTS = dts;
     i2dash_debug_msg("context->sample->DTS: %d", (int)context->sample->DTS);
     context->sample->IsRAP = key_frame;
