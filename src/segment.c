@@ -8,24 +8,25 @@
 i2DASHError i2dash_segment_new(i2DASHContext *context, char *segment_path)
 {
     GF_Err err;
-    //GF_AVCConfig *avccfg;
+    GF_AVCConfig *avccfg;
 
     u32 description_index;
     u32 timescale = context->frame_rate;
 
     i2dash_debug_msg("init segment: %s", segment_path);
 
-    context->avccfg = gf_odf_avc_cfg_new();
-    if (!context->avccfg) {
+    avccfg = gf_odf_avc_cfg_new();
+    if (!avccfg) {
         i2dash_debug_err("Cannot create AVCConfig");
         return i2DASH_ERROR;
     }    
 
-    context->avccfg->configurationVersion = 1;
+    avccfg->configurationVersion = 1;
 
     // GF_ISOM_WRITE_EDIT -> new file
     // 3rd param NULL -> will use the system's tmp folder
     
+    i2dash_debug_msg("segment_path before check if is null: %s", segment_path);
     if(segment_path != NULL) {
         context->file = gf_isom_open(segment_path, GF_ISOM_OPEN_WRITE, NULL);
         if (context->file == NULL) {
@@ -55,18 +56,8 @@ i2DASHError i2dash_segment_new(i2DASHContext *context, char *segment_path)
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    /*
-    avccfg = gf_odf_avc_cfg_new();
-
-    if (!avccfg) {
-        i2dash_debug_err("Cannot create AVCConfig");
-        return i2DASH_ERROR;
-    }
-
-    avccfg->configurationVersion = 1;
-    */
-
-    err = gf_isom_avc_config_new(context->file, 1, context->avccfg, NULL, NULL, 
+    
+    err = gf_isom_avc_config_new(context->file, 1, avccfg, NULL, NULL, 
                                     &description_index);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_avc_config_new: %s",
@@ -74,7 +65,7 @@ i2DASHError i2dash_segment_new(i2DASHContext *context, char *segment_path)
         return i2DASH_ERROR;
     }
 
-    gf_odf_avc_cfg_del(context->avccfg);
+    gf_odf_avc_cfg_del(avccfg);
 
     err = gf_isom_avc_set_inband_config(context->file, track, 1);
     if (err != GF_OK) {

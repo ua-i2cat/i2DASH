@@ -32,6 +32,7 @@ i2DASHContext *i2dash_context_new(const char *path)
     //context->avccfg = avccfg;
 
     context->path = (char *)path;
+    context->file = NULL;
 
     context->segment_number = 0;
     context->fragment_number = 0;
@@ -45,14 +46,14 @@ i2DASHContext *i2dash_context_new(const char *path)
     //context->samples_per_fragment = 24;
     //context->fragments_per_segment = 1;
 
-    context->frames_per_fragment = 5;
-    context->frames_per_segment = 5;
+    context->frames_per_fragment = 24;
+    context->frames_per_segment = 24;
 
     context->fragment_dts = (uint64_t)0;
 
     context->frame_rate = 24.0;
     //context->file = file;
-    context->sample = NULL;
+    context->sample = gf_isom_sample_new();
 
     return context;
 }
