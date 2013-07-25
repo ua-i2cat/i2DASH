@@ -37,10 +37,6 @@ i2DASHError i2dash_fragment_write(i2DASHContext *context, const char * buf,
                             gf_error_to_string(ret));
             return i2DASH_ERROR;
         }
-        int i;
-        for(i=0;i<10;i++){
-            //i2dash_debug_msg("moof: %s", context->file->fileName[i]);
-        }
 
         ret = gf_isom_set_traf_base_media_decode_time(context->file, 1,
                                                     context->fragment_dts);
@@ -66,14 +62,13 @@ i2DASHError i2dash_fragment_close(i2DASHContext *context)
 {
     GF_Err ret;
 
-    if(context->frame_number % context->frames_per_fragment ==
-                                context->frames_per_fragment - 1) {
-        ret = gf_isom_flush_fragments(context->file, 1);
-        if(ret != GF_OK) {
-            i2dash_debug_err("gf_isom_flush_fragments: %s",
-                         gf_error_to_string(ret));
-            return i2DASH_ERROR;
-        }
+    //if(context->frame_number % context->frames_per_fragment == context->frames_per_fragment - 1) {
+    ret = gf_isom_flush_fragments(context->file, 1);
+    if(ret != GF_OK) {
+        i2dash_debug_err("gf_isom_flush_fragments: %s",
+                     gf_error_to_string(ret));
+        return i2DASH_ERROR;
     }
+    //}
     return i2DASH_OK;
 }
