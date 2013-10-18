@@ -5,7 +5,7 @@
 
 static GF_Err avc_import_ffextradata(const u8 *extradata, const u64 extradata_size, GF_AVCConfig *dstcfg);
 
-i2DASHError i2dash_write_init(i2DASHContext *context, GF_ISOFile *input)
+i2DASHError i2dash_write_init(i2DASHContext *context)
 {
     GF_Err err;
     GF_AVCConfig *avccfg;
