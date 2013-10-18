@@ -16,6 +16,9 @@
  * @return i2DASH_OK if no error was found.
  * @return i2DASH_ERROR otherwise.
  */
+
+i2DASHError i2dash_write_init(i2DASHContext *context, GF_ISOFile *input);
+
 i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len);
 
 i2DASHError i2dash_close(i2DASHContext *context);

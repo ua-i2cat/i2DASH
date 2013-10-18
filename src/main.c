@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
     char *input_path = argv[1];
     char *output_path = argv[2];
-
+    i2DASHError err;
     i2DASHContext *context = NULL;
    
     AVFormatContext *pFormatCtx = NULL;
@@ -29,6 +29,13 @@ int main(int argc, char *argv[])
     AVPacket packet;
 
     AVDictionary *optionsDict = NULL;
+
+    // new i2dash context
+    context = i2dash_context_new(output_path);
+    if (context == NULL) {                    
+        i2dash_debug_err("i2dash_context_new");
+        return -1;
+    }
 
     // Register all formats and codecs
     av_register_all();
@@ -77,29 +84,42 @@ int main(int argc, char *argv[])
        return -1;
     }
 
-    // new i2dash context
-    context = i2dash_context_new(output_path);
-    if (context == NULL) {                    
-        i2dash_debug_err("i2dash_context_new");
-        return -1;
-    }
-                        
-    i2dash_debug_msg("segment_number %d, fragment_number %d, frame_number %d, segment_duration %d,frames_per_sample %d, frames_per_fragment %d, frames_per_segment %d, frame_rate %f",
-        context->segment_number, 
-        context->fragment_number, 
-        context->frame_number,
-        context->segment_duration,
-        context->frames_per_sample,
-        context->frames_per_fragment,
-        context->frames_per_segment,
-        context->frame_rate
-    );
-                        
-    context->avcodeccontext = pCodecCtx;
-    
-    int count = 0;
-    i2DASHError err;
+	context->avcodec = avcodec_find_encoder(CODEC_ID_H264);
+	if (context->avcodec == NULL) {
+			fprintf(stderr, "Output video codec %d not found\n", CODEC_ID_H264);
+			return -1;
+		}
+	context->avcodeccontext = avcodec_alloc_context3(context->avcodec);
 
+	context->avcodeccontext->codec_id = context->avcodec->id;
+	context->avcodeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
+	context->avcodeccontext->bit_rate = pCodecCtx->bit_rate;
+	context->avcodeccontext->width = pCodecCtx->width;
+	context->avcodeccontext->height = pCodecCtx->height;
+	context->avcodeccontext->time_base = pCodecCtx->time_base;	
+	context->avcodeccontext->pix_fmt = PIX_FMT_YUV420P;
+	context->avcodeccontext->gop_size = pCodecCtx->gop_size;
+
+	av_opt_set(context->avcodeccontext->priv_data, "preset", "ultrafast", 0);
+	av_opt_set(context->avcodeccontext->priv_data, "tune", "zerolatency", 0);
+
+	context->avcodeccontext->flags |= CODEC_FLAG_GLOBAL_HEADER;
+	context->avcodeccontext->gop_size = pCodecCtx->gop_size;
+
+	if (avcodec_open2(context->avcodeccontext, context->avcodec, NULL) < 0) {
+		fprintf(stderr, "Cannot open output video codec\n");
+	}              
+                      
+    //context->avcodeccontext = pCodecCtx_enc;
+    
+	err = i2dash_write_init(context);
+	if (err != i2DASH_OK) {
+		i2dash_debug_err("i2dash_write");
+		return -1;
+   	}
+
+	
+/*
     while(av_read_frame(pFormatCtx, &packet)>=0) {
         i2dash_debug_msg("Reading frame %d", count);
         if(packet.stream_index==videoStream) {
@@ -118,7 +138,7 @@ int main(int argc, char *argv[])
         // Free the packet that was allocated by av_read_frame
         av_free_packet(&packet);
     }
-    
+*/  
     // Close the codec
     avcodec_close(pCodecCtx);
 

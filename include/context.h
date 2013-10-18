@@ -3,7 +3,9 @@
 
 #include <gpac/isomedia.h>
 #include <gpac/internal/isomedia_dev.h>
+#include <gpac/internal/media_dev.h>
 #include <libavcodec/avcodec.h>
+#include <gpac/constants.h>
 
 #include "error.h"
 
@@ -27,6 +29,7 @@ typedef struct {
     
     float frame_rate;
     AVCodecContext *avcodeccontext;
+	AVCodec *avcodec;
 
     FILE *p_file;
 

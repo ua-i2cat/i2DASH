@@ -8,7 +8,7 @@ i2DASHError i2dash_fragment_setup(i2DASHContext *context)
 
     ret = gf_isom_setup_track_fragment(context->file, 1, 1, 1, 0, 0, 0, 0);
     if(ret != GF_OK) {
-        i2dash_debug_err("gf_isom_avc_set_inband_config: %s",
+        i2dash_debug_err("gf_isom_setup_track_fragment: %s",
                                 gf_error_to_string(ret));
         return i2DASH_ERROR;
     }
