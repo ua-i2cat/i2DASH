@@ -91,6 +91,8 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
         return i2DASH_ERROR;
     }
 
+	//err = gf_isom_add_user_data(context->file, track, GF_4CC( 'I', '2', 'C', 'T' ), 0, "i2cat copyright", strlen("i2cat copyright"));
+
     err = gf_isom_finalize_for_fragment(context->file, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_finalize_for_fragment: %s",
@@ -99,7 +101,7 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
     }
 
     context->fragment_dts = 0;
-	sprintf(segment_path, "%s_%d.m4s", (const char *)context->path, 1);
+	sprintf(segment_path, "%s_%d.m4s", (const char *)context->path, 0);
 	i2dash_debug_msg("segment_path: %s", segment_path);
 
     err = gf_isom_start_segment(context->file, segment_path, 1);
@@ -108,6 +110,7 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
                             gf_error_to_string(err));
         return i2DASH_ERROR;
     }
+	remove(segment_path);
 	i2dash_debug_msg("Init finished: %s\n", segment_path);
 	
     return i2DASH_OK;

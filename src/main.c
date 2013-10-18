@@ -108,9 +108,7 @@ int main(int argc, char *argv[])
 
 	if (avcodec_open2(context->avcodeccontext, context->avcodec, NULL) < 0) {
 		fprintf(stderr, "Cannot open output video codec\n");
-	}              
-                      
-    //context->avcodeccontext = pCodecCtx_enc;
+	}
     
 	err = i2dash_write_init(context);
 	if (err != i2DASH_OK) {
