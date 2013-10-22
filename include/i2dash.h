@@ -19,8 +19,8 @@
 
 i2DASHError i2dash_write_init(i2DASHContext *context);
 
-i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len);
+i2DASHError i2dash_write_segment(i2DASHContext *context, const char *buffer, int buffer_len);
 
-i2DASHError i2dash_close(i2DASHContext *context);
+//i2DASHError i2dash_close_segment(i2DASHContext *context);
 
 #endif

@@ -12,7 +12,7 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
 	AVCodecContext * p_video_codec_ctx = context->avcodeccontext;
 
     u32 description_index;
-    u32 timescale = context->frame_rate;
+    //u32 timescale = context->frame_rate;
 	u32 track;
 
     char segment_path[256];
@@ -103,25 +103,28 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
     context->fragment_dts = 0;
 	sprintf(segment_path, "%s_%d.m4s", (const char *)context->path, 0);
 	i2dash_debug_msg("segment_path: %s", segment_path);
-
+/*
     err = gf_isom_start_segment(context->file, segment_path, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_start_segment: %s", 
                             gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-	remove(segment_path);
+	remove(segment_path);*/
+	context->segment_number++;
+    context->fragment_number++;
+
 	i2dash_debug_msg("Init finished: %s\n", segment_path);
 	
     return i2DASH_OK;
 }
 
-i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_len)
+i2DASHError i2dash_write_segment(i2DASHContext *context, const char *buffer, int buffer_len)
 {   
     int next_frame_number = context->frame_number + 1;
     
     // init file with moov creation
-    if (context->segment_number == 0 && context->frame_number == 0) {
+    /*if (context->segment_number == 0 && context->frame_number == 0) {
         char segment_path[256];
         bzero(segment_path, 256);
 
@@ -167,7 +170,7 @@ i2DASHError i2dash_write(i2DASHContext *context, const char *buffer, int buffer_
         context->segment_number++;
         context->fragment_number++;
     }
-    else if (next_frame_number % context->frames_per_segment == 0) {
+    else*/ if (next_frame_number % context->frames_per_segment == 0) {
         if(i2dash_fragment_close(context) != i2DASH_OK) {
             i2dash_debug_err("i2dash_fragment_close: KO");
             return i2DASH_ERROR;
