@@ -19,7 +19,7 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
     bzero(segment_path, 256);
 
     i2dash_debug_msg("Starting init segment");
-    int ret = sprintf(segment_path, "%s_init.mp4",
+    int ret = sprintf(segment_path, "%sinit.mp4",
                       (const char *)context->path);
     if (ret < 0) {
         i2dash_debug_err("init segment");
@@ -101,8 +101,8 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
     }
 
     context->fragment_dts = 0;
-	sprintf(segment_path, "%s_%d.m4s", (const char *)context->path, 0);
-	i2dash_debug_msg("segment_path: %s", segment_path);
+	//sprintf(segment_path, "%s_%d.m4s", (const char *)context->path, 0);
+	//i2dash_debug_msg("segment_path: %s", segment_path);
 /*
     err = gf_isom_start_segment(context->file, segment_path, 1);
     if (err != GF_OK) {
