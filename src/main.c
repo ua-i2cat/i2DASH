@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -12,27 +13,55 @@
 
 int main(int argc, char *argv[])
 {	
-    if ((argc < 2 ) || (argc > 3)){
-        printf("usage: %s <output> [<input>]\n", argv[0]);
+	// TODO: add argc audio, video, both
+    if ((argc < 3 ) || (argc > 4)){
+        i2dash_debug_msg("usage: %s <output> <video/audio/both> [<input>]", argv[0]);
         return -1;
     }
+
+	char *output_path = argv[1];
+	i2dash_debug_msg("output path: %s", output_path);
+
+    bool video = false;
+	bool audio = false;
+
+    i2dash_debug_msg("input kind: %s", argv[2]);
+
+	if(strcmp(argv[2], "both") == 0) {
+		audio = true;
+		video = true;
+	} else if(strcmp(argv[2], "video") == 0) {
+		video = true;
+	} else if(strcmp(argv[2], "audio") == 0) {
+		audio = true;
+	} else {
+        i2dash_debug_msg("usage: %s <output> <video/audio/both> [<input>]", argv[0]);
+        return -1;
+	}
+    
     char *input_path = NULL;
-	if (argc == 3)
-		input_path = argv[2];
-    char *output_path = argv[1];
+	if (argc == 4) {
+		input_path = argv[3];
+		i2dash_debug_msg("input path: %s", argv[3]);
+	}
+
     i2DASHError err;
     i2DASHContext *context = NULL;
    
-    AVFormatContext *pFormatCtx = NULL;
-    int videoStream;
-    AVCodecContext *pCodecCtx = NULL;
-    AVCodec *pCodec = NULL;
-    AVPacket packet;
+	AVFormatContext *vFormatCtx = NULL;
+	AVFormatContext *aFormatCtx = NULL;
 
+    AVCodecContext *vCodecCtx = NULL;
+    AVCodecContext *aCodecCtx = NULL;
+ 
+    AVCodec *vCodec = NULL;
+    AVCodec *aCodec = NULL;
+
+    AVPacket packet;
     AVDictionary *optionsDict = NULL;
 
-	int i, count;
-
+	int i, count, videoStream;
+	
     // new i2dash context
     context = i2dash_context_new(output_path);
     if (context == NULL) {                    
@@ -43,96 +72,139 @@ int main(int argc, char *argv[])
     // Register all formats and codecs
     av_register_all();
 
-	if (input_path != NULL) {
-    	// Open video file
-		if(avformat_open_input(&pFormatCtx, input_path, NULL, NULL)!=0) {
-		    return -1; // Couldn't open file
+    if(video) {
+    	i2dash_debug_msg("start video init");
+	    if (input_path != NULL) {
+	    	// Open video file
+			if(avformat_open_input(&vFormatCtx, input_path, NULL, NULL)!=0) {
+			    return -1; // Couldn't open file
+			}
+		   
+			// Retrieve stream information
+			if(avformat_find_stream_info(vFormatCtx, NULL) < 0) {
+			    return -1; // Couldn't find stream information
+			}
+			
+			// Dump information about file onto standard error
+			av_dump_format(vFormatCtx, 0, input_path, 0);
+
+			// Find the first video stream
+			videoStream=-1;
+
+			for(i = 0; i < vFormatCtx-> nb_streams; i++) {
+			    if(vFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
+			        videoStream = i;
+			        break;
+			    }
+			}
+
+			if(videoStream==-1) {
+			    return -1; // Didn't find a video stream
+			}
+			
+			// Get a pointer to the codec context for the video stream
+			vCodecCtx=vFormatCtx->streams[videoStream]->codec;
+
+			// Find the decoder for the video stream
+			vCodec=avcodec_find_decoder(vCodecCtx->codec_id);
+			if(vCodec==NULL) {
+			  i2dash_debug_err("Unsupported codec!");
+			  return -1; // Codec not found
+			}
+
+			// Open codec
+			if(avcodec_open2(vCodecCtx, vCodec, &optionsDict) < 0) {
+			   i2dash_debug_err("Could not open codec");
+			   return -1;
+			}
 		}
-	   
-		// Retrieve stream information
-		if(avformat_find_stream_info(pFormatCtx, NULL) < 0) {
-		    return -1; // Couldn't find stream information
-		}
+
+		context->vcodec = avcodec_find_encoder(CODEC_ID_H264);
+		if (context->vcodec == NULL) {
+				fprintf(stderr, "Output video codec %d not found\n", CODEC_ID_H264);
+				return -1;
+			}
+		context->vcodeccontext = avcodec_alloc_context3(context->vcodec);
+
+		context->vcodeccontext->codec_id = context->vcodec->id;
+		context->vcodeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
+		context->vcodeccontext->pix_fmt = PIX_FMT_YUV420P;
 		
-		// Dump information about file onto standard error
-		av_dump_format(pFormatCtx, 0, input_path, 0);
-
-		// Find the first video stream
-		videoStream=-1;
-
-		for(i = 0; i < pFormatCtx-> nb_streams; i++) {
-		    if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
-		        videoStream = i;
-		        break;
-		    }
+		if (input_path != NULL) {
+			context->vcodeccontext->bit_rate = vCodecCtx->bit_rate;
+			context->vcodeccontext->width = vCodecCtx->width;
+			context->vcodeccontext->height = vCodecCtx->height;
+			context->vcodeccontext->time_base = vCodecCtx->time_base;		
+			context->vcodeccontext->gop_size = vCodecCtx->gop_size;
+		}
+		else {
+			context->vcodeccontext->bit_rate = 8000000;
+			context->vcodeccontext->width = 1280;
+			context->vcodeccontext->height = 720;
+			context->vcodeccontext->time_base = (AVRational){1, 24};
+			context->vcodeccontext->gop_size = 24;
 		}
 
-		if(videoStream==-1) {
-		    return -1; // Didn't find a video stream
-		}
-		
-		// Get a pointer to the codec context for the video stream
-		pCodecCtx=pFormatCtx->streams[videoStream]->codec;
+		av_opt_set(context->vcodeccontext->priv_data, "preset", "ultrafast", 0);
+		av_opt_set(context->vcodeccontext->priv_data, "tune", "zerolatency", 0);
 
-		// Find the decoder for the video stream
-		pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
-		if(pCodec==NULL) {
-		  i2dash_debug_err("Unsupported codec!");
-		  return -1; // Codec not found
-		}
+		context->vcodeccontext->flags |= CODEC_FLAG_GLOBAL_HEADER;
 
-		// Open codec
-		if(avcodec_open2(pCodecCtx, pCodec, &optionsDict) < 0) {
-		   i2dash_debug_err("Could not open codec");
-		   return -1;
-		}
-	}
-
-	context->avcodec = avcodec_find_encoder(CODEC_ID_H264);
-	if (context->avcodec == NULL) {
-			fprintf(stderr, "Output video codec %d not found\n", CODEC_ID_H264);
+		if (avcodec_open2(context->vcodeccontext, context->vcodec, NULL) < 0) {
+			i2dash_debug_err("Cannot open output video codec");
 			return -1;
 		}
-	context->avcodeccontext = avcodec_alloc_context3(context->avcodec);
+	    
+	    //Commented in order to test audio init generation
+		err = i2dash_write_init_video(context);
+		if (err != i2DASH_OK) {
+			i2dash_debug_err("i2dash_write_init_video");
+			return -1;
+	   	}
+    }
 
-	context->avcodeccontext->codec_id = context->avcodec->id;
-	context->avcodeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
-	context->avcodeccontext->pix_fmt = PIX_FMT_YUV420P;
-	
-	if (input_path != NULL) {
-		printf("bit_rate: %d width %d heigth %d time_base %d gop_size %d\n", pCodecCtx->bit_rate, pCodecCtx->width, pCodecCtx->height, pCodecCtx->time_base, pCodecCtx->gop_size);
-		context->avcodeccontext->bit_rate = pCodecCtx->bit_rate;
-		context->avcodeccontext->width = pCodecCtx->width;
-		context->avcodeccontext->height = pCodecCtx->height;
-		context->avcodeccontext->time_base = pCodecCtx->time_base;		
-		context->avcodeccontext->gop_size = pCodecCtx->gop_size;
+	if(audio) {
+		//TODO all
+   		i2dash_debug_msg("start audio init");
+        if (input_path != NULL) {
+        	i2dash_debug_msg("please, don't specify audio input by now");
+        	return -1;
+        }
+
+        context->acodec = avcodec_find_encoder(CODEC_ID_AAC);
+        if (context->acodec == NULL) {
+        	//TODO
+			i2dash_debug_err("Output audio codec not found");
+			return -1;
+		}
+
+		context->acodeccontext = avcodec_alloc_context3(context->acodec);
+
+		context->acodeccontext->codec_id = context->acodec->id;
+		context->acodeccontext->codec_type = AVMEDIA_TYPE_AUDIO;
+		context->acodeccontext->sample_fmt = AV_SAMPLE_FMT_S16;
+
+		if(input_path == NULL) {
+			context->acodeccontext->bit_rate = 256000;
+			context->acodeccontext->sample_rate = 48000;
+			context->acodeccontext->time_base  = (AVRational){1, 48000};
+			context->acodeccontext->channels = 2;
+			context->acodeccontext->channel_layout = AV_CH_LAYOUT_STEREO;
+		}
+
+		if (avcodec_open2(context->acodeccontext, context->acodec, NULL) < 0) {
+			i2dash_debug_err("Cannot open output audio codec");
+			return -1;
+		}
+
+		err = i2dash_write_init_audio(context);
+   		if (err != i2DASH_OK) {
+			i2dash_debug_err("i2dash_write_init_audio");
+			return -1;
+   		}
 	}
-	else {
-		context->avcodeccontext->bit_rate = 8000000;
-		context->avcodeccontext->width = 1280;
-		context->avcodeccontext->height = 720;
-		context->avcodeccontext->time_base = (AVRational){1, 24};
-		context->avcodeccontext->gop_size = 24;
-	}
 
-	av_opt_set(context->avcodeccontext->priv_data, "preset", "ultrafast", 0);
-	av_opt_set(context->avcodeccontext->priv_data, "tune", "zerolatency", 0);
-
-	context->avcodeccontext->flags |= CODEC_FLAG_GLOBAL_HEADER;
-
-
-	if (avcodec_open2(context->avcodeccontext, context->avcodec, NULL) < 0) {
-		fprintf(stderr, "Cannot open output video codec\n");
-	}
-    
-	err = i2dash_write_init(context);
-	if (err != i2DASH_OK) {
-		i2dash_debug_err("i2dash_write");
-		return -1;
-   	}
-
-	
-	if (input_path != NULL) {
+	/*if (input_path != NULL) {
 		while(av_read_frame(pFormatCtx, &packet)>=0) {
 		    i2dash_debug_msg("Reading frame %d", count);
 		    if(packet.stream_index==videoStream) {
@@ -157,10 +229,9 @@ int main(int argc, char *argv[])
 
 		// Close the video file
 		avformat_close_input(&pFormatCtx);
-	}
+	}*/
 //	else
 		
-
     i2dash_context_free(context);
 
     return 0;

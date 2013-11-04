@@ -17,7 +17,9 @@
  * @return i2DASH_ERROR otherwise.
  */
 
-i2DASHError i2dash_write_init(i2DASHContext *context);
+i2DASHError i2dash_write_init_video(i2DASHContext *context);
+
+i2DASHError i2dash_write_init_audio(i2DASHContext *context);
 
 i2DASHError i2dash_write_segment(i2DASHContext *context, const char *buffer, int buffer_len);
 

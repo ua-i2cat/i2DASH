@@ -33,6 +33,7 @@ i2DASHContext *i2dash_context_new(const char *path)
 
     context->path = (char *)path;
     context->file = NULL;
+    context->audio_file = NULL;
 
     context->segment_number = 0;
     context->fragment_number = 0;
@@ -63,6 +64,12 @@ i2DASHError i2dash_context_free(i2DASHContext *context)
     i2DASHError ret = i2DASH_OK;
     if (context->file != NULL) {
         if (gf_isom_close(context->file) != GF_OK) {
+            ret = i2DASH_ERROR;
+        }
+    }
+
+    if (context->file != NULL) {
+        if (gf_isom_close(context->audio_file) != GF_OK) {
             ret = i2DASH_ERROR;
         }
     }

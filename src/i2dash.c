@@ -5,11 +5,11 @@
 
 static GF_Err avc_import_ffextradata(const u8 *extradata, const u64 extradata_size, GF_AVCConfig *dstcfg);
 
-i2DASHError i2dash_write_init(i2DASHContext *context)
+i2DASHError i2dash_write_init_video(i2DASHContext *context)
 {
     GF_Err err;
     GF_AVCConfig *avccfg;
-	AVCodecContext * p_video_codec_ctx = context->avcodeccontext;
+	AVCodecContext * p_video_codec_ctx = context->vcodeccontext;
 
     u32 description_index;
     //u32 timescale = context->frame_rate;
@@ -19,7 +19,7 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
     bzero(segment_path, 256);
 
     i2dash_debug_msg("Starting init segment");
-    int ret = sprintf(segment_path, "%sinit.mp4",
+    int ret = sprintf(segment_path, "%svideo_init.mp4",
                       (const char *)context->path);
     if (ret < 0) {
         i2dash_debug_err("init segment");
@@ -116,6 +116,143 @@ i2DASHError i2dash_write_init(i2DASHContext *context)
 
 	i2dash_debug_msg("Init finished: %s\n", segment_path);
 	
+    return i2DASH_OK;
+}
+
+i2DASHError i2dash_write_init_audio(i2DASHContext *context)
+{
+    // TODO check if we need separated audio and video codecctx
+    GF_Err err;
+    AVCodecContext * p_audio_codec_ctx = context->acodeccontext;
+    u32 description_index;
+    u32 track;
+    u8 bpsample;
+    GF_ESD * p_esd;
+    GF_M4ADecSpecInfo acfg;
+
+    char segment_path[256];
+    bzero(segment_path, 256);
+    i2dash_debug_msg("Starting audio init segment");
+    int ret = sprintf(segment_path, "%saudio_init.mp4",
+                      (const char *)context->path);
+    if (ret < 0) {
+        i2dash_debug_err("init segment");
+        return i2DASH_ERROR;
+    }
+    i2dash_debug_msg("init segment: %s", segment_path);
+
+    if(segment_path != NULL) {
+        context->audio_file = gf_isom_open(segment_path, GF_ISOM_OPEN_WRITE, NULL);
+        if (context->audio_file == NULL) {
+            i2dash_debug_err("gf_isom_open: %s", segment_path);
+            return i2DASH_ERROR;
+        }
+    }
+    printf("1\n");
+
+    memset(&acfg, 0, sizeof(GF_M4ADecSpecInfo));
+    acfg.base_object_type = GF_M4A_LAYER2;
+    //TODO how we get/set these params
+
+    acfg.base_sr = p_audio_codec_ctx->sample_rate;
+    acfg.nb_chan = p_audio_codec_ctx->channels;
+    acfg.sbr_object_type = 0;
+    printf("2\n");
+    acfg.audioPL = gf_m4a_get_profile(&acfg);
+    if(!acfg.audioPL) {
+        i2dash_debug_err("gf_m4a_get_profile");
+        return i2DASH_ERROR;
+    }
+    printf("3\n");
+    p_esd = gf_odf_desc_esd_new(2);
+    if (!p_esd) {
+        i2dash_debug_err("Cannot create GF_ESD");
+        return i2DASH_ERROR;
+    }
+    printf("4\n");
+    p_esd->decoderConfig = (GF_DecoderConfig *) gf_odf_desc_new(GF_ODF_DCD_TAG);
+    p_esd->slConfig = (GF_SLConfig *) gf_odf_desc_new(GF_ODF_SLC_TAG);
+    p_esd->decoderConfig->streamType = GF_STREAM_AUDIO;
+    p_esd->decoderConfig->objectTypeIndication = GPAC_OTI_AUDIO_MPEG1;
+    p_esd->decoderConfig->bufferSizeDB = 20;
+    p_esd->slConfig->timestampResolution = p_audio_codec_ctx->sample_rate;
+    p_esd->decoderConfig->decoderSpecificInfo = (GF_DefaultDescriptor *) gf_odf_desc_new(GF_ODF_DSI_TAG);
+    p_esd->ESID = 1;
+    printf("5\n");
+    err = gf_m4a_write_config(&acfg, &p_esd->decoderConfig->decoderSpecificInfo->data, &p_esd->decoderConfig->decoderSpecificInfo->dataLength);
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_m4a_write_config: %s",
+                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("6\n");
+    printf("ESID: %d\n", p_esd->ESID);
+    track = gf_isom_new_track(context->audio_file, 1,
+            GF_ISOM_MEDIA_AUDIO, p_audio_codec_ctx->sample_rate);
+    if(!track) {
+        i2dash_debug_err("gf_isom_new_track: %d", (int)track);
+        return i2DASH_ERROR;
+    }
+    printf("62\n");
+
+    err = gf_isom_set_track_enabled(context->audio_file, track, 1);
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_isom_set_track_enabled: %s",
+                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("7\n");
+    err = gf_isom_new_mpeg4_description(context->audio_file, track, p_esd, NULL, NULL, &description_index);
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_isom_new_mpeg4_description: %s",
+                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("8\n");
+    gf_odf_desc_del((GF_Descriptor *) p_esd);
+    p_esd = NULL;
+    printf("9\n");
+    //TODO check, p_audio_codec_ctx->sample_fmt
+    bpsample = av_get_bytes_per_sample(p_audio_codec_ctx->sample_fmt) * 8;
+    printf("10\n");
+    //TODO check, p_audio_codec_ctx->channels
+    err = gf_isom_set_audio_info(context->audio_file, track, description_index,
+            p_audio_codec_ctx->sample_rate, p_audio_codec_ctx->channels,
+            bpsample);
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_isom_set_audio_info: %s",
+                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("11\n");
+    err = gf_isom_set_pl_indication(context->audio_file, GF_ISOM_PL_AUDIO, acfg.audioPL);    
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_isom_set_pl_indication: %s",
+                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("12\n");
+    // TODO check p_audio_codec_ctx->frame_size
+    err = gf_isom_setup_track_fragment(context->audio_file, track, 1,
+            p_audio_codec_ctx->frame_size, 0, 0, 0, 0);
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_isom_setup_track_fragment: %s",
+                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("13\n");
+    err = gf_isom_finalize_for_fragment(context->audio_file, 1);
+    if (err != GF_OK) {
+        i2dash_debug_err("gf_isom_finalize_for_fragment: %s",
+                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("14\n");
+    //context->segment_number++;
+    //context->fragment_number++;
+
+    i2dash_debug_msg("Audio init finished: %s\n", segment_path);
+
     return i2DASH_OK;
 }
 

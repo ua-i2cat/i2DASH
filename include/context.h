@@ -5,6 +5,7 @@
 #include <gpac/internal/isomedia_dev.h>
 #include <gpac/internal/media_dev.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avio.h>
 #include <gpac/constants.h>
 
 #include "error.h"
@@ -28,8 +29,10 @@ typedef struct {
     uint64_t fragment_dts;
     
     float frame_rate;
-    AVCodecContext *avcodeccontext;
-	AVCodec *avcodec;
+    AVCodecContext *vcodeccontext;
+	AVCodec *vcodec;
+    AVCodecContext *acodeccontext;
+    AVCodec *acodec;
 
     FILE *p_file;
 
@@ -37,6 +40,7 @@ typedef struct {
     //char *segment_path;
  
     GF_ISOFile *file;
+    GF_ISOFile *audio_file;
     GF_ISOSample *sample;
     GF_AVCConfig *avccfg;
 } i2DASHContext;
