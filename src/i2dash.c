@@ -114,7 +114,7 @@ i2DASHError i2dash_write_init_video(i2DASHContext *context)
 	context->segment_number++;
     context->fragment_number++;
 
-	i2dash_debug_msg("Init finished: %s\n", segment_path);
+	i2dash_debug_msg("Init finished: %s", segment_path);
 	
     return i2DASH_OK;
 }
@@ -148,7 +148,6 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
             return i2DASH_ERROR;
         }
     }
-    printf("1\n");
 
     memset(&acfg, 0, sizeof(GF_M4ADecSpecInfo));
     acfg.base_object_type = GF_M4A_LAYER2;
@@ -157,19 +156,16 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
     acfg.base_sr = p_audio_codec_ctx->sample_rate;
     acfg.nb_chan = p_audio_codec_ctx->channels;
     acfg.sbr_object_type = 0;
-    printf("2\n");
     acfg.audioPL = gf_m4a_get_profile(&acfg);
     if(!acfg.audioPL) {
         i2dash_debug_err("gf_m4a_get_profile");
         return i2DASH_ERROR;
     }
-    printf("3\n");
     p_esd = gf_odf_desc_esd_new(2);
     if (!p_esd) {
         i2dash_debug_err("Cannot create GF_ESD");
         return i2DASH_ERROR;
     }
-    printf("4\n");
     p_esd->decoderConfig = (GF_DecoderConfig *) gf_odf_desc_new(GF_ODF_DCD_TAG);
     p_esd->slConfig = (GF_SLConfig *) gf_odf_desc_new(GF_ODF_SLC_TAG);
     p_esd->decoderConfig->streamType = GF_STREAM_AUDIO;
@@ -178,22 +174,20 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
     p_esd->slConfig->timestampResolution = p_audio_codec_ctx->sample_rate;
     p_esd->decoderConfig->decoderSpecificInfo = (GF_DefaultDescriptor *) gf_odf_desc_new(GF_ODF_DSI_TAG);
     p_esd->ESID = 1;
-    printf("5\n");
     err = gf_m4a_write_config(&acfg, &p_esd->decoderConfig->decoderSpecificInfo->data, &p_esd->decoderConfig->decoderSpecificInfo->dataLength);
     if (err != GF_OK) {
         i2dash_debug_err("gf_m4a_write_config: %s",
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    printf("6\n");
-    printf("ESID: %d\n", p_esd->ESID);
+
     track = gf_isom_new_track(context->audio_file, 1,
             GF_ISOM_MEDIA_AUDIO, p_audio_codec_ctx->sample_rate);
     if(!track) {
         i2dash_debug_err("gf_isom_new_track: %d", (int)track);
         return i2DASH_ERROR;
     }
-    printf("62\n");
+
 
     err = gf_isom_set_track_enabled(context->audio_file, track, 1);
     if (err != GF_OK) {
@@ -201,20 +195,20 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    printf("7\n");
+
     err = gf_isom_new_mpeg4_description(context->audio_file, track, p_esd, NULL, NULL, &description_index);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_new_mpeg4_description: %s",
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    printf("8\n");
+
     gf_odf_desc_del((GF_Descriptor *) p_esd);
     p_esd = NULL;
-    printf("9\n");
+;
     //TODO check, p_audio_codec_ctx->sample_fmt
     bpsample = av_get_bytes_per_sample(p_audio_codec_ctx->sample_fmt) * 8;
-    printf("10\n");
+
     //TODO check, p_audio_codec_ctx->channels
     err = gf_isom_set_audio_info(context->audio_file, track, description_index,
             p_audio_codec_ctx->sample_rate, p_audio_codec_ctx->channels,
@@ -224,14 +218,14 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    printf("11\n");
+
     err = gf_isom_set_pl_indication(context->audio_file, GF_ISOM_PL_AUDIO, acfg.audioPL);    
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_set_pl_indication: %s",
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    printf("12\n");
+
     // TODO check p_audio_codec_ctx->frame_size
     err = gf_isom_setup_track_fragment(context->audio_file, track, 1,
             p_audio_codec_ctx->frame_size, 0, 0, 0, 0);
@@ -240,18 +234,18 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    printf("13\n");
+
     err = gf_isom_finalize_for_fragment(context->audio_file, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_finalize_for_fragment: %s",
                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
-    printf("14\n");
+
     //context->segment_number++;
     //context->fragment_number++;
 
-    i2dash_debug_msg("Audio init finished: %s\n", segment_path);
+    i2dash_debug_msg("Audio init finished: %s", segment_path);
 
     return i2DASH_OK;
 }
