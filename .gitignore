@@ -8,4 +8,10 @@ doc
 *.ppm
 
 *.swp
+<<<<<<< HEAD
 *.*~
+=======
+*.h~
+*.c~
+*.gitignore~
+>>>>>>> TVRING-151: add *.h~ *.c~ .gitignore~ to .gitignore
