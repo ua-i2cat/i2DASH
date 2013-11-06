@@ -30,7 +30,7 @@ i2DASHContext *i2dash_context_new(const char *path)
     }
 
     //context->avccfg = avccfg;
-
+    context->both = false;
     context->path = (char *)path;
     context->file = NULL;
     context->audio_file = NULL;

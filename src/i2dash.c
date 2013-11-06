@@ -15,12 +15,21 @@ i2DASHError i2dash_write_init_video(i2DASHContext *context)
     //u32 timescale = context->frame_rate;
 	u32 track;
 
+    int ret;
+
     char segment_path[256];
     bzero(segment_path, 256);
 
     i2dash_debug_msg("Starting init segment");
-    int ret = sprintf(segment_path, "%svideo_init.mp4",
-                      (const char *)context->path);
+
+    if(context->both == true) {
+        ret = sprintf(segment_path, "%svideo_init.mp4",
+                    (const char *)context->path);
+    } else {
+        ret = sprintf(segment_path, "%sinit.mp4",
+                    (const char *)context->path);
+    }
+
     if (ret < 0) {
         i2dash_debug_err("init segment");
         return i2DASH_ERROR;
@@ -129,12 +138,18 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
     u8 bpsample;
     GF_ESD * p_esd;
     GF_M4ADecSpecInfo acfg;
+    int ret;
 
     char segment_path[256];
     bzero(segment_path, 256);
     i2dash_debug_msg("Starting audio init segment");
-    int ret = sprintf(segment_path, "%saudio_init.mp4",
-                      (const char *)context->path);
+    if(context->both == true) {
+        ret = sprintf(segment_path, "%saudio_init.mp4",
+                    (const char *)context->path);
+    } else {
+        ret = sprintf(segment_path, "%sinit.mp4",
+                    (const char *)context->path);
+    }
     if (ret < 0) {
         i2dash_debug_err("init segment");
         return i2DASH_ERROR;

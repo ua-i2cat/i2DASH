@@ -19,11 +19,29 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    int i = 1;
+    i2DASHError err;
+    i2DASHContext *context = NULL;
+
+	AVFormatContext *vFormatCtx = NULL;
+	AVFormatContext *aFormatCtx = NULL;
+
+    AVCodecContext *vCodecCtx = NULL;
+    AVCodecContext *aCodecCtx = NULL;
+
+    AVCodec *vCodec = NULL;
+    AVCodec *aCodec = NULL;
+
+    AVPacket packet;
+    AVDictionary *optionsDict = NULL;
+
+	int i = 1;
+	int j, count, videoStream;
+
     char *input_path = NULL;
 	char *output_path = argv[i+1];
 	bool video = false;
 	bool audio = false;
+	bool both = false;
 
     while((i+1) < argc)
     {
@@ -33,6 +51,7 @@ int main(int argc, char *argv[])
 		} else if(strcmp(argv[i], "-f") == 0) {
 		    i2dash_debug_msg("input kind: %s", argv[i+1]);
 			if(strcmp(argv[i+1], "both") == 0) {
+				both = true;
 				audio = true;
 				video = true;
 				i += 2;
@@ -56,30 +75,16 @@ int main(int argc, char *argv[])
 		}
 	}
 
-    i2DASHError err;
-    i2DASHContext *context = NULL;
-   
-	AVFormatContext *vFormatCtx = NULL;
-	AVFormatContext *aFormatCtx = NULL;
-
-    AVCodecContext *vCodecCtx = NULL;
-    AVCodecContext *aCodecCtx = NULL;
- 
-    AVCodec *vCodec = NULL;
-    AVCodec *aCodec = NULL;
-
-    AVPacket packet;
-    AVDictionary *optionsDict = NULL;
-
-	int j, count, videoStream;
-	
     // new i2dash context
     context = i2dash_context_new(output_path);
-    if (context == NULL) {                    
+    if (context == NULL) {                  
         i2dash_debug_err("i2dash_context_new");
         return -1;
     }
 
+    if(both == true)
+		context->both = true;
+    
     // Register all formats and codecs
     av_register_all();
 

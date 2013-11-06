@@ -7,24 +7,25 @@
 #include <libavcodec/avcodec.h>
 #include <libavformat/avio.h>
 #include <gpac/constants.h>
+#include <stdbool.h>
 
 #include "error.h"
+
 
 typedef struct {
     int segment_number;
     int fragment_number;
     int frame_number;
-
     /** segment duration in ms */
     int segment_duration;
-
     int segment_marker;
-
     int frames_per_sample;
     int samples_per_fragment;
     int fragments_per_segment;
     int frames_per_fragment;
     int frames_per_segment;
+    /** audio + video */
+    bool both;
 
     uint64_t fragment_dts;
     
