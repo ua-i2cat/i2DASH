@@ -2,6 +2,8 @@ SRC_PATH = src
 OBJ_PATH = obj
 INC_PATH = include
 BIN_PATH = bin
+INSTALL_PATH = /usr/local/bin
+
 CC:=gcc
 INCLUDES:=$(shell pkg-config --cflags libavformat libavcodec libswscale libavutil sdl lgpac) 
 CFLAGS:=-g -DDEBUG -Wall -I$(INC_PATH)
@@ -24,5 +26,11 @@ $(OBJ_PATH)/%.o: %.c
 	@mkdir -p $(OBJ_PATH)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+install:
+	cp $(BIN_PATH)/$(PROG) $(INSTALL_PATH)
+
 clean:
-	rm -f $(OBJS) ./bin/$(PROG)
+	rm -f $(OBJS) $(BIN_PATH)/$(PROG)
+
+unistall:
+	rm -f $(OBJS) $(BIN_PATH)/$(PROG) $(INSTALL_PATH)/$(PROG)

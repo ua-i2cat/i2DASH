@@ -14,35 +14,46 @@
 int main(int argc, char *argv[])
 {	
 	// TODO: add argc audio, video, both
-    if ((argc < 3 ) || (argc > 4)){
-        i2dash_debug_msg("usage: %s <output> <video/audio/both> [<input>]", argv[0]);
+    if ((argc < 5 ) || (argc > 7)){
+        i2dash_debug_msg("usage: %s -o <output> -f <video/audio/both> [-i <input>]", argv[0]);
         return -1;
     }
 
-	char *output_path = argv[1];
-	i2dash_debug_msg("output path: %s", output_path);
-
-    bool video = false;
+    int i = 1;
+    char *input_path = NULL;
+	char *output_path = argv[i+1];
+	bool video = false;
 	bool audio = false;
 
-    i2dash_debug_msg("input kind: %s", argv[2]);
-
-	if(strcmp(argv[2], "both") == 0) {
-		audio = true;
-		video = true;
-	} else if(strcmp(argv[2], "video") == 0) {
-		video = true;
-	} else if(strcmp(argv[2], "audio") == 0) {
-		audio = true;
-	} else {
-        i2dash_debug_msg("usage: %s <output> <video/audio/both> [<input>]", argv[0]);
-        return -1;
-	}
-    
-    char *input_path = NULL;
-	if (argc == 4) {
-		input_path = argv[3];
-		i2dash_debug_msg("input path: %s", argv[3]);
+    while((i+1) < argc)
+    {
+		if(strcmp(argv[i], "-o") == 0) {
+			i2dash_debug_msg("output path: %s", output_path);
+			i +=2;
+		} else if(strcmp(argv[i], "-f") == 0) {
+		    i2dash_debug_msg("input kind: %s", argv[i+1]);
+			if(strcmp(argv[i+1], "both") == 0) {
+				audio = true;
+				video = true;
+				i += 2;
+			} else if(strcmp(argv[i+1], "video") == 0) {
+				video = true;
+				i += 2;
+			} else if(strcmp(argv[i+1], "audio") == 0) {
+				audio = true;
+				i += 2;
+			} else {
+				i2dash_debug_msg("usage: %s -o <output> -f <video/audio/both> [-i <input>]", argv[0]);
+				return -1;
+			}
+		} else if(strcmp(argv[i+1], "-i") == 0) {
+			input_path = argv[i+1];
+			i2dash_debug_msg("input path: %s", argv[i+1]);
+			i += 2;
+		} else {
+		i2dash_debug_msg("usage: %s -o <output> -f <video/audio/both> [-i <input>]", argv[0]);
+		return -1;
+		}
 	}
 
     i2DASHError err;
@@ -60,7 +71,7 @@ int main(int argc, char *argv[])
     AVPacket packet;
     AVDictionary *optionsDict = NULL;
 
-	int i, count, videoStream;
+	int j, count, videoStream;
 	
     // new i2dash context
     context = i2dash_context_new(output_path);
@@ -91,9 +102,9 @@ int main(int argc, char *argv[])
 			// Find the first video stream
 			videoStream=-1;
 
-			for(i = 0; i < vFormatCtx-> nb_streams; i++) {
-			    if(vFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
-			        videoStream = i;
+			for(j = 0; j < vFormatCtx-> nb_streams; j++) {
+			    if(vFormatCtx->streams[j]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
+			        videoStream = j;
 			        break;
 			    }
 			}
