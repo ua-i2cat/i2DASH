@@ -77,14 +77,14 @@ int main(int argc, char *argv[])
 
     // new i2dash context
     context = i2dash_context_new(output_path);
-    if (context == NULL) {                  
+    if (context == NULL) {
         i2dash_debug_err("i2dash_context_new");
         return -1;
     }
 
     if(both == true)
 		context->both = true;
-    
+
     // Register all formats and codecs
     av_register_all();
 
@@ -186,8 +186,8 @@ int main(int argc, char *argv[])
         	i2dash_debug_msg("please, don't specify audio input by now");
         	return -1;
         }
-
-        context->acodec = avcodec_find_encoder(CODEC_ID_AAC);
+        //context->acodec = avcodec_find_encoder(CODEC_ID_AAC);
+        context->acodec = avcodec_find_encoder(CODEC_ID_MP2);
         if (context->acodec == NULL) {
         	//TODO
 			i2dash_debug_err("Output audio codec not found");
