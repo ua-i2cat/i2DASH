@@ -92,13 +92,97 @@ i2DASHError i2dash_write_init_video(i2DASHContext *context)
 	i2dash_debug_err("gf_isom_modify_alternate_brand: %s", gf_error_to_string(err));
 	return i2DASH_ERROR;
 	}*/
+
+    /*because of movie fragments MOOF based offset, ISOM <4 is forbidden*/
+    gf_isom_set_brand_info(context->file, GF_4CC('i','s','o','5'), 1);
+    gf_isom_modify_alternate_brand(context->file, GF_4CC('i','s','o','m'), 0);
+    gf_isom_modify_alternate_brand(context->file, GF_4CC('i','s','o','1'), 0);
+    gf_isom_modify_alternate_brand(context->file, GF_4CC('i','s','o','2'), 0);
+    gf_isom_modify_alternate_brand(context->file, GF_4CC('i','s','o','3'), 0);
+    gf_isom_modify_alternate_brand(context->file, GF_ISOM_BRAND_MP41, 0);
+    gf_isom_modify_alternate_brand(context->file, GF_ISOM_BRAND_MP42, 0);
+
+    gf_isom_modify_alternate_brand(context->file, GF_4CC('a','v','c','1'), 1);
+    gf_isom_modify_alternate_brand(context->file, GF_4CC('d','a','s','h'), 1);
 	
+    /*gf_clone*/
+    //gf_isom_insert_moov(context->file);
+    /*gf_isom_insert_moov*/
+   /* u64 now;
+    GF_MovieHeaderBox *mvhd;
+    //if (context->file->moov) return;
+    //OK, create our boxes (mvhd, iods, ...)
+    context->file->moov = (GF_MovieBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_MOOV);
+    context->file->moov->mov = context->file;
+    //Header SetUp
+    //now = gf_isom_get_mp4time();
+    u32 calctime, msec;
+    //gf_utc_time_since_1970(&calctime, &msec);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    calctime = tv.tv_sec;
+    msec = tv.tv_usec/1000;
+    printf("1\n");
+    calctime += GF_ISOM_MAC_TIME_OFFSET;
+    now = calctime;
+    printf("2\n");
+    mvhd = (GF_MovieHeaderBox *)  gf_isom_box_new(GF_ISOM_BOX_TYPE_MVHD);
+    mvhd->creationTime = now;
+    if (!context->file->keep_utc)
+        mvhd->modificationTime = now;
+    mvhd->nextTrackID = 1;
+    //600 is our default movie TimeScale
+    mvhd->timeScale = 600;
+    printf("3\n");
+    context->file->interleavingTime = mvhd->timeScale;
+    context->file->moov = mvhd;
+    printf("4\n");
+    gf_list_add(context->file->TopBoxes, context->file->moov);
+    printf("5\n");
+
+
+
+    printf("%s\n", "una");
+    GF_SampleTableBox *stbl_temp = (GF_SampleTableBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_STBL);
+    GF_TrackBox *trak, *new_tk;
+    char *data;
+    u32 data_size;
+    GF_BitStream *bs = gf_bs_new(NULL, 0, GF_BITSTREAM_WRITE);
+    printf("%s\n", "una");
+    trak = (GF_TrackBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_TRAK);
+    printf("%s\n", "una ssssss");
+    printf("%s %d %d\n", "una parse", sizeof(GF_MediaBox), sizeof(GF_MediaInformationBox));
+         trak->Media = (GF_MediaBox *)malloc(sizeof(GF_MediaBox));
+     trak->Media->information = (GF_MediaInformationBox*) malloc(sizeof(GF_MediaInformationBox));
+     trak->Media->information->sampleTable = stbl_temp;
+     printf("%s\n", " gf_isom_box_size");
+    gf_isom_box_size( (GF_Box *) trak);
+    printf("%s\n", "dos");
+    gf_isom_box_write((GF_Box *) trak, bs);
+    printf("%s\n", "tres");
+    gf_bs_get_content(bs, &data, &data_size);
+    printf("%s\n", "una");
+    printf("%s\n", "33");
+    gf_bs_del(bs);
+    bs = gf_bs_new(data, data_size, GF_BITSTREAM_READ);
+    err = gf_isom_parse_box((GF_Box **) &new_tk, bs);
+    printf("%s\n", "una esto");
+     if(err != GF_OK) {
+        i2dash_debug_err("gf_isom_parse_box: %s",
+                                gf_error_to_string(err));
+        return i2DASH_ERROR;
+    }
+    printf("%s\n", "una esto");
+    trak->Media->information->sampleTable = stbl_temp;
+    */
 	err = gf_isom_setup_track_fragment(context->file, 1, 1, 1, 0, 0, 0, 0);
     if(err != GF_OK) {
         i2dash_debug_err("gf_isom_setup_track_fragment: %s",
                                 gf_error_to_string(err));
         return i2DASH_ERROR;
     }
+    printf("6\n");
+
 
 	//err = gf_isom_add_user_data(context->file, track, GF_4CC( 'I', '2', 'C', 'T' ), 0, "i2cat copyright", strlen("i2cat copyright"));
 
@@ -108,11 +192,12 @@ i2DASHError i2dash_write_init_video(i2DASHContext *context)
                         gf_error_to_string(err));
         return i2DASH_ERROR;
     }
+    printf("7\n");
 
     context->fragment_dts = 0;
-	//sprintf(segment_path, "%s_%d.m4s", (const char *)context->path, 0);
+	/*sprintf(segment_path, "%s_%d.m4s", (const char *)context->path, 0);
 	//i2dash_debug_msg("segment_path: %s", segment_path);
-/*
+
     err = gf_isom_start_segment(context->file, segment_path, 1);
     if (err != GF_OK) {
         i2dash_debug_err("gf_isom_start_segment: %s", 
@@ -122,7 +207,7 @@ i2DASHError i2dash_write_init_video(i2DASHContext *context)
 	remove(segment_path);*/
 	context->segment_number++;
     context->fragment_number++;
-
+    //gf_isom_close(context->file);
 	i2dash_debug_msg("Init finished: %s", segment_path);
 	
     return i2DASH_OK;
@@ -142,6 +227,7 @@ i2DASHError i2dash_write_init_audio(i2DASHContext *context)
 
     char segment_path[256];
     bzero(segment_path, 256);
+    //i2dash_debug_msg("antes star: %s", context->path);
     i2dash_debug_msg("Starting audio init segment");
     if(context->both == true) {
         ret = sprintf(segment_path, "%saudio_init.mp4",

@@ -10,6 +10,9 @@
 #include "sample.h"
 #include "debug.h"
 
+#define MAX_AUDIO_PACKET_SIZE (128 * 1024)
+
+
 
 int main(int argc, char *argv[])
 {	
@@ -145,7 +148,7 @@ int main(int argc, char *argv[])
 		context->vcodeccontext->codec_id = context->vcodec->id;
 		context->vcodeccontext->codec_type = AVMEDIA_TYPE_VIDEO;
 		context->vcodeccontext->pix_fmt = PIX_FMT_YUV420P;
-		
+
 		if (input_path != NULL) {
 			context->vcodeccontext->bit_rate = vCodecCtx->bit_rate;
 			context->vcodeccontext->width = vCodecCtx->width;
@@ -186,8 +189,12 @@ int main(int argc, char *argv[])
         	i2dash_debug_msg("please, don't specify audio input by now");
         	return -1;
         }
+
+        AVFrame * p_aframe = avcodec_alloc_frame();
+        uint8_t * p_adata_buf = (uint8_t*) av_malloc(2 * MAX_AUDIO_PACKET_SIZE);
         //context->acodec = avcodec_find_encoder(CODEC_ID_AAC);
-        context->acodec = avcodec_find_encoder(CODEC_ID_MP2);
+        //context->acodec = avcodec_find_encoder(CODEC_ID_MP2);
+        context->acodec = avcodec_find_encoder_by_name("mp2");
         if (context->acodec == NULL) {
         	//TODO
 			i2dash_debug_err("Output audio codec not found");
@@ -202,8 +209,8 @@ int main(int argc, char *argv[])
 
 		if(input_path == NULL) {
 			context->acodeccontext->bit_rate = 256000;
-			context->acodeccontext->sample_rate = 48000;
-			context->acodeccontext->time_base  = (AVRational){1, 48000};
+			context->acodeccontext->sample_rate = 44100;
+			context->acodeccontext->time_base  = (AVRational){1, 44100};
 			context->acodeccontext->channels = 2;
 			context->acodeccontext->channel_layout = AV_CH_LAYOUT_STEREO;
 		}
@@ -213,6 +220,27 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 
+		int osize = av_get_bytes_per_sample(context->acodeccontext->sample_fmt);
+
+		// TODO find context->acodeccontext->frame_size
+		context->frame_bytes = context->acodeccontext->frame_size * osize * context->acodeccontext->channels;
+
+		avcodec_get_frame_defaults(p_aframe);
+
+		p_aframe->nb_samples =
+			context->frame_bytes
+					/ (context->acodeccontext->channels
+							* av_get_bytes_per_sample(
+									context->acodeccontext->sample_fmt));
+
+		if (avcodec_fill_audio_frame(p_aframe, context->acodeccontext->channels, context->acodeccontext->sample_fmt, p_adata_buf, 
+			context->frame_bytes, 1) < 0) {
+			i2dash_debug_err("Fill audio frame failed");
+			return -1;
+		}
+
+		//p_aout->acc_samples = 0;
+		context->frame_size = context->acodeccontext->frame_size;
 		err = i2dash_write_init_audio(context);
    		if (err != i2DASH_OK) {
 			i2dash_debug_err("i2dash_write_init_audio");

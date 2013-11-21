@@ -24,8 +24,11 @@ typedef struct {
     int fragments_per_segment;
     int frames_per_fragment;
     int frames_per_segment;
+    int frame_bytes;
+    int frame_size;
     /** audio + video */
     bool both;
+
 
     uint64_t fragment_dts;
     
