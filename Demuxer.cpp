@@ -76,7 +76,8 @@ bool Demuxer::openInput(string filename)
 void Demuxer::closeInput()
 {
     if (!isOpen || fmtCtx == NULL){
-        cerr << "Input already closed"<< endl;
+        cerr << "Input already closed"<< endl; pkt.size = 0;
+            pkt.data = NULL;
         return;
     }
     
@@ -173,6 +174,9 @@ Frame* const Demuxer::readFrame(int &gotFrame)
         return NULL;
     }
     
+    pkt.data = NULL;
+    pkt.size = 0;
+    
     gotFrame = av_read_frame(fmtCtx, &pkt);
     
     if (gotFrame >= 0) {
@@ -185,7 +189,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
                                    videoStream->codec->extradata_size);
             }
             videoFrame->setVideoSize(videoStream->codec->width, videoStream->codec->height);
-            //TODO: set timestamp
+            //TODO: set timestamp, bitrate, others...
             return videoFrame;
         } else if (pkt.stream_index == audioStreamIdx && pkt.size > 0){
             //TODO: set audio frame
