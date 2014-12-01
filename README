@@ -1,0 +1,1 @@
+g++ -std=c++11 -g -D__STDC_CONSTANT_MACROS DemuxerTest.cpp Demuxer.cpp Frame.cpp -o DemuxTest -lavformat -lavutil -lavcodec -lcpptest
