@@ -23,9 +23,10 @@
 #ifndef _DEMUXER_HH
 #define _DEMUXER_HH
 extern "C" {
+    #include <libavutil/imgutils.h>
+    #include <libavutil/samplefmt.h>
+    #include <libavutil/timestamp.h>
     #include <libavformat/avformat.h>
-    #include <libavutil/avutil.h>
-    #include <libavcodec/avcodec.h>
 }
 
 #include <string>
@@ -42,12 +43,13 @@ public:
     bool openInput(string filename);
     void closeInput();
     void dumpFormat();
-    bool findVideoStream();
-    bool findAudioStream();
-    Frame* const readFrame(int& gotFrame);
+    bool findStreams();
+    Frame* readFrame(int& gotFrame);
     
 private:
     bool sourceExists(string filename);
+    bool findVideoStream();
+    bool findAudioStream();
     bool validVideoCodec();
     bool validAudioCodec();
           
@@ -60,7 +62,7 @@ private:
     int framesCounter;
     bool isOpen;
     
-    AVCCFrame* const videoFrame;
+    AVCCFrame* videoFrame;
 };
 
 #endif
