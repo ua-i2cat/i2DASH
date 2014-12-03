@@ -69,4 +69,28 @@ private:
     size_t frameHLen;
 };
 
+class AACFrame : public Frame {
+    
+public:
+    AACFrame();
+    
+    ~AACFrame();
+    
+    unsigned char* getHBuf() {return frameHBuff;};
+    size_t getHLength() {return frameHLen;};
+    
+    void setHBuffer(unsigned char *buff, size_t length);
+
+    int getSampleRate() {return sampleRate;};
+    void setSampleRate(int sRate);
+    
+    void clearFrame();
+    
+private:
+    int sampleRate;
+
+    unsigned char *frameHBuff;
+    size_t frameHLen;
+};
+
 #endif

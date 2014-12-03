@@ -29,7 +29,8 @@
 Demuxer::Demuxer(): fmtCtx(NULL), videoStream(NULL), 
                                 audioStream(NULL), videoStreamIdx(-1), 
                                 audioStreamIdx(-1), framesCounter(0), 
-                                isOpen(false), videoFrame(new AVCCFrame())
+                                isOpen(false), videoFrame(new AVCCFrame()),
+                                audioFrame(new AACFrame())
 {
     av_register_all();
     av_init_packet(&pkt);
@@ -45,6 +46,7 @@ Demuxer::~Demuxer()
     av_free_packet(&pkt);
     
     delete videoFrame;
+    delete audioFrame;
 }
 
 bool Demuxer::openInput(string filename)
@@ -149,11 +151,11 @@ bool Demuxer::validVideoCodec()
         return false;
     }
     
-    if (videoStream->codec->codec_id == CODEC_ID_H264){
-        return true;
+    if (videoStream->codec->codec_id != CODEC_ID_H264){
+        return false;
     }
     
-    return false;
+    return true;
 }
 
 bool Demuxer::validAudioCodec()
@@ -162,11 +164,12 @@ bool Demuxer::validAudioCodec()
         return false;
     }
     
-    if (audioStream->codec->codec_id == CODEC_ID_AAC){
-        return true;
+    if (audioStream->codec->codec_id != CODEC_ID_AAC){
+        cerr << "Invalid codec. It must be AAC" << endl;
+        return false;
     }
        
-    return false;
+    return true;
 }
 
 bool Demuxer::findAudioStream()
@@ -201,7 +204,7 @@ Frame* Demuxer::readFrame(int &gotFrame)
         cerr << "No audio or video streams found" << endl;
         return NULL;
     }
-    
+
     pkt.size = 0;
     gotFrame = av_read_frame(fmtCtx, &pkt);
     
@@ -211,9 +214,10 @@ Frame* Demuxer::readFrame(int &gotFrame)
     
     if (gotFrame >= 0) {
         videoFrame->clearFrame();
-        if (pkt.stream_index == videoStreamIdx){
+        audioFrame->clearFrame();
+
+        if (pkt.stream_index == videoStreamIdx) {
             videoFrame->setBuffer(pkt.data, pkt.size);
-            cout << "video frame, size: " << pkt.size << " idx: " << pkt.stream_index << endl;
             if (videoStream->codec->extradata_size > 0){
                 videoFrame->setHBuffer(videoStream->codec->extradata, 
                                    videoStream->codec->extradata_size);
@@ -221,13 +225,23 @@ Frame* Demuxer::readFrame(int &gotFrame)
             videoFrame->setVideoSize(videoStream->codec->width, videoStream->codec->height);
             //TODO: set timestamp, bitrate, others...
             return videoFrame;
-        } else if (pkt.stream_index == audioStreamIdx){
-            //TODO: set audio frame
-            cout << "audio frame" << endl;
-            return NULL;
-        } else {
-            cout << "unknown frame, size: " << pkt.size << " idx: " << pkt.stream_index << endl;
         }
+
+        if (pkt.stream_index == audioStreamIdx) {
+            audioFrame->setBuffer(pkt.data, pkt.size);
+            if (audioStream->codec->extradata_size > 0){
+                audioFrame->setHBuffer(audioStream->codec->extradata, 
+                                       audioStream->codec->extradata_size);
+            }
+
+            audioFrame->setSampleRate(audioStream->codec->sample_rate);
+
+            //TODO: set other parameters
+            return audioFrame;
+        } 
+
+        cout << "Unknown frame, size: " << pkt.size << " idx: " << pkt.stream_index << endl;
+        
     }
     
     return NULL;
