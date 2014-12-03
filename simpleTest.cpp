@@ -1,5 +1,5 @@
 /*
- *  Demuxer.hh - Demuxer class
+ *  DemuxerTest.cpp - Demuxer class test
  *  Copyright (C) 2014  Fundació i2CAT, Internet i Innovació digital a Catalunya
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -20,50 +20,42 @@
  *            
  */
 
-#ifndef _DEMUXER_HH
-#define _DEMUXER_HH
-extern "C" {
-    #include <libavutil/imgutils.h>
-    #include <libavutil/samplefmt.h>
-    #include <libavutil/timestamp.h>
-    #include <libavformat/avformat.h>
-}
-
 #include <string>
+#include <iostream>
 
+#include "Demuxer.hh"
 #include "Frame.hh"
 
 using namespace std;
 
-class Demuxer {
-public:
-    Demuxer();
-    ~Demuxer();
-    
-    bool openInput(string filename);
-    void closeInput();
-    void dumpFormat();
-    bool findStreams();
-    Frame* readFrame(int& gotFrame);
-    
-private:
-    bool sourceExists(string filename);
-    bool findVideoStream();
-    bool findAudioStream();
-    bool validVideoCodec();
-    bool validAudioCodec();
-          
-private:
-    AVFormatContext *fmtCtx;
-    AVStream *videoStream, *audioStream;
-    AVPacket pkt;
-    
-    int videoStreamIdx, audioStreamIdx;
-    int framesCounter;
-    bool isOpen;
-    
+int main(int argc, char* argv[])
+{
     AVCCFrame* videoFrame;
     AACFrame* audioFrame;
-};
+    Frame* frame;
+    int gotFrame;
+    Demuxer* demux = new Demuxer();
 
-#endif
+    demux->openInput(argv[1]);
+    demux->findStreams();
+    demux->dumpFormat();
+
+    while (gotFrame >= 0){
+
+        frame = demux->readFrame(gotFrame);
+
+        if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
+            std::cout << "VideoFrame buffer length: " << videoFrame->getLength() << std::endl;
+            std::cout << "VideoFrame size: " << videoFrame->getWidth() << "x" << videoFrame->getHeight() << std::endl;
+        }
+
+        if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
+            std::cout << "AudioFrame sample rate: " << audioFrame->getLength() << std::endl;
+            std::cout << "AudioFrame: " << audioFrame->getSampleRate() << std::endl;
+        }
+    }
+
+    delete demux;
+    
+    return 0;
+} 

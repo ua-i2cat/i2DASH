@@ -65,3 +65,32 @@ void AVCCFrame::clearFrame()
     frameBuff = NULL;
     frameHBuff = NULL;
 }
+
+AACFrame::AACFrame(): Frame(), frameHBuff(NULL), frameHLen(0)
+{
+}
+
+AACFrame::~AACFrame()
+{
+}
+
+void AACFrame::setHBuffer(unsigned char *buff, size_t length)
+{
+    frameHBuff = buff;
+    frameHLen = length;
+}
+    
+void AACFrame::clearFrame()
+{
+    frameLen = 0;
+    frameHLen = 0;
+    frameBuff = NULL;
+    frameHBuff = NULL;
+}
+
+void AACFrame::setSampleRate(int sRate)
+{
+    sampleRate = sRate;
+}
+
+
