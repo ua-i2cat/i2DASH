@@ -76,8 +76,9 @@ bool Demuxer::openInput(string filename)
 void Demuxer::closeInput()
 {
     if (!isOpen || fmtCtx == NULL){
-        cerr << "Input already closed"<< endl; pkt.size = 0;
-            pkt.data = NULL;
+        cerr << "Input already closed"<< endl;
+        pkt.size = 0;    
+        pkt.data = NULL;
         return;
     }
     
@@ -100,6 +101,29 @@ void Demuxer::dumpFormat()
     }
 }
 
+bool Demuxer::findStreams()
+{
+    if (!isOpen){
+        return false;
+    }
+    
+    if (videoStreamIdx != -1 || audioStreamIdx != -1){
+        cerr << "Streams already found"<< endl;
+        return true;
+    }
+    
+    if (avformat_find_stream_info(fmtCtx, NULL) < 0) {
+        cerr << "No streams found!"<< endl; 
+        return false;
+    }
+    
+    if (findVideoStream() | findAudioStream()){
+        return true;
+    }
+    
+    return false;
+}
+
 bool Demuxer::findVideoStream()
 {
     if (!isOpen){
@@ -113,6 +137,8 @@ bool Demuxer::findVideoStream()
             return true;
         }   
     } 
+    
+    videoStreamIdx = -1;
     
     return false;
 }
@@ -139,7 +165,7 @@ bool Demuxer::validAudioCodec()
     if (audioStream->codec->codec_id == CODEC_ID_AAC){
         return true;
     }
-    
+       
     return false;
 }
 
@@ -157,10 +183,12 @@ bool Demuxer::findAudioStream()
         }
     }
     
+    audioStreamIdx = -1;
+    
     return false;
 }
 
-Frame* const Demuxer::readFrame(int &gotFrame)
+Frame* Demuxer::readFrame(int &gotFrame)
 {
     gotFrame = -1;
     
@@ -174,14 +202,16 @@ Frame* const Demuxer::readFrame(int &gotFrame)
         return NULL;
     }
     
-    pkt.data = NULL;
     pkt.size = 0;
-    
     gotFrame = av_read_frame(fmtCtx, &pkt);
+    
+    if (pkt.size <= 0){
+        return NULL;
+    }
     
     if (gotFrame >= 0) {
         videoFrame->clearFrame();
-        if (pkt.stream_index == videoStreamIdx && pkt.size > 0){
+        if (pkt.stream_index == videoStreamIdx){
             videoFrame->setBuffer(pkt.data, pkt.size);
             cout << "video frame, size: " << pkt.size << " idx: " << pkt.stream_index << endl;
             if (videoStream->codec->extradata_size > 0){
@@ -191,7 +221,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             videoFrame->setVideoSize(videoStream->codec->width, videoStream->codec->height);
             //TODO: set timestamp, bitrate, others...
             return videoFrame;
-        } else if (pkt.stream_index == audioStreamIdx && pkt.size > 0){
+        } else if (pkt.stream_index == audioStreamIdx){
             //TODO: set audio frame
             cout << "audio frame" << endl;
             return NULL;
