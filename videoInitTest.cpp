@@ -80,7 +80,8 @@ int main(int argc, char* argv[])
 
 
 
-    while (gotFrame >= 0) {
+    //while (gotFrame >= 0){
+    while (newInitBufferLen == 0) {
 
         frame = demux->readFrame(gotFrame);
 
