@@ -33,7 +33,7 @@ public:
     
     void setBuffer(unsigned char *buff, size_t length);
     
-    unsigned char* getFrameBuf() {return frameBuff;};
+    unsigned char* getBuffer() {return frameBuff;};
     size_t getLength() {return frameLen;};
     
     virtual void clearFrame() = 0;
