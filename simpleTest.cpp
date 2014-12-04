@@ -26,6 +26,7 @@
 
 #include "Demuxer.hh"
 #include "Frame.hh"
+#include "DashVideoSegmenter.hh"
 
 using namespace std;
 
@@ -36,46 +37,37 @@ int main(int argc, char* argv[])
     Frame* frame;
     int gotFrame;
     Demuxer* demux = new Demuxer();
+    DashVideoSegmenter* vSeg = new DashVideoSegmenter();
+
+    size_t initBufferMaxLen = 1024*1024; //1MB
+    size_t initBufferLen = 0;
+    unsigned char* initBuffer = new unsigned char[initBufferMaxLen];
 
     demux->openInput(argv[1]);
     demux->findStreams();
     demux->dumpFormat();
 
-    while (gotFrame >= 0){
+    if (!vSeg->init()) {
+        cout << "Error initializing Video Segmenter" << endl;
+        exit(1);
+    }
+
+    //while (gotFrame >= 0){
+    while (initBufferLen == 0) {
 
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
-            /*
-            newSample = dashVideoSeg->addFrameToSample(videoFrame);
-            
-            if (newSample) {
-                writeToDisk(dashVideoSeg->getSampleBuffer(), dashVideoSeg->getSampleLength, sampleName)
-            }
-            */
-            std::cout << "VideoFrame buffer length: " << videoFrame->getLength() << std::endl;
-
-            for (int i=0; i < videoFrame->getHLength(); i ++) {
-                printf("%x ", videoFrame->getFrameHBuf()[i]);
-            }
-
-            printf("\n\n");
+            initBufferLen = vSeg->generateInit(videoFrame->getFrameHBuf(), videoFrame->getHLength(), initBuffer);
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
-            /*
-            newSample = dashAudioSeg->addFrameToSample(videoFrame);
-            
-            if (newSample) {
-                writeToDisk(dashAudioSeg->getSampleBuffer(), dashAudioSeg->getSampleLength, sampleName)
-            }
-            */
-            std::cout << "AudioFrame sample rate: " << audioFrame->getLength() << std::endl;
-            std::cout << "AudioFrame: " << audioFrame->getSampleRate() << std::endl;
+
         }
     }
 
     delete demux;
+    delete vSeg;
     
     return 0;
 } 
