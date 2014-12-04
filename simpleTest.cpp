@@ -59,6 +59,12 @@ int main(int argc, char* argv[])
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
             initBufferLen = vSeg->generateInit(videoFrame->getFrameHBuf(), videoFrame->getHLength(), initBuffer);
+
+            printf("%lu\n", initBufferLen);
+            for (int i=0; i < initBufferLen; i++) {
+                printf("%x ", initBuffer[i]);
+            }
+            printf("\n\n"); 
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {

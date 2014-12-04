@@ -41,6 +41,10 @@ uint8_t get_width_height(byte *nal_sps, uint32_t *size_nal_sps, i2ctx_video **ct
 
 uint8_t is_key_frame(byte *input_data, uint32_t size_input);
 
+void extract_video_size_from_metadata(byte *metadata, uint32_t* width, uint32_t* height);
+uint8_t get_video_size(byte *nal_sps, uint32_t *size_nal_sps, uint32_t* w, uint32_t* h); 
+
+
 // IMPLEMENTATION
 void set_segment_duration(uint32_t segment_duration, i2ctx **context){
     (*context)->duration_ms = segment_duration * SEC_TO_MSEC;
@@ -151,6 +155,43 @@ void video_sample_context_initializer(i2ctx_video **ctxVideo) {
     ctxVSample->trun_pos = 0;
 }
 
+uint8_t get_video_size(byte *nal_sps, uint32_t *size_nal_sps, uint32_t* w, uint32_t* h) 
+{
+    uint32_t width, height;
+    sps_t* sps = (sps_t*)malloc(sizeof(sps_t));
+    uint8_t* rbsp_buf = (uint8_t*)malloc(*size_nal_sps);
+
+    if (nal_to_rbsp(nal_sps, (int*)size_nal_sps, rbsp_buf, (int*)size_nal_sps) < 0){
+        free(rbsp_buf);
+        free(sps);
+        return I2ERROR_SPS_PPS;
+    }
+    bs_t* b = bs_new(rbsp_buf, *size_nal_sps);
+
+    if(read_seq_parameter_set_rbsp(sps,b) < 0){
+        bs_free(b);
+        free(rbsp_buf);
+        free(sps);
+        return I2ERROR_SPS_PPS;
+    }
+
+    width = (sps->pic_width_in_mbs_minus1 + 1) * 16;
+    height = (2 - sps->frame_mbs_only_flag) * (sps->pic_height_in_map_units_minus1 + 1) * 16;
+
+    if (sps->frame_cropping_flag){
+        width -= (sps->frame_crop_left_offset*2 + sps->frame_crop_right_offset*2);
+        height -= (sps->frame_crop_top_offset*2 + sps->frame_crop_bottom_offset*2);
+    }
+
+    *w = width;
+    *h = height;
+    bs_free(b);
+    free(rbsp_buf);
+    free(sps);
+
+    return 0;
+}
+
 uint8_t get_width_height(byte *nal_sps, uint32_t *size_nal_sps, i2ctx_video **ctxVideo) {
     uint32_t width, height;
     sps_t* sps = (sps_t*)malloc(sizeof(sps_t));
@@ -227,11 +268,27 @@ uint8_t context_initializer(i2ctx **context, uint32_t media_type){
     return I2OK;
 }
 
+void extract_video_size_from_metadata(byte *metadata, uint32_t* width, uint32_t* height) 
+{
+    int spsSize1stBytePosInMetadata = 6;
+    int spsSize2ndBytePosInMetadata = spsSize1stBytePosInMetadata +1;
+    int sps1stBytePosInMetadata = spsSize2ndBytePosInMetadata + 1;
+
+    byte* sps;
+
+    uint32_t sps_size = (uint32_t)metadata[spsSize1stBytePosInMetadata] << 8  | (uint32_t)metadata[spsSize2ndBytePosInMetadata];
+
+    sps = metadata + sps1stBytePosInMetadata;
+
+    get_video_size(sps, &sps_size, width, height);
+}
+
+
 uint32_t new_init_video_handler(byte *metadata, uint32_t metadata_size, byte *output_data, i2ctx **context) 
 {
     uint32_t initSize;
-    uint32_t spsSize;
-    byte** sps;
+    uint32_t width = 0;
+    uint32_t height = 0;
 
     if ((*context) == NULL) {
         return I2ERROR_CONTEXT_NULL;
@@ -249,9 +306,14 @@ uint32_t new_init_video_handler(byte *metadata, uint32_t metadata_size, byte *ou
         return I2ERROR_SIZE_ZERO;
     }
 
-//  TODO: evaluate if it is necessary to extact from here video width and height
-//    if(get_width_height(sps_data, sps_size, &((*context)->ctxvideo)) == I2ERROR_SPS_PPS)    
-//        return I2ERROR_SPS_PPS;
+    extract_video_size_from_metadata(metadata, &width, &height);
+
+    if (width <= 0 || height <= 0) {
+        return I2ERROR_SPS_PPS;
+    }
+
+    (*context)->ctxvideo->width = width;
+    (*context)->ctxvideo->height = height;
 
     initSize = initVideoGenerator(metadata, metadata_size, output_data, context);
 

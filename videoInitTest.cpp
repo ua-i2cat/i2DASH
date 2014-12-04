@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
     uint32_t metadata2Size;
     uint32_t metadata3Size;
     i2ctx* avContext;
+    i2ctx* newAvContext;
 
     int buffIdx;
     uint8_t i2error;
@@ -93,7 +94,14 @@ int main(int argc, char* argv[])
                 break;
             }
 
+            i2error = context_initializer(&newAvContext, VIDEO_TYPE);
+            if (i2error == I2ERROR_MEDIA_TYPE) {
+                printf ("Media type incorrect\n");
+                break;
+            }
+
             set_segment_duration(segmentTime, &avContext);
+            set_segment_duration(segmentTime, &newAvContext);
             buffIdx = 0;
 
             // METADATA
@@ -123,12 +131,11 @@ int main(int argc, char* argv[])
 
             pps = videoFrame->getFrameHBuf() + buffIdx;
 
-
             initBufferLen = init_video_handler(metadata, metadataSize, metadata2, metadata2Size, 
                                                sps, &spsSize, metadata3, metadata3Size, pps, ppsSize, 
                                                initBuffer, &avContext);
             
-            newInitBufferLen = new_init_video_handler(videoFrame->getFrameHBuf(), videoFrame->getHLength(), newInitBuffer, &avContext);
+            newInitBufferLen = new_init_video_handler(videoFrame->getFrameHBuf(), videoFrame->getHLength(), newInitBuffer, &newAvContext);
 
 
             assert (initBufferLen == newInitBufferLen);
