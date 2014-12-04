@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *  Authors:  David Cassany <david.cassany@i2cat.net>
+ *            Marc Palau <marc.palau@i2cat.net>
  *            
  *            
  */
@@ -45,11 +46,30 @@ int main(int argc, char* argv[])
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
+            /*
+            newSample = dashVideoSeg->addFrameToSample(videoFrame);
+            
+            if (newSample) {
+                writeToDisk(dashVideoSeg->getSampleBuffer(), dashVideoSeg->getSampleLength, sampleName)
+            }
+            */
             std::cout << "VideoFrame buffer length: " << videoFrame->getLength() << std::endl;
-            std::cout << "VideoFrame size: " << videoFrame->getWidth() << "x" << videoFrame->getHeight() << std::endl;
+
+            for (int i=0; i < videoFrame->getHLength(); i ++) {
+                printf("%x ", videoFrame->getFrameHBuf()[i]);
+            }
+
+            printf("\n\n");
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
+            /*
+            newSample = dashAudioSeg->addFrameToSample(videoFrame);
+            
+            if (newSample) {
+                writeToDisk(dashAudioSeg->getSampleBuffer(), dashAudioSeg->getSampleLength, sampleName)
+            }
+            */
             std::cout << "AudioFrame sample rate: " << audioFrame->getLength() << std::endl;
             std::cout << "AudioFrame: " << audioFrame->getSampleRate() << std::endl;
         }
