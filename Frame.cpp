@@ -29,7 +29,7 @@ Frame::~Frame()
 {
 }
 
-void Frame::setBuffer(unsigned char *buff, size_t length)
+void Frame::setDataBuffer(unsigned char *buff, size_t length)
 {
     frameBuff = buff;
     frameLen = length;
@@ -50,7 +50,7 @@ void AVCCFrame::setVideoSize(int width, int height)
     this->height = height;
 }
 
-void AVCCFrame::setHBuffer(unsigned char *buff, size_t length)
+void AVCCFrame::setHdrBuffer(unsigned char *buff, size_t length)
 {
     frameHBuff = buff;
     frameHLen = length;
@@ -74,7 +74,7 @@ AACFrame::~AACFrame()
 {
 }
 
-void AACFrame::setHBuffer(unsigned char *buff, size_t length)
+void AACFrame::setHdrBuffer(unsigned char *buff, size_t length)
 {
     frameHBuff = buff;
     frameHLen = length;

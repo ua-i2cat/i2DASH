@@ -28,6 +28,7 @@
 #include "Demuxer.hh"
 #include "Frame.hh"
 #include "DashVideoSegmenter.hh"
+#include "DashAudioSegmenter.hh"
 
 using namespace std;
 
@@ -39,6 +40,7 @@ int main(int argc, char* argv[])
     int gotFrame;
     Demuxer* demux = new Demuxer();
     DashVideoSegmenter* vSeg = new DashVideoSegmenter();
+    DashAudioSegmenter* aSeg = new DashAudioSegmenter();
 
     size_t initBufferMaxLen = 1024*1024; //1MB
     size_t vInitBufferLen = 0;
@@ -47,6 +49,7 @@ int main(int argc, char* argv[])
     unsigned char* aInitBuffer = new unsigned char[initBufferMaxLen];
 
     ofstream vInitFile("test_video_init.m4v", ofstream::binary);
+    ofstream aInitFile("test_audio_init.m4v", ofstream::binary);
 
     demux->openInput(argv[1]);
     demux->findStreams();
@@ -57,25 +60,34 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
+    if (!aSeg->init()) {
+        cout << "Error initializing Audio Segmenter" << endl;
+        exit(1);
+    }
+
     // while (gotFrame >= 0){
-    while (vInitBufferLen == 0 /*|| aInitBufferLen == 0*/) {
+    while (vInitBufferLen == 0 || aInitBufferLen == 0) {
 
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
-            vInitBufferLen = vSeg->generateInit(videoFrame->getFrameHBuf(), videoFrame->getHLength(), vInitBuffer);
+            vInitBufferLen = vSeg->generateInit(videoFrame->getHdrBuffer(), videoFrame->getHdrLength(), vInitBuffer);
             vInitFile.write((char*)vInitBuffer,vInitBufferLen);
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
-            // aInitBufferLen = aSeg->generateInit(audioFrame->getFrameHBuf(), audioFrame->getHLength(), aInitBuffer);
+            aSeg->setSampleRate(audioFrame->getSampleRate());
+            aInitBufferLen = aSeg->generateInit(audioFrame->getHdrBuffer(), audioFrame->getHdrLength(), aInitBuffer);
+            aInitFile.write((char*)aInitBuffer,aInitBufferLen);
         }
     }
 
     vInitFile.close();
+    aInitFile.close();
 
     delete demux;
     delete vSeg;
+    delete aSeg;
     
     return 0;
 } 

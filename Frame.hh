@@ -31,10 +31,10 @@ public:
     
     virtual ~Frame();
     
-    void setBuffer(unsigned char *buff, size_t length);
-    
-    unsigned char* getBuffer() {return frameBuff;};
-    size_t getLength() {return frameLen;};
+    unsigned char* getDataBuffer() {return frameBuff;};
+    size_t getDataLength() {return frameLen;};
+
+    void setDataBuffer(unsigned char *buff, size_t length);
     
     virtual void clearFrame() = 0;
     
@@ -52,10 +52,10 @@ public:
     
     void setVideoSize(int width, int height);
     
-    unsigned char* getFrameHBuf() {return frameHBuff;};
-    size_t getHLength() {return frameHLen;};
+    unsigned char* getHdrBuffer() {return frameHBuff;};
+    size_t getHdrLength() {return frameHLen;};
     
-    void setHBuffer(unsigned char *buff, size_t length);
+    void setHdrBuffer(unsigned char *buff, size_t length);
     
     int getWidth() {return width;};
     int getHeight() {return height;};
@@ -76,10 +76,10 @@ public:
     
     ~AACFrame();
     
-    unsigned char* getHBuf() {return frameHBuff;};
-    size_t getHLength() {return frameHLen;};
+    unsigned char* getHdrBuffer() {return frameHBuff;};
+    size_t getHdrLength() {return frameHLen;};
     
-    void setHBuffer(unsigned char *buff, size_t length);
+    void setHdrBuffer(unsigned char *buff, size_t length);
 
     int getSampleRate() {return sampleRate;};
     void setSampleRate(int sRate);

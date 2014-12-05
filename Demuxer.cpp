@@ -217,9 +217,9 @@ Frame* Demuxer::readFrame(int &gotFrame)
         audioFrame->clearFrame();
 
         if (pkt.stream_index == videoStreamIdx) {
-            videoFrame->setBuffer(pkt.data, pkt.size);
+            videoFrame->setDataBuffer(pkt.data, pkt.size);
             if (videoStream->codec->extradata_size > 0){
-                videoFrame->setHBuffer(videoStream->codec->extradata, 
+                videoFrame->setHdrBuffer(videoStream->codec->extradata, 
                                    videoStream->codec->extradata_size);
             }
             videoFrame->setVideoSize(videoStream->codec->width, videoStream->codec->height);
@@ -228,9 +228,9 @@ Frame* Demuxer::readFrame(int &gotFrame)
         }
 
         if (pkt.stream_index == audioStreamIdx) {
-            audioFrame->setBuffer(pkt.data, pkt.size);
+            audioFrame->setDataBuffer(pkt.data, pkt.size);
             if (audioStream->codec->extradata_size > 0){
-                audioFrame->setHBuffer(audioStream->codec->extradata, 
+                audioFrame->setHdrBuffer(audioStream->codec->extradata, 
                                        audioStream->codec->extradata_size);
             }
 
