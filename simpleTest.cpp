@@ -23,6 +23,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 
 #include "Demuxer.hh"
 #include "Frame.hh"
@@ -40,8 +41,12 @@ int main(int argc, char* argv[])
     DashVideoSegmenter* vSeg = new DashVideoSegmenter();
 
     size_t initBufferMaxLen = 1024*1024; //1MB
-    size_t initBufferLen = 0;
-    unsigned char* initBuffer = new unsigned char[initBufferMaxLen];
+    size_t vInitBufferLen = 0;
+    size_t aInitBufferLen = 0;
+    unsigned char* vInitBuffer = new unsigned char[initBufferMaxLen];
+    unsigned char* aInitBuffer = new unsigned char[initBufferMaxLen];
+
+    ofstream vInitFile("test_video_init.m4v", ofstream::binary);
 
     demux->openInput(argv[1]);
     demux->findStreams();
@@ -52,25 +57,22 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    //while (gotFrame >= 0){
-    while (initBufferLen == 0) {
+    // while (gotFrame >= 0){
+    while (vInitBufferLen == 0 /*|| aInitBufferLen == 0*/) {
 
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
-            initBufferLen = vSeg->generateInit(videoFrame->getFrameHBuf(), videoFrame->getHLength(), initBuffer);
-
-            printf("%lu\n", initBufferLen);
-            for (int i=0; i < initBufferLen; i++) {
-                printf("%x ", initBuffer[i]);
-            }
-            printf("\n\n"); 
+            vInitBufferLen = vSeg->generateInit(videoFrame->getFrameHBuf(), videoFrame->getHLength(), vInitBuffer);
+            vInitFile.write((char*)vInitBuffer,vInitBufferLen);
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
-
+            // aInitBufferLen = aSeg->generateInit(audioFrame->getFrameHBuf(), audioFrame->getHLength(), aInitBuffer);
         }
     }
+
+    vInitFile.close();
 
     delete demux;
     delete vSeg;
