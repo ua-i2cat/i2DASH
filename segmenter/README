@@ -1,0 +1,1 @@
+g++ -std=c++11 test/simpleTest.cpp src/* ../libi2dash/src/* -Iinclude -I../libi2dash/include -D__STDC_CONSTANT_MACROS -lavformat -lavcodec -lavutil -o simple
