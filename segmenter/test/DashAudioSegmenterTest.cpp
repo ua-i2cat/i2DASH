@@ -1,5 +1,5 @@
 /*
- *  DashVideoSegmenterTest.cpp - DashVideoSegmenter class test
+ *  DashAudioSegmenterTest.cpp - DashAudioSegmenter class test
  *  Copyright (C) 2014  Fundació i2CAT, Internet i Innovació digital a Catalunya
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -25,17 +25,17 @@
 #include <fstream>
 #include <cpptest.h>
 
-#include "DashVideoSegmenter.hh"
+#include "DashAudioSegmenter.hh"
 
 using namespace std;
 
-class dashVideoSegmenterTestSuite : public Test::Suite {
+class dashAudioSegmenterTestSuite : public Test::Suite {
 protected:
     void tear_down();
-    DashVideoSegmenter* vSeg;
+    DashAudioSegmenter* aSeg;
 };
 
-class constructorTestSuite : public dashVideoSegmenterTestSuite {
+class constructorTestSuite : public dashAudioSegmenterTestSuite {
 public:
     constructorTestSuite() {
         TEST_ADD(constructorTestSuite::constructorTest);
@@ -45,7 +45,7 @@ private:
     void constructorTest();
 };
 
-class initTestSuite : public dashVideoSegmenterTestSuite {
+class initTestSuite : public dashAudioSegmenterTestSuite {
 public:
     initTestSuite() {
         TEST_ADD(initTestSuite::init);
@@ -56,7 +56,7 @@ private:
     void init();
 };
 
-class generateInitTestSuite : public dashVideoSegmenterTestSuite {
+class generateInitTestSuite : public dashAudioSegmenterTestSuite {
 public:
     generateInitTestSuite() {
         TEST_ADD(generateInitTestSuite::generateInit);
@@ -73,31 +73,31 @@ private:
     unsigned char* outputData;
 };
 
-void dashVideoSegmenterTestSuite::tear_down()
+void dashAudioSegmenterTestSuite::tear_down()
 {
-    delete vSeg;
+    delete aSeg;
 }
 
 
 void constructorTestSuite::constructorTest()
 {
-    vSeg = new DashVideoSegmenter();
-    TEST_ASSERT(vSeg != NULL);
+    aSeg = new DashAudioSegmenter();
+    TEST_ASSERT(aSeg != NULL);
 }
 
 void initTestSuite::setup()
 {
-    vSeg = new DashVideoSegmenter();
+    aSeg = new DashAudioSegmenter();
 }
 
 void initTestSuite::init()
 {
-    if (vSeg == NULL) {
+    if (aSeg == NULL) {
         TEST_FAIL("Segmenter instance is null. Check constructor test\n");
         return;
     }
 
-    TEST_ASSERT_MSG(vSeg->init(), "VideoSegmenter init failed");
+    TEST_ASSERT_MSG(aSeg->init(), "AudioSegmenter init failed");
 }
 
 void generateInitTestSuite::setup()
@@ -107,19 +107,19 @@ void generateInitTestSuite::setup()
     inputData = NULL;
     outputData = NULL;
     
-    vSeg = new DashVideoSegmenter();
-    if (vSeg == NULL) {
+    aSeg = new DashAudioSegmenter();
+    if (aSeg == NULL) {
         TEST_FAIL("Segmenter instance is null. Check constructor test\n");
         return;
     }
 
-    if (!vSeg->init()) {
+    if (!aSeg->init()) {
         TEST_FAIL("Segmenter init failed. Check init test\n");
         return;
     }
 
-    ifstream inputDataFile("testData/DashVideoSegmenterTest_input_data", ios::in|ios::binary|ios::ate);
-    ifstream outputDataFile("testData/DashVideoSegmenterTest_init_model.m4v", ios::in|ios::binary|ios::ate);
+    ifstream inputDataFile("testData/DashAudioSegmenterTest_input_data", ios::in|ios::binary|ios::ate);
+    ifstream outputDataFile("testData/DashAudioSegmenterTest_init_model.m4a", ios::in|ios::binary|ios::ate);
     
     if (!inputDataFile.is_open() || !outputDataFile.is_open()) {
         TEST_FAIL("Error opening test files. Check paths\n");
@@ -152,7 +152,7 @@ void generateInitTestSuite::generateInit()
     size_t bufferMaxLen = 1024*1024; //1MB
     unsigned char* initBuffer = new unsigned char[bufferMaxLen];
 
-    initBufferLen = vSeg->generateInit(inputData, inputDataSize, initBuffer);
+    initBufferLen = aSeg->generateInit(inputData, inputDataSize, initBuffer);
 
     if (initBufferLen != outputDataSize) {
         TEST_FAIL("Init buffer length invalid");
@@ -169,7 +169,7 @@ void generateInitTestSuite::tear_down()
 {
     delete inputData;
     delete outputData;
-    delete vSeg;
+    delete aSeg;
 }
 
 int main(int argc, char* argv[])

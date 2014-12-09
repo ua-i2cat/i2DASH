@@ -79,17 +79,17 @@ int main(int argc, char* argv[])
 
         frame = demux->readFrame(gotFrame);
 
-        if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
+        if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL && vInitBufferLen == 0) {
             vInitBufferLen = vSeg->generateInit(videoFrame->getHdrBuffer(), videoFrame->getHdrLength(), vInitBuffer);
             vInitFile.write((char*)vInitBuffer,vInitBufferLen);
             vHeaderFile.write((char*)videoFrame->getHdrBuffer(),videoFrame->getHdrLength());
         }
 
-        if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
+        if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL && aInitBufferLen == 0) {
             aSeg->setSampleRate(audioFrame->getSampleRate());
             aInitBufferLen = aSeg->generateInit(audioFrame->getHdrBuffer(), audioFrame->getHdrLength(), aInitBuffer);
             aInitFile.write((char*)aInitBuffer,aInitBufferLen);
-            aHeaderFile.write((char*)audioFrame->getHdrBuffer(),audioFrame->getHdrLength());
+            aHeaderFile.write((char*)audioFrame->getHdrBuffer(), audioFrame->getHdrLength());
         }
     }
 
