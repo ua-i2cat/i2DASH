@@ -1,1 +1,3 @@
 g++ -std=c++11 test/simpleTest.cpp src/* ../libi2dash/src/* -Iinclude -I../libi2dash/include -D__STDC_CONSTANT_MACROS -lavformat -lavcodec -lavutil -o simple
+g++ -std=c++11 test/DashVideoSegmenterTest.cpp src/DashVideoSegmenter.cpp ../libi2dash/src/* -Iinclude -I../libi2dash/include -lcpptest -o DashVideoSegmenterTest
+g++ -std=c++11 test/DashAudioSegmenterTest.cpp src/DashAudioSegmenter.cpp ../libi2dash/src/* -Iinclude -I../libi2dash/include -lcpptest -o DashAudioSegmenterTest
