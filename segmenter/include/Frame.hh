@@ -55,11 +55,7 @@ public:
     
     void setVideoSize(int width, int height);
     
-    unsigned char* getHdrBuffer() {return frameHBuff;};
-    size_t getHdrLength() {return frameHLen;};
     bool isIntra() {return intra;};
-    
-    void setHdrBuffer(unsigned char *buff, size_t length);
     
     int getWidth() {return width;};
     int getHeight() {return height;};
@@ -68,9 +64,6 @@ public:
     
 private:
     int width, height;
-    
-    unsigned char *frameHBuff;
-    size_t frameHLen;
     bool intra;
 };
 
@@ -81,11 +74,6 @@ public:
     
     ~AACFrame();
     
-    unsigned char* getHdrBuffer() {return frameHBuff;};
-    size_t getHdrLength() {return frameHLen;};
-    
-    void setHdrBuffer(unsigned char *buff, size_t length);
-
     int getSampleRate() {return sampleRate;};
     void setSampleRate(int sRate);
     
@@ -93,9 +81,6 @@ public:
     
 private:
     int sampleRate;
-
-    unsigned char *frameHBuff;
-    size_t frameHLen;
 };
 
 #endif

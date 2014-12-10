@@ -31,7 +31,7 @@
 class DashVideoSegmenter {
     
 public:
-    DashVideoSegmenter(int segmentDurationSeconds = DEFAULT_VIDEO_SEG_DURATION);
+    DashVideoSegmenter();
     ~DashVideoSegmenter();
 
     bool init();
@@ -41,6 +41,9 @@ public:
     
 private:
     int segDurationInSec;
+    int width;
+    int height;
+    int framerate;
     i2ctx* dashContext;
     std::chrono::milliseconds previousTimestamp;
 

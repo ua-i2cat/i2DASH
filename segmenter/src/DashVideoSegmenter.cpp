@@ -22,22 +22,29 @@
 
 size_t getBytesIndicatingNalSizeFromMetadata(unsigned char* metadata);
 
-DashVideoSegmenter::DashVideoSegmenter(int segmentDurationSeconds) 
-: segDurationInSec(segmentDurationSeconds), dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0))
+DashVideoSegmenter::DashVideoSegmenter() 
+: segDurationInSec(0), dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), width(0), height(0), framerate(0)
 {
 }
 
-bool DashVideoSegmenter::init() 
+bool DashVideoSegmenter::init(int segDurationInSec, int width, int height, int framerate) 
 {
     uint8_t i2error;
 
-    i2error = context_initializer(&dashContext, VIDEO_TYPE);
+    this->width = width;
+    this->height = height;
+    this->framerate = framerate;
+    this->segDurationInSec = segDurationInSec;
 
-    if (i2error == I2ERROR_MEDIA_TYPE) {
+    i2error = generate_context(&dashContext, VIDEO_TYPE);
+
+    if (i2error != I2OK) {
         return false;
     }
 
-    if(!dashContext) {
+    i2error = fill_video_context(&dashContext, width, height, framerate);
+
+    if (i2error != I2OK) {
         return false;
     }
 
@@ -49,7 +56,7 @@ DashVideoSegmenter::~DashVideoSegmenter()
 {
 }
 
-bool DashVideoSegmenter::generateInit(AVCCFrame* frame, DashSegment* segment) 
+bool DashVideoSegmenter::generateInit(unsigned char *metadata, size_t metadataSize, DashSegment* segment) 
 {
     size_t initSize = 0;
 
@@ -57,7 +64,7 @@ bool DashVideoSegmenter::generateInit(AVCCFrame* frame, DashSegment* segment)
         return false;
     }
 
-    initSize = new_init_video_handler(frame->getHdrBuffer(), frame->getHdrLength(), segment->getDataBuffer(), &dashContext);
+    initSize = new_init_video_handler(metadata, metadataSize, segment->getDataBuffer(), &dashContext);
 
     if (initSize == 0) {
         return false;
