@@ -80,9 +80,9 @@ void audio_context_initializer(i2ctx **context) {
 
     ctxAudio->aac_data_length = 0;
     ctxAudio->segment_data_size = 0;
-    ctxAudio->channels = 2;
-    ctxAudio->sample_rate = 44100;
-    ctxAudio->sample_size = 16;
+    ctxAudio->channels = 0;
+    ctxAudio->sample_rate = 0;
+    ctxAudio->sample_size = 0;
     ctxAudio->sequence_number = 0;
     ctxAudio->earliest_presentation_time = 0;
     ctxAudio->latest_presentation_time = 0;
@@ -110,7 +110,7 @@ void video_context_initializer(i2ctx **context) {
     ctxVideo->segment_data_size = 0;
     ctxVideo->width = 0;
     ctxVideo->height = 0;
-    ctxVideo->frame_rate = 24;
+    ctxVideo->frame_rate = 0;
     ctxVideo->earliest_presentation_time = 0;
     ctxVideo->latest_presentation_time = 0;
     ctxVideo->sequence_number = 0;
@@ -221,7 +221,6 @@ uint8_t get_width_height(byte *nal_sps, uint32_t *size_nal_sps, i2ctx_video **ct
 
     (*ctxVideo)->width = width;
     (*ctxVideo)->height = height;
-	//printf("width! %u, height! %u\n", width, height);
     bs_free(b);
     free(rbsp_buf);
     free(sps);
@@ -229,19 +228,73 @@ uint8_t get_width_height(byte *nal_sps, uint32_t *size_nal_sps, i2ctx_video **ct
     return 0;
 }
 
+uint8_t generate_context(i2ctx **context, uint32_t media_type) 
+{
+    if ((media_type != VIDEO_TYPE) && (media_type != AUDIO_TYPE) && (media_type != AUDIOVIDEO_TYPE)) {
+        (*context) = NULL;
+        return I2ERROR_MEDIA_TYPE;
+    }
 
-/*
-uint8_t get_width_height(i2ctx_video **ctxVideo) {
-    uint32_t width, height;
-	width = getWidth((*ctxVideo)->nalsHeader);
-	height = getHeight((*ctxVideo)->nalsHeader);
-	//printf("width! %u, height! %u\n", width, height);
-    (*ctxVideo)->width = width;
-    (*ctxVideo)->height = height;
+    *context = (i2ctx *) malloc(sizeof(i2ctx));
+    (*context)->reference_size = 0;
 
-    return 0;
+    if ((media_type == VIDEO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
+        video_context_initializer(context);
+    } else {
+        (*context)->ctxvideo = NULL;
+    }
+
+    if ((media_type == AUDIO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
+        audio_context_initializer(context);
+    } else {
+        (*context)->ctxaudio = NULL;
+    }
+
+    return I2OK;
 }
-*/
+
+uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uint32_t framerate) 
+{
+    uint32_t fps_per_cent = 0;
+
+    if ((*context) == NULL) {
+        return I2ERROR_CONTEXT_NULL;
+    }
+
+    if ((*context)->ctxvideo == NULL) {
+        return I2ERROR_CONTEXT_NULL;
+    }
+
+    (*context)->ctxvideo->width = width;
+    (*context)->ctxvideo->height = height;
+    (*context)->ctxvideo->frame_rate = framerate;
+
+    fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
+    // Threshold: 1/fps * %fps * 1000
+    (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
+
+    return I2OK;
+}
+
+uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_rate, uint32_t sample_size) 
+{
+    if ((*context) == NULL) {
+        return I2ERROR_CONTEXT_NULL;
+    }
+
+    if ((*context)->ctxaudio == NULL) {
+        return I2ERROR_CONTEXT_NULL;
+    }
+
+    (*context)->ctxaudio->channels = channels;
+    (*context)->ctxaudio->sample_rate = sample_rate;
+    (*context)->ctxaudio->sample_size = sample_size;
+
+    return I2OK;
+}
+
+
+
 uint8_t context_initializer(i2ctx **context, uint32_t media_type){
     if ((media_type != VIDEO_TYPE) && (media_type != AUDIO_TYPE) && (media_type != AUDIOVIDEO_TYPE)) {
         (*context) = NULL;
@@ -306,14 +359,9 @@ uint32_t new_init_video_handler(byte *metadata, uint32_t metadata_size, byte *ou
         return I2ERROR_SIZE_ZERO;
     }
 
-    extract_video_size_from_metadata(metadata, &width, &height);
-
-    if (width <= 0 || height <= 0) {
-        return I2ERROR_SPS_PPS;
+    if ((*context)->ctxvideo->width == 0 || (*context)->ctxvideo->height == 0 || (*context)->ctxvideo->framerate == 0) {
+        return I2ERROR_SIZE_ZERO;
     }
-
-    (*context)->ctxvideo->width = width;
-    (*context)->ctxvideo->height = height;
 
     initSize = initVideoGenerator(metadata, metadata_size, output_data, context);
 

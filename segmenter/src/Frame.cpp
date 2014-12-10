@@ -35,8 +35,7 @@ void Frame::setDataBuffer(unsigned char *buff, size_t length)
     frameLen = length;
 }
 
-AVCCFrame::AVCCFrame(): Frame(), width(0), height(0), 
-                        frameHBuff(NULL), frameHLen(0), intra(false)
+AVCCFrame::AVCCFrame(): Frame(), width(0), height(0), intra(false)
 {
 }
 
@@ -50,24 +49,16 @@ void AVCCFrame::setVideoSize(int width, int height)
     this->height = height;
 }
 
-void AVCCFrame::setHdrBuffer(unsigned char *buff, size_t length)
-{
-    frameHBuff = buff;
-    frameHLen = length;
-}
-    
 void AVCCFrame::clearFrame()
 {
     width = 0;
     height = 0;
     frameLen = 0;
-    frameHLen = 0;
     frameBuff = NULL;
-    frameHBuff = NULL;
     intra = false;
 }
 
-AACFrame::AACFrame(): Frame(), frameHBuff(NULL), frameHLen(0)
+AACFrame::AACFrame(): Frame(), sampleRate(0)
 {
 }
 
@@ -75,18 +66,10 @@ AACFrame::~AACFrame()
 {
 }
 
-void AACFrame::setHdrBuffer(unsigned char *buff, size_t length)
-{
-    frameHBuff = buff;
-    frameHLen = length;
-}
-    
 void AACFrame::clearFrame()
 {
     frameLen = 0;
-    frameHLen = 0;
     frameBuff = NULL;
-    frameHBuff = NULL;
 }
 
 void AACFrame::setSampleRate(int sRate)
