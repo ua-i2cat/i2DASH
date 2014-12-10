@@ -147,22 +147,24 @@ void generateInitTestSuite::setup()
 
 void generateInitTestSuite::generateInit()
 {
+    std::string dummyPath("");
+    DashSegment* initSegment = new DashSegment(dummyPath);
+    AVCCFrame* frame = new AVCCFrame();
+    frame->setHdrBuffer(inputData, inputDataSize);
+
     int diff = 0;
-    size_t initBufferLen = 0;
-    size_t bufferMaxLen = 1024*1024; //1MB
-    unsigned char* initBuffer = new unsigned char[bufferMaxLen];
 
-    initBufferLen = vSeg->generateInit(inputData, inputDataSize, initBuffer);
+    vSeg->generateInit(frame, initSegment);
 
-    if (initBufferLen != outputDataSize) {
+    if (initSegment->getDataLength() != outputDataSize) {
         TEST_FAIL("Init buffer length invalid");
     }
 
-    diff = memcmp(initBuffer, outputData, initBufferLen);
+    diff = memcmp(initSegment->getDataBuffer(), outputData, initSegment->getDataLength());
 
     TEST_ASSERT_MSG(diff == 0, "Init does not coincide with init file model");
 
-    delete initBuffer;
+    delete initSegment;
 }
 
 void generateInitTestSuite::tear_down()

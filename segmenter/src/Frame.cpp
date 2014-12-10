@@ -1,5 +1,5 @@
 /*
- *  AVCCFrame - Video frame for H264 AVCC format
+ *  Frame - AV Frame structure
  *  Copyright (C) 2013  Fundació i2CAT, Internet i Innovació digital a Catalunya
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 #include "Frame.hh"
 
-Frame::Frame() : frameBuff(NULL), frameLen(0)
+Frame::Frame() : frameBuff(NULL), frameLen(0), timestamp(std::chrono::milliseconds(0))
 {
 }
 
@@ -36,7 +36,7 @@ void Frame::setDataBuffer(unsigned char *buff, size_t length)
 }
 
 AVCCFrame::AVCCFrame(): Frame(), width(0), height(0), 
-                        frameHBuff(NULL), frameHLen(0)
+                        frameHBuff(NULL), frameHLen(0), intra(false)
 {
 }
 
@@ -64,6 +64,7 @@ void AVCCFrame::clearFrame()
     frameHLen = 0;
     frameBuff = NULL;
     frameHBuff = NULL;
+    intra = false;
 }
 
 AACFrame::AACFrame(): Frame(), frameHBuff(NULL), frameHLen(0)

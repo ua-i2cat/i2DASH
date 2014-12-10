@@ -20,9 +20,10 @@
 
 #include "DashVideoSegmenter.hh"
 
+size_t getBytesIndicatingNalSizeFromMetadata(unsigned char* metadata);
 
 DashVideoSegmenter::DashVideoSegmenter(int segmentDurationSeconds) 
-: segDurationInSec(segmentDurationSeconds), dashContext(NULL)
+: segDurationInSec(segmentDurationSeconds), dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0))
 {
 }
 
@@ -48,15 +49,47 @@ DashVideoSegmenter::~DashVideoSegmenter()
 {
 }
 
-size_t DashVideoSegmenter::generateInit(unsigned char* metadata, size_t metadataSize, unsigned char* initBuffer) 
+bool DashVideoSegmenter::generateInit(AVCCFrame* frame, DashSegment* segment) 
 {
     size_t initSize = 0;
 
     if (!dashContext) {
-        return initSize;
+        return false;
     }
 
-    initSize = new_init_video_handler(metadata, metadataSize, initBuffer, &dashContext);
+    initSize = new_init_video_handler(frame->getHdrBuffer(), frame->getHdrLength(), segment->getDataBuffer(), &dashContext);
 
-    return initSize;
+    if (initSize == 0) {
+        return false;
+    }
+
+    segment->setDataLength(initSize);
+
+    return true;
 }
+
+bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment) 
+{
+    std::chrono::milliseconds sampleDuration;
+    std::chrono::milliseconds frameTimestamp = frame->getTimestamp();
+    size_t segmentSize = 0;
+
+    if (!frame || !segment || frame->getDataLength() <= 0 || !dashContext) {
+        return false;
+    }
+
+    //TODO: first frame duration
+    sampleDuration = frameTimestamp - previousTimestamp;
+    previousTimestamp = frameTimestamp; 
+
+    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), sampleDuration.count(), 
+                             frameTimestamp.count(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
+
+    if (segmentSize <= I2ERROR_MAX) {
+        return false;
+    }
+
+    segment->setDataLength(segmentSize);
+    return true;
+}
+
