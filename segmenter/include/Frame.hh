@@ -45,7 +45,7 @@ public:
 protected:
     unsigned char *frameBuff;
     size_t frameLen;
-    std::chrono::milliseconds timestamp;
+    std::chrono::milliseconds presentationTime;
 };
 
 class AVCCFrame : public Frame {

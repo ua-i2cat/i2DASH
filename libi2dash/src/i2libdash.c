@@ -293,8 +293,6 @@ uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_r
     return I2OK;
 }
 
-
-
 uint8_t context_initializer(i2ctx **context, uint32_t media_type){
     if ((media_type != VIDEO_TYPE) && (media_type != AUDIO_TYPE) && (media_type != AUDIOVIDEO_TYPE)) {
         (*context) = NULL;
@@ -340,8 +338,6 @@ void extract_video_size_from_metadata(byte *metadata, uint32_t* width, uint32_t*
 uint32_t new_init_video_handler(byte *metadata, uint32_t metadata_size, byte *output_data, i2ctx **context) 
 {
     uint32_t initSize;
-    uint32_t width = 0;
-    uint32_t height = 0;
 
     if ((*context) == NULL) {
         return I2ERROR_CONTEXT_NULL;
@@ -359,7 +355,7 @@ uint32_t new_init_video_handler(byte *metadata, uint32_t metadata_size, byte *ou
         return I2ERROR_SIZE_ZERO;
     }
 
-    if ((*context)->ctxvideo->width == 0 || (*context)->ctxvideo->height == 0 || (*context)->ctxvideo->framerate == 0) {
+    if ((*context)->ctxvideo->width == 0 || (*context)->ctxvideo->height == 0 || (*context)->ctxvideo->frame_rate == 0) {
         return I2ERROR_SIZE_ZERO;
     }
 

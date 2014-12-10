@@ -27,11 +27,11 @@
 #include <sys/stat.h>
 
 Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), videoStreamIdx(-1), 
-                    audioStreamIdx(-1), framesCounter(0), 
-                    isOpen(false), audioBitRate(0), videoBitRate(0),
-                    sampleRate(0), fps(0.0), vStartTime(vTime),
-                    aStartTime(aTime), videoFrame(new AVCCFrame()), 
-                    audioFrame(new AACFrame())
+                    audioStreamIdx(-1), framesCounter(0), isOpen(false), 
+                    videoBitRate(0), audioBitRate(0), fps(0.0), width(0),
+                    height(0), channels(0), sampleRate(0), bitsPerSample(0),
+                    vStartTime(aTime), aStartTime(aTime), 
+                    videoFrame(new AVCCFrame()), audioFrame(new AACFrame())
 {   
     av_register_all();
     av_init_packet(&pkt);
@@ -134,17 +134,43 @@ bool Demuxer::findVideoStream()
     }
     
     videoStreamIdx = av_find_best_stream(fmtCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    if (videoStreamIdx >= 0 && videoStreamIdx != audioStreamIdx){
+    if (videoStreamIdx >= 0 && videoStreamIdx != audioStreamIdx) {
         
-        fps = (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.num / (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.den;
         videoBitRate = fmtCtx->streams[videoStreamIdx]->codec->bit_rate;
-        
-        if (validVideoCodec() && fps > 0 && videoBitRate > 0){
+        width = fmtCtx->streams[videoStreamIdx]->codec->width;
+        height = fmtCtx->streams[videoStreamIdx]->codec->height;
+        fps = (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.num / (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.den;
+
+        if (validVideoCodec() && fps > 0 && videoBitRate > 0 && width > 0 && height > 0){
             return true;
         }   
     }
     
     videoStreamIdx = -1;
+    
+    return false;
+}
+
+bool Demuxer::findAudioStream()
+{
+    if (!isOpen){
+        return false;
+    }
+    
+    audioStreamIdx = av_find_best_stream(fmtCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+    if (audioStreamIdx >= 0 && videoStreamIdx != audioStreamIdx){
+        
+        audioBitRate = fmtCtx->streams[audioStreamIdx]->codec->bit_rate;
+        channels = fmtCtx->streams[audioStreamIdx]->codec->channels;
+        sampleRate = fmtCtx->streams[audioStreamIdx]->codec->sample_rate;
+        bitsPerSample = av_get_bytes_per_sample(fmtCtx->streams[audioStreamIdx]->codec->sample_fmt) * 8; //Bytes to bits;
+
+        if (validAudioCodec() && channels > 0 && sampleRate > 0 && sampleRate > 0 && audioBitRate > 0) {
+            return true;
+        }
+    }
+    
+    audioStreamIdx = -1;
     
     return false;
 }
@@ -176,27 +202,6 @@ bool Demuxer::validAudioCodec()
     return true;
 }
 
-bool Demuxer::findAudioStream()
-{
-    if (!isOpen){
-        return false;
-    }
-    
-    audioStreamIdx = av_find_best_stream(fmtCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
-    if (audioStreamIdx >= 0 && videoStreamIdx != audioStreamIdx){
-        
-        sampleRate = fmtCtx->streams[audioStreamIdx]->codec->sample_rate;
-        audioBitRate = fmtCtx->streams[audioStreamIdx]->codec->bit_rate;
-                    
-        if (validAudioCodec() && sampleRate > 0 && audioBitRate > 0){
-            return true;
-        }
-    }
-    
-    audioStreamIdx = -1;
-    
-    return false;
-}
 
 bool Demuxer::hasVideo()
 {
@@ -214,6 +219,90 @@ bool Demuxer::hasAudio()
     }
     
     return audioStreamIdx >= 0;
+}
+
+unsigned char* Demuxer::getVideoExtraData()
+{
+    unsigned char* data = NULL;
+
+    if (!isOpen || fmtCtx == NULL || videoStreamIdx < 0) {
+        return data;
+    }
+
+    if (!fmtCtx->streams[videoStreamIdx]->codec) {
+        return data;
+    }
+
+    if (!fmtCtx->streams[videoStreamIdx]->codec->extradata) {
+        return data;
+    }
+
+    data = fmtCtx->streams[videoStreamIdx]->codec->extradata;
+
+    return data;
+}
+
+size_t Demuxer::getVideoExtraDataLength()
+{
+    size_t size = 0;
+
+    if (!isOpen || fmtCtx == NULL || videoStreamIdx < 0) {
+        return size;
+    }
+
+    if (!fmtCtx->streams[videoStreamIdx]->codec) {
+        return size;
+    }
+
+    if (!fmtCtx->streams[videoStreamIdx]->codec->extradata) {
+        return size;
+    }
+
+    size = fmtCtx->streams[videoStreamIdx]->codec->extradata_size;
+
+    return size;
+}
+
+unsigned char* Demuxer::getAudioExtraData()
+{
+     unsigned char* data = NULL;
+
+    if (!isOpen || fmtCtx == NULL || audioStreamIdx < 0) {
+        return data;
+    }
+
+    if (!fmtCtx->streams[audioStreamIdx]->codec) {
+        return data;
+    }
+
+    if (!fmtCtx->streams[audioStreamIdx]->codec->extradata) {
+        return data;
+    }
+
+    data = fmtCtx->streams[audioStreamIdx]->codec->extradata;
+
+    return data;
+}
+
+size_t Demuxer::getAudioExtraDataLength()
+{
+    size_t size = 0;
+
+    if (!isOpen || fmtCtx == NULL || audioStreamIdx < 0) {
+        return size;
+    }
+
+    if (!fmtCtx->streams[audioStreamIdx]->codec) {
+        return size;
+    }
+
+    if (!fmtCtx->streams[audioStreamIdx]->codec->extradata) {
+        return size;
+    }
+
+    size = fmtCtx->streams[audioStreamIdx]->codec->extradata_size;
+
+    return size;
 }
 
 Frame* const Demuxer::readFrame(int &gotFrame)
@@ -245,11 +334,6 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
         if (pkt.stream_index == videoStreamIdx) {
             videoFrame->setDataBuffer(pkt.data, pkt.size);
-            if (fmtCtx->streams[videoStreamIdx]->codec->extradata_size > 0){
-                videoFrame->setHdrBuffer(fmtCtx->streams[videoStreamIdx]->codec->extradata, 
-                                   fmtCtx->streams[videoStreamIdx]->codec->extradata_size);
-            }
-            videoFrame->setVideoSize(fmtCtx->streams[videoStreamIdx]->codec->width, fmtCtx->streams[videoStreamIdx]->codec->height);
             
             time = (uint64_t) ((double) pkt.pts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
@@ -261,10 +345,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
         if (pkt.stream_index == audioStreamIdx) {
             audioFrame->setDataBuffer(pkt.data, pkt.size);
-            if (fmtCtx->streams[audioStreamIdx]->codec->extradata_size > 0){
-                audioFrame->setHdrBuffer(fmtCtx->streams[audioStreamIdx]->codec->extradata, 
-                                       fmtCtx->streams[audioStreamIdx]->codec->extradata_size);
-            }
+            
             time = (uint64_t) ((double) pkt.pts * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + aStartTime;
                 

@@ -21,7 +21,7 @@
 
 #include "Frame.hh"
 
-Frame::Frame() : frameBuff(NULL), frameLen(0), timestamp(std::chrono::milliseconds(0))
+Frame::Frame() : frameBuff(NULL), frameLen(0)
 {
     presentationTime = std::chrono::milliseconds(-1);
 }

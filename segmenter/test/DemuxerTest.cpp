@@ -135,10 +135,14 @@ void DemuxerSuite::findStreams()
     if (demux->hasVideo()){
         TEST_ASSERT(demux->getVideoBitRate() > 0);
         TEST_ASSERT(demux->getFPS() > 0);
+        TEST_ASSERT(demux->getWidth() > 0);
+        TEST_ASSERT(demux->getHeight() > 0);
     } 
-    if (demux->hasVideo()){
+    if (demux->hasAudio()){
         TEST_ASSERT(demux->getAudioBitRate() > 0);
         TEST_ASSERT(demux->getAudioSampleRate() > 0);
+        TEST_ASSERT(demux->getAudioBitsPerSample() > 0);
+        TEST_ASSERT(demux->getAudioChannels() > 0);
     } 
 }
 
@@ -160,19 +164,13 @@ void DemuxerSuite::readFrame()
         if (dynamic_cast<AVCCFrame*>(frame)){
             vFrame = dynamic_cast<AVCCFrame*>(frame);
             videoFrame = true;
-            TEST_ASSERT(vFrame->getWidth() > 0);
-            TEST_ASSERT(vFrame->getHeight() > 0);
             TEST_ASSERT(vFrame->getDataBuffer() != NULL);
             TEST_ASSERT(vFrame->getDataLength() > 0);
-            TEST_ASSERT(vFrame->getHdrBuffer() != NULL);
-            TEST_ASSERT(vFrame->getHdrLength() > 0);
         } else if (dynamic_cast<AACFrame*>(frame)){
             aFrame = dynamic_cast<AACFrame*>(frame);
             audioFrame = true;
             TEST_ASSERT(aFrame->getDataBuffer() != NULL);
             TEST_ASSERT(aFrame->getDataLength() > 0);
-            TEST_ASSERT(aFrame->getHdrBuffer() != NULL);
-            TEST_ASSERT(aFrame->getHdrLength() > 0);
         }
     } while(gotFrame >= 0);
     

@@ -34,18 +34,18 @@ public:
     DashVideoSegmenter();
     ~DashVideoSegmenter();
 
-    bool init();
-    bool generateInit(AVCCFrame* frame, DashSegment* segment);
+    bool init(size_t segDurationInSec, size_t width, size_t height, size_t framerate); 
+    bool generateInit(unsigned char* metadata, size_t metadataSize, DashSegment* segment);
     bool addToSegment(AVCCFrame* frame, DashSegment* segment); 
 
     
 private:
-    int segDurationInSec;
-    int width;
-    int height;
-    int framerate;
+    size_t segDurationInSec;
     i2ctx* dashContext;
     std::chrono::milliseconds previousTimestamp;
+    size_t width;
+    size_t height;
+    size_t framerate;
 
 };
 
