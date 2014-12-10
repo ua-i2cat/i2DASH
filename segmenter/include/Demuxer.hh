@@ -37,15 +37,24 @@ using namespace std;
 
 class Demuxer {
 public:
-    Demuxer();
+    Demuxer(uint64_t vTime = 0, uint64_t aTime = 0);
     ~Demuxer();
     
     bool openInput(string filename);
     void closeInput();
     void dumpFormat();
     bool findStreams();
-    Frame* readFrame(int& gotFrame);
+    Frame* const readFrame(int& gotFrame);
     
+    uint32_t getAudioSampleRate() {return sampleRate;};
+    float getFPS(){return fps;};
+    
+    uint32_t getAudioBitRate() {return audioBitRate;};
+    uint32_t getVideoBitRate() {return videoBitRate;};
+    
+    bool hasVideo();
+    bool hasAudio();
+        
 private:
     bool sourceExists(string filename);
     bool findVideoStream();
@@ -55,15 +64,22 @@ private:
           
 private:
     AVFormatContext *fmtCtx;
-    AVStream *videoStream, *audioStream;
     AVPacket pkt;
     
     int videoStreamIdx, audioStreamIdx;
     int framesCounter;
     bool isOpen;
     
-    AVCCFrame* videoFrame;
-    AACFrame* audioFrame;
+    uint32_t audioBitRate;
+    uint32_t videoBitRate;
+    uint32_t sampleRate;
+    float fps;
+    
+    uint64_t vStartTime;
+    uint64_t aStartTime;
+    
+    AVCCFrame* const videoFrame;
+    AACFrame* const audioFrame;
 };
 
 #endif

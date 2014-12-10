@@ -26,12 +26,13 @@
 #include <iostream>
 #include <sys/stat.h>
 
-Demuxer::Demuxer(): fmtCtx(NULL), videoStream(NULL), 
-                                audioStream(NULL), videoStreamIdx(-1), 
-                                audioStreamIdx(-1), framesCounter(0), 
-                                isOpen(false), videoFrame(new AVCCFrame()),
-                                audioFrame(new AACFrame())
-{
+Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), videoStreamIdx(-1), 
+                    audioStreamIdx(-1), framesCounter(0), 
+                    isOpen(false), audioBitRate(0), videoBitRate(0),
+                    sampleRate(0), fps(0.0), vStartTime(vTime),
+                    aStartTime(aTime), videoFrame(new AVCCFrame()), 
+                    audioFrame(new AACFrame())
+{   
     av_register_all();
     av_init_packet(&pkt);
     pkt.data = NULL;
@@ -134,11 +135,14 @@ bool Demuxer::findVideoStream()
     
     videoStreamIdx = av_find_best_stream(fmtCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
     if (videoStreamIdx >= 0 && videoStreamIdx != audioStreamIdx){
-        videoStream = fmtCtx->streams[videoStreamIdx];
-        if (validVideoCodec()){
+        
+        fps = (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.num / (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.den;
+        videoBitRate = fmtCtx->streams[videoStreamIdx]->codec->bit_rate;
+        
+        if (validVideoCodec() && fps > 0 && videoBitRate > 0){
             return true;
         }   
-    } 
+    }
     
     videoStreamIdx = -1;
     
@@ -147,11 +151,11 @@ bool Demuxer::findVideoStream()
 
 bool Demuxer::validVideoCodec()
 {
-    if (!isOpen || videoStream == NULL){
+    if (!isOpen || videoStreamIdx < 0){
         return false;
     }
     
-    if (videoStream->codec->codec_id != CODEC_ID_H264){
+    if (fmtCtx->streams[videoStreamIdx]->codec->codec_id != CODEC_ID_H264){
         return false;
     }
     
@@ -160,11 +164,11 @@ bool Demuxer::validVideoCodec()
 
 bool Demuxer::validAudioCodec()
 {
-    if (!isOpen || audioStream == NULL){
+    if (!isOpen || audioStreamIdx < 0){
         return false;
     }
     
-    if (audioStream->codec->codec_id != CODEC_ID_AAC){
+    if (fmtCtx->streams[audioStreamIdx]->codec->codec_id != CODEC_ID_AAC){
         cerr << "Invalid codec. It must be AAC" << endl;
         return false;
     }
@@ -180,8 +184,11 @@ bool Demuxer::findAudioStream()
     
     audioStreamIdx = av_find_best_stream(fmtCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
     if (audioStreamIdx >= 0 && videoStreamIdx != audioStreamIdx){
-        audioStream = fmtCtx->streams[audioStreamIdx];
-        if (validAudioCodec()){
+        
+        sampleRate = fmtCtx->streams[audioStreamIdx]->codec->sample_rate;
+        audioBitRate = fmtCtx->streams[audioStreamIdx]->codec->bit_rate;
+                    
+        if (validAudioCodec() && sampleRate > 0 && audioBitRate > 0){
             return true;
         }
     }
@@ -191,8 +198,28 @@ bool Demuxer::findAudioStream()
     return false;
 }
 
-Frame* Demuxer::readFrame(int &gotFrame)
+bool Demuxer::hasVideo()
 {
+    if (!isOpen || fmtCtx == NULL){
+        return false;
+    }
+    
+    return videoStreamIdx >= 0;
+}
+
+bool Demuxer::hasAudio()
+{
+    if (!isOpen || fmtCtx == NULL){
+        return false;
+    }
+    
+    return audioStreamIdx >= 0;
+}
+
+Frame* const Demuxer::readFrame(int &gotFrame)
+{
+    uint64_t time;
+    
     gotFrame = -1;
     
     if (!isOpen){
@@ -218,30 +245,33 @@ Frame* Demuxer::readFrame(int &gotFrame)
 
         if (pkt.stream_index == videoStreamIdx) {
             videoFrame->setDataBuffer(pkt.data, pkt.size);
-            if (videoStream->codec->extradata_size > 0){
-                videoFrame->setHdrBuffer(videoStream->codec->extradata, 
-                                   videoStream->codec->extradata_size);
+            if (fmtCtx->streams[videoStreamIdx]->codec->extradata_size > 0){
+                videoFrame->setHdrBuffer(fmtCtx->streams[videoStreamIdx]->codec->extradata, 
+                                   fmtCtx->streams[videoStreamIdx]->codec->extradata_size);
             }
-            videoFrame->setVideoSize(videoStream->codec->width, videoStream->codec->height);
-            //TODO: set timestamp, bitrate, others...
+            videoFrame->setVideoSize(fmtCtx->streams[videoStreamIdx]->codec->width, fmtCtx->streams[videoStreamIdx]->codec->height);
+            
+            time = (uint64_t) ((double) pkt.pts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
+                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
+            
+            videoFrame->setPresentationTime(std::chrono::milliseconds(time));
+
             return videoFrame;
         }
 
         if (pkt.stream_index == audioStreamIdx) {
             audioFrame->setDataBuffer(pkt.data, pkt.size);
-            if (audioStream->codec->extradata_size > 0){
-                audioFrame->setHdrBuffer(audioStream->codec->extradata, 
-                                       audioStream->codec->extradata_size);
+            if (fmtCtx->streams[audioStreamIdx]->codec->extradata_size > 0){
+                audioFrame->setHdrBuffer(fmtCtx->streams[audioStreamIdx]->codec->extradata, 
+                                       fmtCtx->streams[audioStreamIdx]->codec->extradata_size);
             }
+            time = (uint64_t) ((double) pkt.pts * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
+                (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + aStartTime;
+                
+            audioFrame->setPresentationTime(std::chrono::milliseconds(time));
 
-            audioFrame->setSampleRate(audioStream->codec->sample_rate);
-
-            //TODO: set other parameters
             return audioFrame;
         } 
-
-        cout << "Unknown frame, size: " << pkt.size << " idx: " << pkt.stream_index << endl;
-        
     }
     
     return NULL;
