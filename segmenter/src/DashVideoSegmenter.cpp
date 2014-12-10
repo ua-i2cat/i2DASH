@@ -27,7 +27,7 @@ DashVideoSegmenter::DashVideoSegmenter()
 {
 }
 
-bool DashVideoSegmenter::init(int segDurationInSec, int width, int height, int framerate) 
+bool DashVideoSegmenter::init(size_t segDurationInSec, size_t width, size_t height, size_t framerate) 
 {
     uint8_t i2error;
 
@@ -78,7 +78,7 @@ bool DashVideoSegmenter::generateInit(unsigned char *metadata, size_t metadataSi
 bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment) 
 {
     std::chrono::milliseconds sampleDuration;
-    std::chrono::milliseconds frameTimestamp = frame->getTimestamp();
+    std::chrono::milliseconds frameTimestamp = frame->getPresentationTime();
     size_t segmentSize = 0;
 
     if (!frame || !segment || frame->getDataLength() <= 0 || !dashContext) {

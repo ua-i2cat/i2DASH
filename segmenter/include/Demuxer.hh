@@ -46,14 +46,24 @@ public:
     bool findStreams();
     Frame* const readFrame(int& gotFrame);
     
-    uint32_t getAudioSampleRate() {return sampleRate;};
     float getFPS(){return fps;};
-    
-    uint32_t getAudioBitRate() {return audioBitRate;};
+    size_t getWidth(){return width;};
+    size_t getHeight(){return height;};
     uint32_t getVideoBitRate() {return videoBitRate;};
+    
+    uint32_t getAudioSampleRate() {return sampleRate;};
+    uint32_t getAudioChannels() {return channels;};
+    uint32_t getAudioBitsPerSample() {return bitsPerSample;};
+    uint32_t getAudioBitRate() {return audioBitRate;};
     
     bool hasVideo();
     bool hasAudio();
+
+    unsigned char* getVideoExtraData();
+    size_t getVideoExtraDataLength();
+
+    unsigned char* getAudioExtraData();
+    size_t getAudioExtraDataLength();
         
 private:
     bool sourceExists(string filename);
@@ -70,10 +80,16 @@ private:
     int framesCounter;
     bool isOpen;
     
-    uint32_t audioBitRate;
     uint32_t videoBitRate;
-    uint32_t sampleRate;
+    uint32_t audioBitRate;
+
     float fps;
+    size_t width;
+    size_t height;
+    
+    size_t channels;
+    size_t sampleRate;
+    size_t bitsPerSample;
     
     uint64_t vStartTime;
     uint64_t aStartTime;

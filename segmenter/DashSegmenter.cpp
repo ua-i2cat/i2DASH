@@ -68,39 +68,41 @@ int main(int argc, char* argv[])
     demux->findStreams();
     demux->dumpFormat();
 
-    if (!vSeg->init()) {
-        cout << "Error initializing Video Segmenter" << endl;
-        exit(1);
+    if (demux->hasVideo()) {
+        if (!vSeg->init(DEFAULT_VIDEO_SEG_DURATION, demux->getWidth(), demux->getHeight(), demux->getFPS())) {
+            cout << "Error initializing Video Segmenter" << endl;
+            exit(1);
+        }
+
+        if (vSeg->generateInit(demux->getVideoExtraData(), demux->getVideoExtraDataLength(), vInitSegment)) {
+            vInitSegment->writeToDisk();
+        }
     }
 
-    if (!aSeg->init()) {
-        cout << "Error initializing Audio Segmenter" << endl;
-        exit(1);
+    if (demux->hasAudio()) {
+        if (!aSeg->init(DEFAULT_VIDEO_SEG_DURATION, demux->getWidth(), demux->getHeight(), demux->getFPS())) {
+            cout << "Error initializing Audio Segmenter" << endl;
+            exit(1);
+        }
+
+        if (aSeg->generateInit(demux->getAudioExtraData(), demux->getAudioExtraDataLength(), aInitSegment)) {
+            aInitSegment->writeToDisk();
+        }
     }
+
 
     while (gotFrame >= 0){
-    // while (!initDone || !segmentDone) {
 
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
             
-            if (vSeg->generateInit(videoFrame, vInitSegment)) {
-                vInitSegment->writeToDisk();
-            }
-
             if (vSeg->addToSegment(videoFrame, vSegment)) {
                 vSegment->writeToDisk();
             }
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
-
-            aSeg->setSampleRate(audioFrame->getSampleRate());
-
-            if (aSeg->generateInit(audioFrame, aInitSegment)) {
-                aInitSegment->writeToDisk();
-            }
 
             if (aSeg->addToSegment(audioFrame, aSegment)) {
                 aSegment->writeToDisk();
