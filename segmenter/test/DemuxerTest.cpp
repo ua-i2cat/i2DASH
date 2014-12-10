@@ -23,9 +23,12 @@
 #include <string>
 #include <iostream>
 #include <cpptest.h>
+#include <chrono>
 
 #include "Demuxer.hh"
 #include "Frame.hh"
+
+#define BIG_START_TIME 4294967296 // 2^32
 
 using namespace std;
 
@@ -37,20 +40,28 @@ public:
         //TODO: check the best way to pass parameters to the test suite
         argc_ = argc;
         argv_ = argv;
-        /*TEST_ADD(DemuxerSuite::correctParams)
+        TEST_ADD(DemuxerSuite::correctParams)
         TEST_ADD(DemuxerSuite::constructorTest)
         TEST_ADD(DemuxerSuite::openInput)
         TEST_ADD(DemuxerSuite::dumpFormat)
         TEST_ADD(DemuxerSuite::findStreams)
         TEST_ADD(DemuxerSuite::readFrame)
         TEST_ADD(DemuxerSuite::closeInput)
-        TEST_ADD(DemuxerSuite::destructorTest)*/
-        TEST_ADD(DemuxerSuite::general)
+        TEST_ADD(DemuxerSuite::destructorTest)
+        
+        TEST_ADD(DemuxerSuite::alternateConstructorTest)
+        TEST_ADD(DemuxerSuite::openInput)
+        TEST_ADD(DemuxerSuite::dumpFormat)
+        TEST_ADD(DemuxerSuite::findStreams)
+        TEST_ADD(DemuxerSuite::readFrame)
+        TEST_ADD(DemuxerSuite::closeInput)
+        TEST_ADD(DemuxerSuite::destructorTest)
     }
     
 private:
     int argc_;
     char **argv_;
+    uint64_t startTime;
     Demuxer* demux = NULL;
     void constructorTest();
     void correctParams();
@@ -60,22 +71,9 @@ private:
     void dumpFormat();
     void findStreams();
     void readFrame();
-    void general();
+    void alternateConstructorTest();
 };
 
-void DemuxerSuite::general()
-{
-    AVCCFrame* frame;
-    int gotFrame;
-    TEST_ASSERT(argc_ >= 2);
-    demux = new Demuxer();
-    TEST_ASSERT(demux != NULL);
-    TEST_ASSERT(demux->openInput(argv_[1]));
-    TEST_ASSERT(demux->findStreams());
-    demux->dumpFormat();
-    frame = dynamic_cast<AVCCFrame*>(demux->readFrame(gotFrame));
-    delete demux;
-}
 
 void DemuxerSuite::correctParams()
 {
@@ -86,8 +84,15 @@ void DemuxerSuite::constructorTest()
 {
     demux = new Demuxer();
     TEST_ASSERT(demux != NULL);
+    startTime = 0;
 }
 
+void DemuxerSuite::alternateConstructorTest()
+{
+    demux = new Demuxer(BIG_START_TIME, BIG_START_TIME);
+    TEST_ASSERT(demux != NULL);
+    startTime = BIG_START_TIME;
+}
 
 void DemuxerSuite::destructorTest()
 {
@@ -98,9 +103,13 @@ void DemuxerSuite::destructorTest()
 void DemuxerSuite::openInput()
 {
     TEST_ASSERT(demux != NULL);
+    TEST_ASSERT(!demux->hasVideo());
+    TEST_ASSERT(!demux->hasAudio());
     TEST_ASSERT(demux->openInput(argv_[1]));
     //TODO: redirect cerr
-    //TEST_ASSERT(!demux->openInput(argv_[1]));
+    TEST_ASSERT(!demux->openInput(argv_[1]));
+    TEST_ASSERT(!demux->hasVideo());
+    TEST_ASSERT(!demux->hasAudio());
 }
 
 void DemuxerSuite::closeInput()
@@ -108,13 +117,13 @@ void DemuxerSuite::closeInput()
     TEST_ASSERT(demux != NULL);
     demux->closeInput();
     //TODO: redirect cerr
-    //demux->closeInput();
+    demux->closeInput();
 }
 
 void DemuxerSuite::dumpFormat()
 {
     TEST_ASSERT(demux != NULL);
-    //TEST_ASSERT(!demux->openInput(argv_[1]));
+    TEST_ASSERT(!demux->openInput(argv_[1]));
     //TODO: assert format is correct
     demux->dumpFormat();
 }
@@ -123,43 +132,65 @@ void DemuxerSuite::findStreams()
 {
     TEST_ASSERT(demux != NULL);
     TEST_ASSERT(demux->findStreams());
+    if (demux->hasVideo()){
+        TEST_ASSERT(demux->getVideoBitRate() > 0);
+        TEST_ASSERT(demux->getFPS() > 0);
+    } 
+    if (demux->hasVideo()){
+        TEST_ASSERT(demux->getAudioBitRate() > 0);
+        TEST_ASSERT(demux->getAudioSampleRate() > 0);
+    } 
 }
 
 void DemuxerSuite::readFrame()
 {
-    AVCCFrame* frame;
+    AVCCFrame* vFrame;
+    AACFrame* aFrame;
+    Frame* frame;
     int gotFrame;
     bool videoFrame = false;
+    bool audioFrame = false;
+    
     TEST_ASSERT(demux != NULL);
-    //TEST_ASSERT(!demux->openInput(argv_[1]));
-    //TEST_ASSERT(demux->findVideoStream());
-    //TEST_ASSERT(demux->findAudioStream());
-    //do {
-        frame = dynamic_cast<AVCCFrame*>(demux->readFrame(gotFrame));
-        if (gotFrame >= 0 && frame != NULL){
-//             videoFrame = true;
-//             TEST_ASSERT(frame->getWidth() > 0);
-//             TEST_ASSERT(frame->getHeight() > 0);
-//             TEST_ASSERT(frame->getFrameBuf() != NULL);
-//             TEST_ASSERT(frame->getLength() > 0);
-//             TEST_ASSERT(frame->getFrameHBuf() != NULL);
-//             TEST_ASSERT(frame->getHLength() > 0);
+    TEST_ASSERT(!demux->openInput(argv_[1]));
+    TEST_ASSERT(demux->findStreams());
+    
+    do {
+        frame = demux->readFrame(gotFrame);
+        if (dynamic_cast<AVCCFrame*>(frame)){
+            vFrame = dynamic_cast<AVCCFrame*>(frame);
+            videoFrame = true;
+            TEST_ASSERT(vFrame->getWidth() > 0);
+            TEST_ASSERT(vFrame->getHeight() > 0);
+            TEST_ASSERT(vFrame->getDataBuffer() != NULL);
+            TEST_ASSERT(vFrame->getDataLength() > 0);
+            TEST_ASSERT(vFrame->getHdrBuffer() != NULL);
+            TEST_ASSERT(vFrame->getHdrLength() > 0);
+        } else if (dynamic_cast<AACFrame*>(frame)){
+            aFrame = dynamic_cast<AACFrame*>(frame);
+            audioFrame = true;
+            TEST_ASSERT(aFrame->getDataBuffer() != NULL);
+            TEST_ASSERT(aFrame->getDataLength() > 0);
+            TEST_ASSERT(aFrame->getHdrBuffer() != NULL);
+            TEST_ASSERT(aFrame->getHdrLength() > 0);
         }
-    //}while(gotFrame >= 0);
-    //TEST_ASSERT(videoFrame == true);
+    } while(gotFrame >= 0);
+    
+    if (demux->hasVideo()){
+        TEST_ASSERT(videoFrame == true);
+        TEST_ASSERT(vFrame != NULL);
+        TEST_ASSERT(vFrame->getPresentationTime() > std::chrono::milliseconds(startTime));
+    } 
+    
+    if (demux->hasAudio()){
+        TEST_ASSERT(audioFrame == true);
+        TEST_ASSERT(aFrame != NULL);
+        TEST_ASSERT(aFrame->getPresentationTime() > std::chrono::milliseconds(startTime));
+    }
 }
 
 int main(int argc, char* argv[])
 {
-    AVCCFrame* frame;
-    int gotFrame;
-    Demuxer* demux = new Demuxer();
-    
-    demux->openInput(argv[1]);
-    demux->findStreams();
-    demux->dumpFormat();
-    frame = dynamic_cast<AVCCFrame*>(demux->readFrame(gotFrame));
-    delete demux;
     try{
         Test::Suite ts;
         ts.add(auto_ptr<Test::Suite>(new DemuxerSuite(argc, argv)));
