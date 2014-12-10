@@ -34,9 +34,11 @@ public:
     
     unsigned char* getDataBuffer() {return frameBuff;};
     size_t getDataLength() {return frameLen;};
-    std::chrono::milliseconds getTimestamp() {return timestamp;};
 
     void setDataBuffer(unsigned char *buff, size_t length);
+    
+    void setPresentationTime(std::chrono::milliseconds pTime);
+    std::chrono::milliseconds getPresentationTime() {return presentationTime;};
     
     virtual void clearFrame() = 0;
     
