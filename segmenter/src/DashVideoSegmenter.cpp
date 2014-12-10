@@ -19,6 +19,7 @@
  */
 
 #include "DashVideoSegmenter.hh"
+#include <iostream>
 
 size_t getBytesIndicatingNalSizeFromMetadata(unsigned char* metadata);
 
