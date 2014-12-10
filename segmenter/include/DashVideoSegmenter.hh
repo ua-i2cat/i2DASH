@@ -26,8 +26,6 @@
 #include "DashSegment.hh"
 #include <chrono>
 
-#define DEFAULT_VIDEO_SEG_DURATION 1
-
 class DashVideoSegmenter {
     
 public:

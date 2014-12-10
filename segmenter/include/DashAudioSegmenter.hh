@@ -26,8 +26,6 @@
 #include "DashSegment.hh"
 #include <chrono>
 
-#define DEFAULT_AUDIO_SEG_DURATION 1
-
 class DashAudioSegmenter {
     
 public:

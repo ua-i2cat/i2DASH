@@ -25,6 +25,7 @@
 #include <string>
 
 #define SEGMENT_MAX_SIZE 1024*1024 //1MB
+#define SEGMENT_DEFAULT_DURATION 1 //second
 
 class DashSegment {
     

@@ -72,8 +72,8 @@ private:
     void generateInit();
     void tear_down();
 
-    int inputDataSize;
-    int outputDataSize;
+    size_t inputDataSize;
+    size_t outputDataSize;
     unsigned char* inputData;
     unsigned char* outputData;
 };
@@ -97,17 +97,13 @@ void initTestSuite::setup()
 
 void initTestSuite::init()
 {
-    size_t duration = TEST_SEGMENT_DURATION;
-    size_t width = TEST_VIDEO_WIDTH;
-    size_t height = TEST_VIDEO_HEIGHT;
-    size_t fps = TEST_VIDEO_FPS;
-
     if (vSeg == NULL) {
         TEST_FAIL("Segmenter instance is null. Check constructor test\n");
         return;
     }
 
-    TEST_ASSERT_MSG(vSeg->init(duration, width, height, fps), "VideoSegmenter init failed");
+    TEST_ASSERT_MSG(vSeg->init(TEST_SEGMENT_DURATION, TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS), 
+                     "VideoSegmenter init failed");
 }
 
 void generateInitTestSuite::setup()
@@ -123,7 +119,7 @@ void generateInitTestSuite::setup()
         return;
     }
 
-    if (!vSeg->init()) {
+    if (!vSeg->init(TEST_SEGMENT_DURATION, TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS)) {
         TEST_FAIL("Segmenter init failed. Check init test\n");
         return;
     }
@@ -159,12 +155,10 @@ void generateInitTestSuite::generateInit()
 {
     std::string dummyPath("");
     DashSegment* initSegment = new DashSegment(dummyPath);
-    AVCCFrame* frame = new AVCCFrame();
-    frame->setHdrBuffer(inputData, inputDataSize);
 
     int diff = 0;
 
-    vSeg->generateInit(frame, initSegment);
+    vSeg->generateInit(inputData, inputDataSize, initSegment);
 
     if (initSegment->getDataLength() != outputDataSize) {
         TEST_FAIL("Init buffer length invalid");

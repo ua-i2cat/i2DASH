@@ -26,6 +26,8 @@
 #include <iostream>
 #include <sys/stat.h>
 
+bool isIntra(unsigned char* data);
+
 Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), videoStreamIdx(-1), 
                     audioStreamIdx(-1), framesCounter(0), isOpen(false), 
                     videoBitRate(0), audioBitRate(0), fps(0.0), width(0),
@@ -334,6 +336,8 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
         if (pkt.stream_index == videoStreamIdx) {
             videoFrame->setDataBuffer(pkt.data, pkt.size);
+
+            videoFrame->setIntra(isIntra(pkt.data));
             
             time = (uint64_t) ((double) pkt.pts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
@@ -357,4 +361,10 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     
     return NULL;
 }
+
+bool isIntra(unsigned char* data)
+{
+    
+}
+
 
