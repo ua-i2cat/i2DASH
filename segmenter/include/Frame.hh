@@ -23,6 +23,7 @@
 #define _FRAME_HH
 
 #include <cstddef>
+#include <chrono>
 
 class Frame {
     
@@ -36,9 +37,13 @@ public:
 
     void setDataBuffer(unsigned char *buff, size_t length);
     
+    void setPresentationTime(std::chrono::milliseconds pTime);
+    std::chrono::milliseconds getPresentationTime() {return presentationTime;};
+    
     virtual void clearFrame() = 0;
     
 protected:
+    std::chrono::milliseconds presentationTime; 
     unsigned char *frameBuff;
     size_t frameLen;
 };
@@ -80,15 +85,10 @@ public:
     size_t getHdrLength() {return frameHLen;};
     
     void setHdrBuffer(unsigned char *buff, size_t length);
-
-    int getSampleRate() {return sampleRate;};
-    void setSampleRate(int sRate);
     
     void clearFrame();
     
 private:
-    int sampleRate;
-
     unsigned char *frameHBuff;
     size_t frameHLen;
 };

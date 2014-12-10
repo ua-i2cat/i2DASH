@@ -23,10 +23,16 @@
 
 Frame::Frame() : frameBuff(NULL), frameLen(0)
 {
+    presentationTime = std::chrono::milliseconds(-1);
 }
 
 Frame::~Frame()
 {
+}
+
+void Frame::setPresentationTime(std::chrono::milliseconds pTime)
+{
+    presentationTime = pTime;
 }
 
 void Frame::setDataBuffer(unsigned char *buff, size_t length)
@@ -87,10 +93,4 @@ void AACFrame::clearFrame()
     frameBuff = NULL;
     frameHBuff = NULL;
 }
-
-void AACFrame::setSampleRate(int sRate)
-{
-    sampleRate = sRate;
-}
-
 
