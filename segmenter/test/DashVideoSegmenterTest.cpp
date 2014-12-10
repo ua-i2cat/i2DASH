@@ -27,6 +27,11 @@
 
 #include "DashVideoSegmenter.hh"
 
+#define TEST_SEGMENT_DURATION 1
+#define TEST_VIDEO_WIDTH 1280
+#define TEST_VIDEO_HEIGHT 534
+#define TEST_VIDEO_FPS 24
+
 using namespace std;
 
 class dashVideoSegmenterTestSuite : public Test::Suite {
@@ -92,12 +97,17 @@ void initTestSuite::setup()
 
 void initTestSuite::init()
 {
+    size_t duration = TEST_SEGMENT_DURATION;
+    size_t width = TEST_VIDEO_WIDTH;
+    size_t height = TEST_VIDEO_HEIGHT;
+    size_t fps = TEST_VIDEO_FPS;
+
     if (vSeg == NULL) {
         TEST_FAIL("Segmenter instance is null. Check constructor test\n");
         return;
     }
 
-    TEST_ASSERT_MSG(vSeg->init(), "VideoSegmenter init failed");
+    TEST_ASSERT_MSG(vSeg->init(duration, width, height, fps), "VideoSegmenter init failed");
 }
 
 void generateInitTestSuite::setup()
