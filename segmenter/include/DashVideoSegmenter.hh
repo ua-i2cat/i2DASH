@@ -22,6 +22,9 @@
 #define _DASH_VIDEO_SEGMENTER_HH
 
 #include "i2libdash.h"
+#include "Frame.hh"
+#include "DashSegment.hh"
+#include <chrono>
 
 #define DEFAULT_VIDEO_SEG_DURATION 1
 
@@ -32,12 +35,14 @@ public:
     ~DashVideoSegmenter();
 
     bool init();
-    size_t generateInit(unsigned char* metadata, size_t metadataSize, unsigned char* initBuffer); 
+    bool generateInit(AVCCFrame* frame, DashSegment* segment);
+    bool addToSegment(AVCCFrame* frame, DashSegment* segment); 
+
     
 private:
-    i2ctx* dashContext;
     int segDurationInSec;
-
+    i2ctx* dashContext;
+    std::chrono::milliseconds previousTimestamp;
 
 };
 

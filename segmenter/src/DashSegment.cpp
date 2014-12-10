@@ -1,5 +1,5 @@
 /*
- *  DashAudioSegmenter - Audio DASH segmenter for AAC
+ *  DashSegment - DASH segment container class
  *  Copyright (C) 2013  Fundació i2CAT, Internet i Innovació digital a Catalunya
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -18,34 +18,30 @@
  *  Authors: Marc Palau <marc.palau@i2cat.net> 
  */
 
-#ifndef _DASH_AUDIO_SEGMENTER_HH
-#define _DASH_AUDIO_SEGMENTER_HH
-
-#include "i2libdash.h"
-#include "Frame.hh"
 #include "DashSegment.hh"
-#include <chrono>
+#include <fstream>
 
-#define DEFAULT_AUDIO_SEG_DURATION 1
+DashSegment::DashSegment(std::string outputFile) : dataLength(0), path(outputFile)
+{
+    data = new unsigned char[SEGMENT_MAX_SIZE];
+}
 
-class DashAudioSegmenter {
+DashSegment::~DashSegment()
+{
+    delete[] data;
+}
+
+void DashSegment::setDataLength(size_t length)
+{
+    dataLength = length;
+}
+
+void DashSegment::writeToDisk()
+{
+    const char* p = path.c_str();
+    std::ofstream file(p, std::ofstream::binary);
+    file.write((char*)data,dataLength);
+    file.close();
+}
+
     
-public:
-    DashAudioSegmenter(int segmentDurationSeconds = DEFAULT_AUDIO_SEG_DURATION);
-    ~DashAudioSegmenter();
-
-    bool init();
-    bool generateInit(AACFrame* frame, DashSegment* segment);
-    bool addToSegment(AACFrame* frame, DashSegment* segment); 
-    void setSampleRate(unsigned sampleRate);
-
-    
-private:
-    int segDurationInSec;
-    i2ctx* dashContext;
-    std::chrono::milliseconds previousTimestamp;
-    int fSampleRate;
-};
-
-
-#endif

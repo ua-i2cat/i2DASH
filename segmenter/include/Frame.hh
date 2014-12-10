@@ -23,6 +23,7 @@
 #define _FRAME_HH
 
 #include <cstddef>
+#include <chrono>
 
 class Frame {
     
@@ -33,6 +34,7 @@ public:
     
     unsigned char* getDataBuffer() {return frameBuff;};
     size_t getDataLength() {return frameLen;};
+    std::chrono::milliseconds getTimestamp() {return timestamp;};
 
     void setDataBuffer(unsigned char *buff, size_t length);
     
@@ -41,6 +43,7 @@ public:
 protected:
     unsigned char *frameBuff;
     size_t frameLen;
+    std::chrono::milliseconds timestamp;
 };
 
 class AVCCFrame : public Frame {
@@ -54,6 +57,7 @@ public:
     
     unsigned char* getHdrBuffer() {return frameHBuff;};
     size_t getHdrLength() {return frameHLen;};
+    bool isIntra() {return intra;};
     
     void setHdrBuffer(unsigned char *buff, size_t length);
     
@@ -67,6 +71,7 @@ private:
     
     unsigned char *frameHBuff;
     size_t frameHLen;
+    bool intra;
 };
 
 class AACFrame : public Frame {
