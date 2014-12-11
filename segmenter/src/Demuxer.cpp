@@ -26,10 +26,6 @@
 #include <iostream>
 #include <sys/stat.h>
 
-bool isIntra(unsigned char* data);
-size_t getNalSizeBytes(unsigned char* metadata);   
-
-
 Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), videoStreamIdx(-1), 
                     audioStreamIdx(-1), framesCounter(0), isOpen(false), 
                     videoBitRate(0), audioBitRate(0), fps(0.0), width(0),
@@ -377,7 +373,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
 size_t getNalSizeBytes(unsigned char* metadata)
 {
-    
+
 }
 
 

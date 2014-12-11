@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     std::string vInitPath = filePath.substr(0,e) + "_init.m4v";
     std::string aInitPath = filePath.substr(0,e) + "_init.m4a";
 
-    demux = new Demuxer();
+    demux = new Demuxer(/*timestmp per parametre del binari*/);
     vSeg = new DashVideoSegmenter();
     aSeg = new DashAudioSegmenter();
     vSegment = new DashSegment(vPath);
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
     demux->dumpFormat();
 
     if (demux->hasVideo()) {
-        if (!vSeg->init(SEGMENT_DEFAULT_DURATION, demux->getWidth(), demux->getHeight(), demux->getFPS())) {
+        if (!vSeg->init(/*demuxer->*/SEGMENT_DEFAULT_DURATION, demux->getWidth(), demux->getHeight(), demux->getFPS())) {
             cout << "Error initializing Video Segmenter" << endl;
             exit(1);
         }
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
     }
 
     if (demux->hasAudio()) {
-        if (!aSeg->init(SEGMENT_DEFAULT_DURATION, demux->getWidth(), demux->getHeight(), demux->getFPS())) {
+        if (!aSeg->init(/*demuxer->*/SEGMENT_DEFAULT_DURATION, demux->getWidth(), demux->getHeight(), demux->getFPS())) {
             cout << "Error initializing Audio Segmenter" << endl;
             exit(1);
         }
