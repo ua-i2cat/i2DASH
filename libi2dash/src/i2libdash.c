@@ -50,8 +50,16 @@ void set_segment_duration(uint32_t segment_duration, i2ctx **context){
     (*context)->duration_ms = segment_duration * SEC_TO_MSEC;
 }
 
+void set_segment_duration_ms(uint32_t segment_duration, i2ctx **context){
+    (*context)->duration_ms = segment_duration;
+}
+
 uint32_t get_segment_duration(i2ctx *context){
     return (context->duration_ms / SEC_TO_MSEC);
+}
+
+uint32_t get_segment_duration_ms(i2ctx *context){
+    return context->duration_ms;
 }
 
 void set_frame_rate(uint32_t frame_rate, i2ctx **context){

@@ -30,8 +30,8 @@ Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), videoStreamIdx(-
                     audioStreamIdx(-1), framesCounter(0), isOpen(false), 
                     videoBitRate(0), audioBitRate(0), fps(0.0), width(0),
                     height(0), channels(0), sampleRate(0), bitsPerSample(0),
-                    vStartTime(aTime), aStartTime(aTime), 
-                    videoFrame(new AVCCFrame()), audioFrame(new AACFrame())
+                    vStartTime(aTime), aStartTime(aTime), videoFrame(new AVCCFrame()), 
+                    audioFrame(new AACFrame()), nalSizeBytes(0)
 {   
     av_register_all();
     av_init_packet(&pkt);
@@ -157,7 +157,7 @@ bool Demuxer::findVideoStream()
         return false;
     }
 
-    nalSizeBytes = getNalSizeBytes(fmtCtx->streams[videoStreamIdx]->codec->extradata)   
+    nalSizeBytes = getNalSizeBytes(fmtCtx->streams[videoStreamIdx]->codec->extradata);   
     
     return true;
 }
@@ -193,6 +193,7 @@ bool Demuxer::validVideoCodec()
     }
     
     if (fmtCtx->streams[videoStreamIdx]->codec->codec_id != CODEC_ID_H264){
+        cerr << "Invalid video codec. IT must be H264" << endl;
         return false;
     }
     
@@ -206,7 +207,7 @@ bool Demuxer::validAudioCodec()
     }
     
     if (fmtCtx->streams[audioStreamIdx]->codec->codec_id != CODEC_ID_AAC){
-        cerr << "Invalid codec. It must be AAC" << endl;
+        cerr << "Invalid audio codec. It must be AAC" << endl;
         return false;
     }
        
@@ -347,7 +348,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             videoFrame->setDataBuffer(pkt.data, pkt.size);
 
             videoFrame->setIntra(isIntra(pkt.data));
-            
+
             time = (uint64_t) ((double) pkt.pts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
             
@@ -371,15 +372,30 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     return NULL;
 }
 
-size_t getNalSizeBytes(unsigned char* metadata)
+size_t Demuxer::getNalSizeBytes(unsigned char* metadata)
 {
+    size_t nOfBytes = 0;
+    size_t nOfBytesMinusOne = 0;
 
+    nOfBytesMinusOne = metadata[N_OF_NAL_SIZE_BYTES_MINUS_ONE_POSITION] & N_OF_NAL_SIZE_BYTES_MINUS_ONE_MASK;
+    nOfBytes = nOfBytesMinusOne + 1;
+
+    return nOfBytes;
 }
 
 
-bool isIntra(unsigned char* data)
+bool Demuxer::isIntra(unsigned char* data)
 {
-    
+    bool isIntra = false;
+    int nalType = 0;
+
+    nalType = data[nalSizeBytes] & NAL_TYPE_MASK;
+
+    if (nalType == IDR_NAL_TYPE) {
+        isIntra = true;
+    }
+
+    return isIntra;
 }
 
 

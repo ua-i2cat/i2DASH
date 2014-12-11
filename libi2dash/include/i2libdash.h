@@ -53,7 +53,11 @@ uint32_t finish_segment(uint32_t media_type, byte *output_data, i2ctx **context)
 
 void set_segment_duration(uint32_t segment_duration, i2ctx **context);
 
+void set_segment_duration_ms(uint32_t segment_duration, i2ctx **context);
+
 uint32_t get_segment_duration(i2ctx *context);
+
+uint32_t get_segment_duration_ms(i2ctx *context);
 
 void set_frame_rate(uint32_t frame_rate, i2ctx **context);
 
