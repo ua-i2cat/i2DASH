@@ -24,13 +24,13 @@
 #include <iostream>
 #include <cpptest.h>
 #include <chrono>
+#include <algorithm>
 
 #include "Demuxer.hh"
 #include "Frame.hh"
 
 #define BIG_START_TIME 4294967296 // 2^32
-
-using namespace std;
+#define ONE_FRAME_DEVIATION 40 //ms
 
 class DemuxerSuite : public Test::Suite
 {
@@ -144,6 +144,8 @@ void DemuxerSuite::findStreams()
         TEST_ASSERT(demux->getAudioBitsPerSample() > 0);
         TEST_ASSERT(demux->getAudioChannels() > 0);
     } 
+    
+    TEST_ASSERT(demux->getDuration() > std::chrono::milliseconds(0));
 }
 
 void DemuxerSuite::readFrame()
@@ -154,10 +156,14 @@ void DemuxerSuite::readFrame()
     int gotFrame;
     bool videoFrame = false;
     bool audioFrame = false;
+    std::chrono::milliseconds duration;
+    std::chrono::milliseconds maxTime;
     
     TEST_ASSERT(demux != NULL);
     TEST_ASSERT(!demux->openInput(argv_[1]));
     TEST_ASSERT(demux->findStreams());
+    duration = demux->getDuration();
+    TEST_ASSERT(duration > std::chrono::milliseconds(0));
     
     do {
         frame = demux->readFrame(gotFrame);
@@ -166,11 +172,13 @@ void DemuxerSuite::readFrame()
             videoFrame = true;
             TEST_ASSERT(vFrame->getDataBuffer() != NULL);
             TEST_ASSERT(vFrame->getDataLength() > 0);
+            maxTime = std::max(maxTime, vFrame->getPresentationTime());
         } else if (dynamic_cast<AACFrame*>(frame)){
             aFrame = dynamic_cast<AACFrame*>(frame);
             audioFrame = true;
             TEST_ASSERT(aFrame->getDataBuffer() != NULL);
             TEST_ASSERT(aFrame->getDataLength() > 0);
+            maxTime = std::max(maxTime, aFrame->getPresentationTime());
         }
     } while(gotFrame >= 0);
     
@@ -185,18 +193,22 @@ void DemuxerSuite::readFrame()
         TEST_ASSERT(aFrame != NULL);
         TEST_ASSERT(aFrame->getPresentationTime() > std::chrono::milliseconds(startTime));
     }
+    
+    std::cout << "maxTime: " << maxTime.count() << " duration: " << duration.count() << " duration+startT: " << duration.count() + std::chrono::milliseconds(startTime).count() << std::endl;
+    
+    TEST_ASSERT(maxTime + std::chrono::milliseconds(ONE_FRAME_DEVIATION) >= (duration + std::chrono::milliseconds(startTime)));
 }
 
 int main(int argc, char* argv[])
 {
     try{
         Test::Suite ts;
-        ts.add(auto_ptr<Test::Suite>(new DemuxerSuite(argc, argv)));
+        ts.add(std::auto_ptr<Test::Suite>(new DemuxerSuite(argc, argv)));
 
         Test::TextOutput output(Test::TextOutput::Verbose);
         ts.run(output, true);
     } catch (int e) {
-        cout << "Unexpected exception encountered: " << e << endl;
+        std::cout << "Unexpected exception encountered: " << e << std::endl;
         return EXIT_FAILURE;
     }
     
