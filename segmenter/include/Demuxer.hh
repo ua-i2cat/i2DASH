@@ -71,8 +71,11 @@ private:
     bool findAudioStream();
     bool validVideoCodec();
     bool validAudioCodec();
+    bool isIntra(unsigned char* data);
+    size_t getNalSizeBytes(unsigned char* metadata);
           
 private:
+      
     AVFormatContext *fmtCtx;
     AVPacket pkt;
     
