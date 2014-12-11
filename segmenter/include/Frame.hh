@@ -58,6 +58,7 @@ public:
     void setVideoSize(int width, int height);
     
     bool isIntra() {return intra;};
+    void setIntra(bool isIntra);
     
     int getWidth() {return width;};
     int getHeight() {return height;};

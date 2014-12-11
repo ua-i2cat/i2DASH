@@ -64,6 +64,11 @@ void AVCCFrame::clearFrame()
     intra = false;
 }
 
+void AVCCFrame::setIntra(bool isIntra)
+{
+    intra = isIntra;
+}
+
 AACFrame::AACFrame(): Frame(), sampleRate(0)
 {
 }

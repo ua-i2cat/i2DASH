@@ -23,18 +23,18 @@
 
 
 DashAudioSegmenter::DashAudioSegmenter() 
-: segDurationInSec(0), dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), channels(0), sampleRate(0), sampleSize(0)
+: dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), segmentDuration(std::chrono::milliseconds(0)), channels(0), sampleRate(0), sampleSize(0)
 {
     
 }
 
-bool DashAudioSegmenter::init(size_t segDurationInSec, size_t channels, size_t sampleRate, size_t sampleSize) 
+bool DashAudioSegmenter::init(std::chrono::milliseconds segmentDuration, size_t channels, size_t sampleRate, size_t sampleSize) 
 {
     uint8_t i2error;
     this->channels = channels;
     this->sampleRate = sampleRate;
     this->sampleSize = sampleSize;
-    this->segDurationInSec = segDurationInSec;
+    this->segmentDuration = segmentDuration;
     
     i2error = generate_context(&dashContext, AUDIO_TYPE);
 
@@ -48,7 +48,7 @@ bool DashAudioSegmenter::init(size_t segDurationInSec, size_t channels, size_t s
         return false;
     }
 
-    set_segment_duration(segDurationInSec, &dashContext);
+    set_segment_duration_ms(segmentDuration.count(), &dashContext);
     return true;
 }
 

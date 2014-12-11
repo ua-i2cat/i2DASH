@@ -24,18 +24,18 @@
 size_t getBytesIndicatingNalSizeFromMetadata(unsigned char* metadata);
 
 DashVideoSegmenter::DashVideoSegmenter() 
-: segDurationInSec(0), dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), width(0), height(0), framerate(0)
+: dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), segmentDuration(std::chrono::milliseconds(0)),  width(0), height(0), framerate(0)
 {
 }
 
-bool DashVideoSegmenter::init(size_t segDurationInSec, size_t width, size_t height, size_t framerate) 
+bool DashVideoSegmenter::init(std::chrono::milliseconds segmentDuration, size_t width, size_t height, size_t framerate) 
 {
     uint8_t i2error;
 
     this->width = width;
     this->height = height;
     this->framerate = framerate;
-    this->segDurationInSec = segDurationInSec;
+    this->segmentDuration = segmentDuration;
 
     i2error = generate_context(&dashContext, VIDEO_TYPE);
 
@@ -49,7 +49,7 @@ bool DashVideoSegmenter::init(size_t segDurationInSec, size_t width, size_t heig
         return false;
     }
 
-    set_segment_duration(segDurationInSec, &dashContext);
+    set_segment_duration_ms(segmentDuration.count(), &dashContext);
     return true;
 }
 

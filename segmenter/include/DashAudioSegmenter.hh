@@ -32,16 +32,16 @@ public:
     DashAudioSegmenter();
     ~DashAudioSegmenter();
 
-    bool init(size_t segDurationInSec, size_t channels, size_t sampleRate, size_t sampleSize);
+    bool init(std::chrono::milliseconds segmentDuration, size_t channels, size_t sampleRate, size_t sampleSize);
     bool generateInit(unsigned char* metadata, size_t metadataSize, DashSegment* segment);
     bool addToSegment(AACFrame* frame, DashSegment* segment); 
     void setSampleRate(unsigned sampleRate);
 
     
 private:
-    size_t segDurationInSec;
     i2ctx* dashContext;
     std::chrono::milliseconds previousTimestamp;
+    std::chrono::milliseconds segmentDuration;
     size_t channels;
     size_t sampleRate;
     size_t sampleSize;
