@@ -50,23 +50,23 @@ Demuxer::~Demuxer()
     delete audioFrame;
 }
 
-bool Demuxer::openInput(string filename)
+bool Demuxer::openInput(std::string filename)
 {
-    string format;
+    std::string format;
     
     if (isOpen){
-        cerr << "Input already open, close it first"<< endl;
+        std::cerr << "Input already open, close it first"<< std::endl;
         return false;
     }
     
     if (!sourceExists(filename) || avformat_open_input(&fmtCtx, filename.c_str(), NULL, NULL) < 0) {
-        cerr << "Could not open source file " << filename << endl;
+        std::cerr << "Could not open source file " << filename << std::endl;
         fmtCtx = NULL;
         return false;
     }
     
     format = fmtCtx->iformat->name;
-    if (!(format.find("mp4") != string::npos)) {
+    if (!(format.find("mp4") != std::string::npos)) {
         avformat_close_input(&fmtCtx);
         fmtCtx = NULL;
         return false;
@@ -79,7 +79,7 @@ bool Demuxer::openInput(string filename)
 void Demuxer::closeInput()
 {
     if (!isOpen || fmtCtx == NULL){
-        cerr << "Input already closed"<< endl;
+        std::cerr << "Input already closed"<< std::endl;
         pkt.size = 0;    
         pkt.data = NULL;
         return;
@@ -91,7 +91,7 @@ void Demuxer::closeInput()
     isOpen = false;
 }
 
-bool Demuxer::sourceExists(string filename)
+bool Demuxer::sourceExists(std::string filename)
 {
     struct stat buffer;
     return (stat (filename.c_str(), &buffer) == 0);
@@ -111,12 +111,17 @@ bool Demuxer::findStreams()
     }
     
     if (videoStreamIdx != -1 || audioStreamIdx != -1){
-        cerr << "Streams already found"<< endl;
+        std::cerr << "Streams already found"<< std::endl;
         return true;
     }
     
     if (avformat_find_stream_info(fmtCtx, NULL) < 0) {
-        cerr << "No streams found!"<< endl; 
+        std::cerr << "No streams found!"<< std::endl; 
+        return false;
+    }
+    
+    if (fmtCtx->duration <= 0) {
+        std::cerr << "Could not set stream duration"<< std::endl; 
         return false;
     }
     
@@ -157,7 +162,7 @@ bool Demuxer::findVideoStream()
         return false;
     }
 
-    nalSizeBytes = getNalSizeBytes(fmtCtx->streams[videoStreamIdx]->codec->extradata)   
+    //nalSizeBytes = getNalSizeBytes(fmtCtx->streams[videoStreamIdx]->codec->extradata)   
     
     return true;
 }
@@ -206,7 +211,7 @@ bool Demuxer::validAudioCodec()
     }
     
     if (fmtCtx->streams[audioStreamIdx]->codec->codec_id != CODEC_ID_AAC){
-        cerr << "Invalid codec. It must be AAC" << endl;
+        std::cerr << "Invalid codec. It must be AAC" << std::endl;
         return false;
     }
        
@@ -323,12 +328,12 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     gotFrame = -1;
     
     if (!isOpen){
-        cerr << "Input closed" << endl;
+        std::cerr << "Input closed" << std::endl;
         return NULL;
     }
     
     if (videoStreamIdx == -1 && audioStreamIdx == -1){
-        cerr << "No audio or video streams found" << endl;
+        std::cerr << "No audio or video streams found" << std::endl;
         return NULL;
     }
 
@@ -346,7 +351,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
         if (pkt.stream_index == videoStreamIdx) {
             videoFrame->setDataBuffer(pkt.data, pkt.size);
 
-            videoFrame->setIntra(isIntra(pkt.data));
+            //videoFrame->setIntra(isIntra(pkt.data));
             
             time = (uint64_t) ((double) pkt.pts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
@@ -369,6 +374,32 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     }
     
     return NULL;
+}
+
+std::chrono::milliseconds Demuxer::getDuration()
+{
+    uint64_t aTime = 0;
+    uint64_t vTime = 0;
+    
+    if (!isOpen || (!hasVideo() && !hasAudio())){
+        return std::chrono::milliseconds(0);
+    }
+    
+    if (hasAudio()){
+        aTime = (uint64_t) ((double) fmtCtx->streams[videoStreamIdx]->duration * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
+                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0);
+    }
+    
+     if (hasVideo()){
+        vTime = (uint64_t) ((double) fmtCtx->streams[videoStreamIdx]->duration * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
+                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0);
+    }
+    
+    if (aTime > vTime){
+        return std::chrono::milliseconds(aTime);
+    }
+    
+    return std::chrono::milliseconds(vTime);
 }
 
 size_t getNalSizeBytes(unsigned char* metadata)

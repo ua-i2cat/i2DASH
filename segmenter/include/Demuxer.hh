@@ -33,14 +33,12 @@ extern "C" {
 
 #include "Frame.hh"
 
-using namespace std;
-
 class Demuxer {
 public:
     Demuxer(uint64_t vTime = 0, uint64_t aTime = 0);
     ~Demuxer();
     
-    bool openInput(string filename);
+    bool openInput(std::string filename);
     void closeInput();
     void dumpFormat();
     bool findStreams();
@@ -56,6 +54,8 @@ public:
     uint32_t getAudioBitsPerSample() {return bitsPerSample;};
     uint32_t getAudioBitRate() {return audioBitRate;};
     
+    std::chrono::milliseconds getDuration();
+    
     bool hasVideo();
     bool hasAudio();
 
@@ -66,7 +66,7 @@ public:
     size_t getAudioExtraDataLength();
         
 private:
-    bool sourceExists(string filename);
+    bool sourceExists(std::string filename);
     bool findVideoStream();
     bool findAudioStream();
     bool validVideoCodec();
