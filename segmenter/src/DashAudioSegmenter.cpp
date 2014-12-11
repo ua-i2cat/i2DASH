@@ -99,3 +99,21 @@ bool DashAudioSegmenter::addToSegment(AACFrame* frame, DashSegment* segment)
     segment->setDataLength(segmentSize);
     return true;
 }
+
+bool DashAudioSegmenter::finishSegment(DashSegment* segment) 
+{
+    size_t segmentSize = 0;
+
+    if (dashContext->ctxaudio->segment_data_size <= 0) {
+        return false;
+    }
+
+    segmentSize = finish_segment(AUDIO_TYPE, segment->getDataBuffer(), &dashContext);
+
+    if (segmentSize <= I2ERROR_MAX) {
+        return false;
+    }
+
+    segment->setDataLength(segmentSize);
+    return true;
+}

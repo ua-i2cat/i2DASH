@@ -34,7 +34,9 @@ public:
 
     bool init(std::chrono::milliseconds segmentDuration, size_t width, size_t height, size_t framerate); 
     bool generateInit(unsigned char* metadata, size_t metadataSize, DashSegment* segment);
-    bool addToSegment(AVCCFrame* frame, DashSegment* segment); 
+    bool addToSegment(AVCCFrame* frame, DashSegment* segment);
+    bool finishSegment(DashSegment* segment);
+    size_t getMaxSegmentLength(){return MAX_DAT;}; 
 
     
 private:

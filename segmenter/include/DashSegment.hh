@@ -30,7 +30,7 @@
 class DashSegment {
     
 public:
-    DashSegment(std::string outputFile);
+    DashSegment(std::string outputFile, size_t maxSize);
     ~DashSegment();
 
     unsigned char* getDataBuffer() {return data;};

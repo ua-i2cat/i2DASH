@@ -34,10 +34,10 @@ public:
 
     bool init(std::chrono::milliseconds segmentDuration, size_t channels, size_t sampleRate, size_t sampleSize);
     bool generateInit(unsigned char* metadata, size_t metadataSize, DashSegment* segment);
-    bool addToSegment(AACFrame* frame, DashSegment* segment); 
-    void setSampleRate(unsigned sampleRate);
+    bool addToSegment(AACFrame* frame, DashSegment* segment);
+    bool finishSegment(DashSegment* segment);
+    size_t getMaxSegmentLength(){return MAX_DAT;}; 
 
-    
 private:
     i2ctx* dashContext;
     std::chrono::milliseconds previousTimestamp;

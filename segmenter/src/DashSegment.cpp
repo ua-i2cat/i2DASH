@@ -21,9 +21,9 @@
 #include "DashSegment.hh"
 #include <fstream>
 
-DashSegment::DashSegment(std::string outputFile) : dataLength(0), path(outputFile)
+DashSegment::DashSegment(std::string outputFile, size_t maxSize) : dataLength(0), path(outputFile)
 {
-    data = new unsigned char[SEGMENT_MAX_SIZE];
+    data = new unsigned char[maxSize];
 }
 
 DashSegment::~DashSegment()
