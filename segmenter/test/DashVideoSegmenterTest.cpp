@@ -24,10 +24,11 @@
 #include <iostream>
 #include <fstream>
 #include <cpptest.h>
+#include <chrono>
 
 #include "DashVideoSegmenter.hh"
 
-#define TEST_SEGMENT_DURATION 1
+#define TEST_SEGMENT_DURATION 1000
 #define TEST_VIDEO_WIDTH 1280
 #define TEST_VIDEO_HEIGHT 534
 #define TEST_VIDEO_FPS 24
@@ -102,7 +103,7 @@ void initTestSuite::init()
         return;
     }
 
-    TEST_ASSERT_MSG(vSeg->init(TEST_SEGMENT_DURATION, TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS), 
+    TEST_ASSERT_MSG(vSeg->init(std::chrono::milliseconds(TEST_SEGMENT_DURATION), TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS), 
                      "VideoSegmenter init failed");
 }
 
@@ -119,7 +120,7 @@ void generateInitTestSuite::setup()
         return;
     }
 
-    if (!vSeg->init(TEST_SEGMENT_DURATION, TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS)) {
+    if (!vSeg->init(std::chrono::milliseconds(TEST_SEGMENT_DURATION), TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS)) {
         TEST_FAIL("Segmenter init failed. Check init test\n");
         return;
     }
