@@ -30,8 +30,12 @@ extern "C" {
 }
 
 #include <string>
-
 #include "Frame.hh"
+
+#define N_OF_NAL_SIZE_BYTES_MINUS_ONE_POSITION 4
+#define N_OF_NAL_SIZE_BYTES_MINUS_ONE_MASK 0x03
+#define NAL_TYPE_MASK 0x1F
+#define IDR_NAL_TYPE 5
 
 class Demuxer {
 public:
@@ -99,6 +103,8 @@ private:
     
     AVCCFrame* const videoFrame;
     AACFrame* const audioFrame;
+
+    size_t nalSizeBytes;
 };
 
 #endif
