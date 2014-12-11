@@ -59,17 +59,17 @@ int main(int argc, char* argv[])
     demux = new Demuxer(/*timestmp per parametre del binari*/);
     vSeg = new DashVideoSegmenter();
     aSeg = new DashAudioSegmenter();
-    vSegment = new DashSegment(vPath);
-    aSegment = new DashSegment(aPath);
-    vInitSegment = new DashSegment(vInitPath);
-    aInitSegment = new DashSegment(aInitPath);
+    vSegment = new DashSegment(vPath, vSeg->getMaxSegmentLength());
+    aSegment = new DashSegment(aPath, aSeg->getMaxSegmentLength());
+    vInitSegment = new DashSegment(vInitPath, vSeg->getMaxSegmentLength());
+    aInitSegment = new DashSegment(aInitPath, aSeg->getMaxSegmentLength());
 
     demux->openInput(argv[1]);
     demux->findStreams();
     demux->dumpFormat();
 
     if (demux->hasVideo()) {
-        if (!vSeg->init(std::chrono::milliseconds(SEGMENT_DEFAULT_DURATION), demux->getWidth(), demux->getHeight(), demux->getFPS())) {
+        if (!vSeg->init(demux->getDuration(), demux->getWidth(), demux->getHeight(), demux->getFPS())) {
             cout << "Error initializing Video Segmenter" << endl;
             exit(1);
         }
@@ -80,8 +80,7 @@ int main(int argc, char* argv[])
     }
 
     if (demux->hasAudio()) {
-        if (!aSeg->init(std::chrono::milliseconds(SEGMENT_DEFAULT_DURATION), demux->getAudioChannels(), 
-                                                  demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
+        if (!aSeg->init(demux->getDuration(), demux->getAudioChannels(), demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
             cout << "Error initializing Audio Segmenter" << endl;
             exit(1);
         }
@@ -109,6 +108,14 @@ int main(int argc, char* argv[])
                 aSegment->writeToDisk();
             }
         }
+    }
+
+    if (vSeg->finishSegment(vSegment)) {
+        vSegment->writeToDisk();
+    }
+
+    if (aSeg->finishSegment(aSegment)) {
+        aSegment->writeToDisk();
     }
 
     delete demux;

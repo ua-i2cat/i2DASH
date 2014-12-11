@@ -21,8 +21,6 @@
 #include "DashVideoSegmenter.hh"
 #include <iostream>
 
-size_t getBytesIndicatingNalSizeFromMetadata(unsigned char* metadata);
-
 DashVideoSegmenter::DashVideoSegmenter() 
 : dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), segmentDuration(std::chrono::milliseconds(0)),  width(0), height(0), framerate(0)
 {
@@ -92,6 +90,26 @@ bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment)
 
     segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), sampleDuration.count(), 
                              frameTimestamp.count(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
+
+    if (segmentSize <= I2ERROR_MAX) {
+        return false;
+    }
+
+    segment->setDataLength(segmentSize);
+    return true;
+}
+
+bool DashVideoSegmenter::finishSegment(DashSegment* segment) 
+{
+    size_t segmentSize = 0;
+
+    std::cout << "Segmend data size in finish: " << dashContext->ctxvideo->segment_data_size << std::endl;
+
+    if (dashContext->ctxvideo->segment_data_size <= 0) {
+        return false;
+    }
+
+    segmentSize = finish_segment(VIDEO_TYPE, segment->getDataBuffer(), &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
         return false;
