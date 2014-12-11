@@ -27,6 +27,8 @@
 #include <sys/stat.h>
 
 bool isIntra(unsigned char* data);
+size_t getNalSizeBytes(unsigned char* metadata);   
+
 
 Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), videoStreamIdx(-1), 
                     audioStreamIdx(-1), framesCounter(0), isOpen(false), 
@@ -136,21 +138,32 @@ bool Demuxer::findVideoStream()
     }
     
     videoStreamIdx = av_find_best_stream(fmtCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    if (videoStreamIdx >= 0 && videoStreamIdx != audioStreamIdx) {
-        
-        videoBitRate = fmtCtx->streams[videoStreamIdx]->codec->bit_rate;
-        width = fmtCtx->streams[videoStreamIdx]->codec->width;
-        height = fmtCtx->streams[videoStreamIdx]->codec->height;
-        fps = (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.num / (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.den;
 
-        if (validVideoCodec() && fps > 0 && videoBitRate > 0 && width > 0 && height > 0){
-            return true;
-        }   
+    if (videoStreamIdx < 0 || videoStreamIdx == audioStreamIdx) {
+        videoStreamIdx = -1;
+        return false;
     }
+        
+    videoBitRate = fmtCtx->streams[videoStreamIdx]->codec->bit_rate;
+    width = fmtCtx->streams[videoStreamIdx]->codec->width;
+    height = fmtCtx->streams[videoStreamIdx]->codec->height;
+    fps = (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.num / (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.den;
+
+    if (fps <= 0 || videoBitRate <= 0 || width <= 0 || height <= 0) {
+        return false;
+    }
+
+    if (!validVideoCodec()) {
+        return false;
+    }
+
+    if (fmtCtx->streams[videoStreamIdx]->codec->extradata_size <= 0) {
+        return false;
+    }
+
+    nalSizeBytes = getNalSizeBytes(fmtCtx->streams[videoStreamIdx]->codec->extradata)   
     
-    videoStreamIdx = -1;
-    
-    return false;
+    return true;
 }
 
 bool Demuxer::findAudioStream()
@@ -361,6 +374,12 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     
     return NULL;
 }
+
+size_t getNalSizeBytes(unsigned char* metadata)
+{
+    
+}
+
 
 bool isIntra(unsigned char* data)
 {
