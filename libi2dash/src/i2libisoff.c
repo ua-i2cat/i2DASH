@@ -1469,10 +1469,12 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     if (media_type == VIDEO_TYPE) {
         earliest_presentation_time = ctxVideo->earliest_presentation_time;
         latest_presentation_time = ctxVideo->latest_presentation_time;
+        duration_ms = ctxVideo->current_video_duration_ms;
     }
     else if (media_type == AUDIO_TYPE) {
         earliest_presentation_time = ctxAudio->earliest_presentation_time;
         latest_presentation_time = ctxAudio->latest_presentation_time;
+        duration_ms = ctxAudio->current_audio_duration_ms;
     }
 
     count = 4;
@@ -1481,7 +1483,7 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     zero_32 = 0;
     one_16 = 1;
     one_32 = 1;
-    duration_ms = latest_presentation_time - earliest_presentation_time;
+    // duration_ms = latest_presentation_time - earliest_presentation_time;
     reference_size = context->reference_size;
 
     // box type
@@ -1508,6 +1510,8 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     count+= 4;
 
     // first offset
+    //TODO: review this value -> "is the distance in bytes, in the file containing media, from the anchor point, to the first byte of the indexed material"
+    // ISO/IEC 14496-12:2008/FDAM 3:2011(E);
     hton_duration_ms = htonl(duration_ms);
     memcpy(data + count, &hton_duration_ms, 4);
     count+= 4;
