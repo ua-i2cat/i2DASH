@@ -38,7 +38,9 @@ public:
     void setDataBuffer(unsigned char *buff, size_t length);
     
     void setPresentationTime(std::chrono::milliseconds pTime);
+    void setDuration(std::chrono::milliseconds dur);
     std::chrono::milliseconds getPresentationTime() {return presentationTime;};
+    std::chrono::milliseconds getDuration() {return duration;};
     
     virtual void clearFrame() = 0;
     
@@ -46,6 +48,7 @@ protected:
     unsigned char *frameBuff;
     size_t frameLen;
     std::chrono::milliseconds presentationTime;
+    std::chrono::milliseconds duration;
 };
 
 class AVCCFrame : public Frame {

@@ -508,8 +508,10 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
             // Add segment data
             memcpy((*context)->ctxvideo->segment_data + (*context)->ctxvideo->segment_data_size, input_data, size_input);
             (*context)->ctxvideo->segment_data_size += size_input;
-            if(ctxSample->mdat_sample_length == 0)
+            
+            if(ctxSample->mdat_sample_length == 0) {
                 (*context)->ctxvideo->earliest_presentation_time = timestamp;
+            }
 
             (*context)->ctxvideo->latest_presentation_time = timestamp;
             (*context)->ctxvideo->current_video_duration_ms += duration_sample;

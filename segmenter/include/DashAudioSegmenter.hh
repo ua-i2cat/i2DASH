@@ -40,7 +40,6 @@ public:
 
 private:
     i2ctx* dashContext;
-    std::chrono::milliseconds previousTimestamp;
     std::chrono::milliseconds segmentDuration;
     size_t channels;
     size_t sampleRate;
