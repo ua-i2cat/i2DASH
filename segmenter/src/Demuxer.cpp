@@ -364,7 +364,6 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
             duration = (size_t) ((double) pkt.duration * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
-
             
             videoFrame->setPresentationTime(std::chrono::milliseconds(pTime));
             videoFrame->setDecodeTime(std::chrono::milliseconds(dTime));
@@ -440,7 +439,7 @@ bool Demuxer::isIntra(unsigned char* data)
 
     nalType = data[nalSizeBytes] & NAL_TYPE_MASK;
 
-    if (nalType == IDR_NAL_TYPE) {
+    if (nalType == IDR_NAL_TYPE || nalType == SEI_NAL_TYPE) {
         isIntra = true;
     }
 

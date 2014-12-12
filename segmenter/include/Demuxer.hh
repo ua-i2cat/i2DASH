@@ -36,6 +36,7 @@ extern "C" {
 #define N_OF_NAL_SIZE_BYTES_MINUS_ONE_MASK 0x03
 #define NAL_TYPE_MASK 0x1F
 #define IDR_NAL_TYPE 5
+#define SEI_NAL_TYPE 6
 
 class Demuxer {
 public:
