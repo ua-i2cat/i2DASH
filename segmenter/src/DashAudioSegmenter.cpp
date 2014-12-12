@@ -23,7 +23,7 @@
 
 
 DashAudioSegmenter::DashAudioSegmenter() 
-: dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), segmentDuration(std::chrono::milliseconds(0)), channels(0), sampleRate(0), sampleSize(0)
+: dashContext(NULL), segmentDuration(std::chrono::milliseconds(0)), channels(0), sampleRate(0), sampleSize(0)
 {
     
 }
@@ -77,20 +77,18 @@ bool DashAudioSegmenter::generateInit(unsigned char* metadata, size_t metadataSi
 
 bool DashAudioSegmenter::addToSegment(AACFrame* frame, DashSegment* segment)
 {
-    std::chrono::milliseconds sampleDuration;
-    std::chrono::milliseconds frameTimestamp = frame->getPresentationTime();
     size_t segmentSize = 0;
 
     if (!frame || !segment || frame->getDataLength() <= 0 || !dashContext) {
         return false;
     }
 
-    //TODO: first frame duration
-    sampleDuration = frameTimestamp - previousTimestamp;
-    previousTimestamp = frameTimestamp; 
+    if (frame->getDuration().count() <= 0) {
+        return false;
+    }
 
-    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), sampleDuration.count(), 
-                             frameTimestamp.count(), AUDIO_TYPE, segment->getDataBuffer(), 1, &dashContext);
+    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), 
+                             frame->getPresentationTime().count(), AUDIO_TYPE, segment->getDataBuffer(), 1, &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
         return false;

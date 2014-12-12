@@ -41,7 +41,6 @@ public:
     
 private:
     i2ctx* dashContext;
-    std::chrono::milliseconds previousTimestamp;
     std::chrono::milliseconds segmentDuration;
     size_t width;
     size_t height;

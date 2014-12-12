@@ -35,6 +35,11 @@ void Frame::setPresentationTime(std::chrono::milliseconds pTime)
     presentationTime = pTime;
 }
 
+void Frame::setDuration(std::chrono::milliseconds dur) 
+{
+    duration = dur;
+}
+
 void Frame::setDataBuffer(unsigned char *buff, size_t length)
 {
     frameBuff = buff;

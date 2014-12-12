@@ -22,7 +22,7 @@
 #include <iostream>
 
 DashVideoSegmenter::DashVideoSegmenter() 
-: dashContext(NULL), previousTimestamp(std::chrono::milliseconds(0)), segmentDuration(std::chrono::milliseconds(0)),  width(0), height(0), framerate(0)
+: dashContext(NULL), segmentDuration(std::chrono::milliseconds(0)),  width(0), height(0), framerate(0)
 {
 }
 
@@ -76,20 +76,18 @@ bool DashVideoSegmenter::generateInit(unsigned char *metadata, size_t metadataSi
 
 bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment) 
 {
-    std::chrono::milliseconds sampleDuration;
-    std::chrono::milliseconds frameTimestamp = frame->getPresentationTime();
     size_t segmentSize = 0;
 
     if (!frame || !segment || frame->getDataLength() <= 0 || !dashContext) {
         return false;
     }
 
-    //TODO: first frame duration
-    sampleDuration = frameTimestamp - previousTimestamp;
-    previousTimestamp = frameTimestamp; 
+    if (frame->getDuration().count() <= 0) {
+        return false;
+    }
 
-    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), sampleDuration.count(), 
-                             frameTimestamp.count(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
+    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), 
+                             frame->getPresentationTime().count(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
         return false;
@@ -102,8 +100,6 @@ bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment)
 bool DashVideoSegmenter::finishSegment(DashSegment* segment) 
 {
     size_t segmentSize = 0;
-
-    std::cout << "Segmend data size in finish: " << dashContext->ctxvideo->segment_data_size << std::endl;
 
     if (dashContext->ctxvideo->segment_data_size <= 0) {
         return false;
