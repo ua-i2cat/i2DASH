@@ -86,8 +86,8 @@ bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment)
         return false;
     }
 
-    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), 
-                             frame->getPresentationTime().count(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
+    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), frame->getPresentationTime().count(), 
+                             frame->getDecodeTime().count(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
         return false;

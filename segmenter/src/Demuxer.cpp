@@ -325,6 +325,7 @@ size_t Demuxer::getAudioExtraDataLength()
 Frame* const Demuxer::readFrame(int &gotFrame)
 {
     size_t pTime;
+    size_t dTime;
     size_t duration;
     
     gotFrame = -1;
@@ -358,10 +359,15 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             pTime = (size_t) ((double) pkt.pts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
 
+            dTime = (size_t) ((double) pkt.dts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
+                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
+
             duration = (size_t) ((double) pkt.duration * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
+
             
             videoFrame->setPresentationTime(std::chrono::milliseconds(pTime));
+            videoFrame->setDecodeTime(std::chrono::milliseconds(dTime));
             videoFrame->setDuration(std::chrono::milliseconds(duration));
 
             return videoFrame;
@@ -373,10 +379,14 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             pTime = (size_t) ((double) pkt.pts * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + aStartTime;
 
+            dTime = (size_t) ((double) pkt.dts * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
+                (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + aStartTime;
+
             duration = (size_t) ((double) pkt.duration * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
                 (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + vStartTime;
-                
+
             audioFrame->setPresentationTime(std::chrono::milliseconds(pTime));
+            audioFrame->setDecodeTime(std::chrono::milliseconds(dTime));
             audioFrame->setDuration(std::chrono::milliseconds(duration));
 
             return audioFrame;
