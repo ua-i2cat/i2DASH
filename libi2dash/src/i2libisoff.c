@@ -1599,6 +1599,8 @@ uint32_t write_mfhd(byte *data, uint32_t media_type, i2ctx *context) {
     count = 0;
     zero = 0;
 
+    printf("Sequence number: %u\n", seqnum);
+
     // Size
     size = 16;
     hton_size = htonl(size);
