@@ -128,7 +128,7 @@ void video_context_initializer(i2ctx **context) {
 void context_refresh(i2ctx **context, uint32_t media_type) {
     if ((media_type == VIDEO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
         (*context)->ctxvideo->earliest_presentation_time = 0;
-        (*context)->ctxvideo->sequence_number++;
+        (*context)->ctxvideo->sequence_number = 0;
         (*context)->ctxvideo->current_video_duration_ms = 0;
         (*context)->ctxvideo->segment_data_size = 0;
         (*context)->ctxvideo->ctxsample->mdat_sample_length = 0;
@@ -138,7 +138,7 @@ void context_refresh(i2ctx **context, uint32_t media_type) {
     }
     if ((media_type == AUDIO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
         (*context)->ctxaudio->earliest_presentation_time = 0;
-        (*context)->ctxaudio->sequence_number++;
+        (*context)->ctxaudio->sequence_number = 0;
         (*context)->ctxaudio->current_audio_duration_ms = 0;
         (*context)->ctxaudio->segment_data_size = 0;
         (*context)->ctxaudio->ctxsample->mdat_sample_length = 0;
@@ -459,7 +459,9 @@ uint32_t init_audio_handler(byte *input_data, uint32_t size_input, byte *output_
     return initAudio;
 }
 
-uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sample, uint32_t pts,  uint32_t dts, uint32_t media_type, byte *output_data, uint8_t is_intra, i2ctx **context) {
+uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sample, uint32_t pts, uint32_t dts, 
+                    uint32_t seqNumber, uint32_t media_type, byte *output_data, uint8_t is_intra, i2ctx **context) 
+{
     uint32_t seg_gen, samp_len;
 
     seg_gen = 0;
@@ -507,6 +509,7 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
 
             if(ctxSample->mdat_sample_length == 0) {
                 (*context)->ctxvideo->earliest_presentation_time = pts;
+                (*context)->ctxvideo->sequence_number = seqNumber;
             }
 
             (*context)->ctxvideo->current_video_duration_ms += duration_sample;
@@ -541,6 +544,7 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
             
             if(ctxSample->mdat_sample_length == 0) {
                 (*context)->ctxaudio->earliest_presentation_time = pts;
+                (*context)->ctxaudio->sequence_number = seqNumber;
             }
 
             (*context)->ctxaudio->current_audio_duration_ms += duration_sample;

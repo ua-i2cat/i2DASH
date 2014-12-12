@@ -49,24 +49,30 @@ int main(int argc, char* argv[])
     int gotFrame;
 
     std::string filePath = argv[1];
-    size_t e = filePath.find_first_of(".");
+    size_t b = filePath.find_last_of("_");
+    size_t e = filePath.find_last_of(".");
 
+    std::string stringSequenceNumber = filePath.substr(b+1,e-b-1);
+    int seqNumber = stoi(stringSequenceNumber);
+
+    std::cout << "seqNumber: " << seqNumber << std::endl;
+ 
     std::string vPath = filePath.substr(0,e) + ".m4v";
     std::string aPath = filePath.substr(0,e) + ".m4a";
     std::string vInitPath = filePath.substr(0,e) + "_init.m4v";
     std::string aInitPath = filePath.substr(0,e) + "_init.m4a";
 
-    demux = new Demuxer(/*timestmp per parametre del binari*/);
+    demux = new Demuxer();
     vSeg = new DashVideoSegmenter();
     aSeg = new DashAudioSegmenter();
-    vSegment = new DashSegment(vPath, vSeg->getMaxSegmentLength());
-    aSegment = new DashSegment(aPath, aSeg->getMaxSegmentLength());
-    vInitSegment = new DashSegment(vInitPath, vSeg->getMaxSegmentLength());
-    aInitSegment = new DashSegment(aInitPath, aSeg->getMaxSegmentLength());
+    vSegment = new DashSegment(vPath, vSeg->getMaxSegmentLength(), seqNumber);
+    aSegment = new DashSegment(aPath, aSeg->getMaxSegmentLength(), seqNumber);
+    vInitSegment = new DashSegment(vInitPath, vSeg->getMaxSegmentLength(), seqNumber);
+    aInitSegment = new DashSegment(aInitPath, aSeg->getMaxSegmentLength(), seqNumber);
 
     demux->openInput(argv[1]);
     demux->findStreams();
-    demux->dumpFormat();
+    // demux->dumpFormat();
 
     if (demux->hasVideo()) {
         if (!vSeg->init(demux->getDuration(), demux->getWidth(), demux->getHeight(), demux->getFPS())) {

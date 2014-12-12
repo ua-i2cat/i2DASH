@@ -87,8 +87,8 @@ bool DashAudioSegmenter::addToSegment(AACFrame* frame, DashSegment* segment)
         return false;
     }
 
-    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), 
-                             frame->getPresentationTime().count(), frame->getDecodeTime().count(), AUDIO_TYPE, segment->getDataBuffer(), 1, &dashContext);
+    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), frame->getPresentationTime().count(), 
+                             frame->getDecodeTime().count(), segment->getSeqNumber(), AUDIO_TYPE, segment->getDataBuffer(), 1, &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
         return false;

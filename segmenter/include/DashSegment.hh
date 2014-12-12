@@ -30,18 +30,20 @@
 class DashSegment {
     
 public:
-    DashSegment(std::string outputFile, size_t maxSize);
+    DashSegment(std::string outputFile, size_t maxSize, size_t seqNum);
     ~DashSegment();
 
     unsigned char* getDataBuffer() {return data;};
     size_t getDataLength() {return dataLength;};
     void setDataLength(size_t length);
+    size_t getSeqNumber(){return seqNumber;};
     void writeToDisk();
 
 
 private:
     unsigned char* data;
     size_t dataLength;
+    size_t seqNumber;
     std::string path;
 
 };
