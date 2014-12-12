@@ -35,6 +35,11 @@ void Frame::setPresentationTime(std::chrono::milliseconds pTime)
     presentationTime = pTime;
 }
 
+void Frame::setDecodeTime(std::chrono::milliseconds dTime)
+{
+    decodeTime = dTime;
+}
+
 void Frame::setDuration(std::chrono::milliseconds dur) 
 {
     duration = dur;

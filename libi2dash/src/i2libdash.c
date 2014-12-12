@@ -93,7 +93,6 @@ void audio_context_initializer(i2ctx **context) {
     ctxAudio->sample_size = 0;
     ctxAudio->sequence_number = 0;
     ctxAudio->earliest_presentation_time = 0;
-    ctxAudio->latest_presentation_time = 0;
     ctxAudio->current_audio_duration_ms = 0;
 
     audio_sample_context_initializer(&ctxAudio);
@@ -120,7 +119,6 @@ void video_context_initializer(i2ctx **context) {
     ctxVideo->height = 0;
     ctxVideo->frame_rate = 0;
     ctxVideo->earliest_presentation_time = 0;
-    ctxVideo->latest_presentation_time = 0;
     ctxVideo->sequence_number = 0;
     ctxVideo->current_video_duration_ms = 0;
 
@@ -130,7 +128,6 @@ void video_context_initializer(i2ctx **context) {
 void context_refresh(i2ctx **context, uint32_t media_type) {
     if ((media_type == VIDEO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
         (*context)->ctxvideo->earliest_presentation_time = 0;
-        (*context)->ctxvideo->latest_presentation_time = 0;
         (*context)->ctxvideo->sequence_number++;
         (*context)->ctxvideo->current_video_duration_ms = 0;
         (*context)->ctxvideo->segment_data_size = 0;
@@ -141,7 +138,6 @@ void context_refresh(i2ctx **context, uint32_t media_type) {
     }
     if ((media_type == AUDIO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
         (*context)->ctxaudio->earliest_presentation_time = 0;
-        (*context)->ctxaudio->latest_presentation_time = 0;
         (*context)->ctxaudio->sequence_number++;
         (*context)->ctxaudio->current_audio_duration_ms = 0;
         (*context)->ctxaudio->segment_data_size = 0;
@@ -463,7 +459,7 @@ uint32_t init_audio_handler(byte *input_data, uint32_t size_input, byte *output_
     return initAudio;
 }
 
-uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sample, uint32_t timestamp, uint32_t media_type, byte *output_data, uint8_t is_intra, i2ctx **context) {
+uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sample, uint32_t pts,  uint32_t dts, uint32_t media_type, byte *output_data, uint8_t is_intra, i2ctx **context) {
     uint32_t seg_gen, samp_len;
 
     seg_gen = 0;
@@ -508,19 +504,19 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
             // Add segment data
             memcpy((*context)->ctxvideo->segment_data + (*context)->ctxvideo->segment_data_size, input_data, size_input);
             (*context)->ctxvideo->segment_data_size += size_input;
-            
+
             if(ctxSample->mdat_sample_length == 0) {
-                (*context)->ctxvideo->earliest_presentation_time = timestamp;
+                (*context)->ctxvideo->earliest_presentation_time = pts;
             }
 
-            (*context)->ctxvideo->latest_presentation_time = timestamp;
             (*context)->ctxvideo->current_video_duration_ms += duration_sample;
 
             // Add metadata
             samp_len = ctxSample->mdat_sample_length;
             ctxSample->mdat[samp_len].size = size_input;
             ctxSample->mdat[samp_len].duration_ms = duration_sample;
-            ctxSample->mdat[samp_len].timestamp = timestamp;
+            ctxSample->mdat[samp_len].presentation_timestamp = pts;
+            ctxSample->mdat[samp_len].decode_timestamp = dts;
             ctxSample->mdat[samp_len].key = is_intra;
             ctxSample->mdat_sample_length++;
         }
@@ -542,16 +538,19 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
             // Add segment data
             memcpy((*context)->ctxaudio->segment_data + (*context)->ctxaudio->segment_data_size, input_data, size_input);
             (*context)->ctxaudio->segment_data_size += size_input;
-            if(ctxSample->mdat_sample_length == 0)
-                (*context)->ctxaudio->earliest_presentation_time = timestamp;
-            (*context)->ctxaudio->latest_presentation_time = timestamp;
+            
+            if(ctxSample->mdat_sample_length == 0) {
+                (*context)->ctxaudio->earliest_presentation_time = pts;
+            }
+
             (*context)->ctxaudio->current_audio_duration_ms += duration_sample;
 
             // Add metadata
             samp_len = ctxSample->mdat_sample_length;
             ctxSample->mdat[samp_len].size = size_input;
             ctxSample->mdat[samp_len].duration_ms = duration_sample;
-            ctxSample->mdat[samp_len].timestamp = timestamp;
+            ctxSample->mdat[samp_len].presentation_timestamp = pts;
+            ctxSample->mdat[samp_len].decode_timestamp = dts;
             ctxSample->mdat[samp_len].key = is_intra;
             ctxSample->mdat_sample_length++;
         }

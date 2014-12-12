@@ -1457,23 +1457,20 @@ uint32_t write_styp(byte *data, uint32_t media_type, i2ctx *context) {
 uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     uint32_t count, zero_32, duration_ms, hton_duration_ms, one_32, hton_one_32;
     uint32_t reference_size, hton_reference_size, size, hton_size, hton_timescale;
-    uint32_t earliest_presentation_time, latest_presentation_time, hton_earliest_presentation_time;
+    uint32_t earliest_presentation_time, hton_earliest_presentation_time;
     uint8_t zero_8;
     uint16_t zero_16, one_16, hton_one_16;
     byte flag8;
     i2ctx_video *ctxVideo = context->ctxvideo;
     i2ctx_audio *ctxAudio = context->ctxaudio;
     earliest_presentation_time = 0;
-    latest_presentation_time = 0;
 
     if (media_type == VIDEO_TYPE) {
         earliest_presentation_time = ctxVideo->earliest_presentation_time;
-        latest_presentation_time = ctxVideo->latest_presentation_time;
         duration_ms = ctxVideo->current_video_duration_ms;
     }
     else if (media_type == AUDIO_TYPE) {
         earliest_presentation_time = ctxAudio->earliest_presentation_time;
-        latest_presentation_time = ctxAudio->latest_presentation_time;
         duration_ms = ctxAudio->current_audio_duration_ms;
     }
 
@@ -1483,7 +1480,6 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     zero_32 = 0;
     one_16 = 1;
     one_32 = 1;
-    // duration_ms = latest_presentation_time - earliest_presentation_time;
     reference_size = context->reference_size;
 
     // box type
@@ -1738,8 +1734,9 @@ uint32_t write_tfdt(byte *data, uint32_t media_type, i2ctx *context) {
 
 uint32_t write_trun(byte *data, uint32_t media_type, i2ctx *context) {
 
-    uint32_t count, nitems, flags, hton_flags, hton_sample_size, hton_sample_duration;
-    uint32_t hton_sample_delay, sample_num, hton_sample_num, offset, hton_offset, moof_pos, size, hton_size, trun_pos;
+    uint32_t count, nitems, flags, hton_flags, hton_sample_size, hton_sample_duration, hton_composition_offset;
+    uint32_t sample_num, hton_sample_num, offset, hton_offset, moof_pos, size, hton_size, trun_pos;
+    uint32_t composition_offset;
     
     i2ctx_sample *samples;
     unsigned int i  = 0;
@@ -1800,8 +1797,9 @@ uint32_t write_trun(byte *data, uint32_t media_type, i2ctx *context) {
             memcpy(data + count, &hton_flags, 4);
             count+= 4;
             // sample composition time offsets
-            hton_sample_delay = htonl(samples->mdat[i].delay);
-            memcpy(data + count, &hton_sample_delay, 4);
+            composition_offset = samples->mdat[i].presentation_timestamp - samples->mdat[i].decode_timestamp;
+            hton_composition_offset = htonl(composition_offset);
+            memcpy(data + count, &hton_composition_offset, 4);
             count+= 4;
         }
     }
