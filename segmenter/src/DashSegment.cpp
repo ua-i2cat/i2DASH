@@ -20,6 +20,7 @@
 
 #include "DashSegment.hh"
 #include <fstream>
+#include <iostream>
 
 DashSegment::DashSegment(std::string outputFile, size_t maxSize, size_t seqNum) : dataLength(0), seqNumber(seqNum), path(outputFile)
 {

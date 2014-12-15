@@ -375,7 +375,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             videoFrame->setDataBuffer(pkt.data, pkt.size);
 
             videoFrame->setIntra(isIntra(pkt.data));
-                      
+            
             videoFrame->setPresentationTime(pkt.pts);
             videoFrame->setDecodeTime(pkt.dts);
             videoFrame->setDuration(pkt.duration);

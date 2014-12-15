@@ -24,6 +24,8 @@
 
 #include "../include/i2libisoff.h"
 
+#define INIT_TIMESCALE 1000 //ms
+
 // ftyp for audio and video files is the same
 uint32_t write_ftyp(byte *data, uint32_t media_type, i2ctx *context);
 
@@ -338,7 +340,7 @@ uint32_t write_mvhd(byte *data, uint32_t media_type, i2ctx *context) {
     count+= 4;
 
     // Timescale
-    flag32 = 1000;
+    flag32 = INIT_TIMESCALE;
     hton_flag32 = htonl(flag32);
     memcpy(data + count, &hton_flag32, 4);
     count+= 4;
@@ -633,11 +635,19 @@ uint32_t write_mdia(byte *data, uint32_t media_type, i2ctx *context) {
 }
 
 uint32_t write_mdhd(byte *data, uint32_t media_type, i2ctx *context) {
-    uint32_t count, size, hton_size, flag32, hton_flag32;
+    uint32_t count, size, hton_size, flag32, hton_flag32, time_scale;
     uint16_t flag16, hton_flag16;
 
     if ((media_type == NO_TYPE) || (media_type == AUDIOVIDEO_TYPE))
         return I2ERROR_ISOFF;
+
+     if ((media_type == VIDEO_TYPE)) {
+        time_scale = context->ctxvideo->time_base;
+    } else if (media_type == AUDIO_TYPE) {
+        time_scale = context->ctxaudio->time_base;
+    } else {
+        return I2ERROR_ISOFF;
+    }
 
     count = 4;
 
@@ -661,7 +671,7 @@ uint32_t write_mdhd(byte *data, uint32_t media_type, i2ctx *context) {
     count+= 4;
 
     // Time scale
-    flag32 = 1000;
+    flag32 = time_scale;
     hton_flag32 = htonl(flag32);
     memcpy(data + count, &hton_flag32, 4);
     count+= 4;
@@ -1173,7 +1183,7 @@ uint32_t write_mp4a(byte *data, i2ctx_audio *ctxAudio) {
     count+= 4;
 
     // timescale
-    hton_timescale = htons(1000);
+    hton_timescale = htons((uint16_t)ctxAudio->time_base);
     memcpy(data + count, &hton_timescale, 2);
     count+= 2;
 
@@ -1510,7 +1520,7 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     // first offset
     //TODO: review this value -> "is the distance in bytes, in the file containing media, from the anchor point, to the first byte of the indexed material"
     // ISO/IEC 14496-12:2008/FDAM 3:2011(E);
-    hton_duration = htonl(duration);
+    hton_duration = htonl(0);
     memcpy(data + count, &hton_duration, 4);
     count+= 4;
 
@@ -1601,8 +1611,6 @@ uint32_t write_mfhd(byte *data, uint32_t media_type, i2ctx *context) {
     }
     count = 0;
     zero = 0;
-
-    printf("Sequence number: %u\n", seqnum);
 
     // Size
     size = 16;
