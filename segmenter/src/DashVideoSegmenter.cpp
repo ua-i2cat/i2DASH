@@ -19,7 +19,6 @@
  */
 
 #include "DashVideoSegmenter.hh"
-#include <iostream>
 
 DashVideoSegmenter::DashVideoSegmenter() 
 : dashContext(NULL), width(0), height(0), framerate(0)

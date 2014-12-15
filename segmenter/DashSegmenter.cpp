@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     AVCCFrame* videoFrame;
     AACFrame* audioFrame;
     Frame* frame;
-    int gotFrame;
+    int gotFrame = 0;
 
     std::string filePath = argv[1];
     size_t b = filePath.find_last_of("_");
@@ -55,8 +55,7 @@ int main(int argc, char* argv[])
     std::string stringSequenceNumber = filePath.substr(b+1,e-b-1);
     int seqNumber = stoi(stringSequenceNumber);
 
-    std::cout << "seqNumber: " << seqNumber << std::endl;
- 
+
     std::string vPath = filePath.substr(0,e) + ".m4v";
     std::string aPath = filePath.substr(0,e) + ".m4a";
     std::string vInitPath = filePath.substr(0,e) + "_init.m4v";
@@ -70,13 +69,13 @@ int main(int argc, char* argv[])
     vInitSegment = new DashSegment(vInitPath, vSeg->getMaxSegmentLength(), seqNumber);
     aInitSegment = new DashSegment(aInitPath, aSeg->getMaxSegmentLength(), seqNumber);
 
+
     demux->openInput(argv[1]);
     demux->findStreams();
-    // demux->dumpFormat();
 
     if (demux->hasVideo()) {
         if (!vSeg->init(demux->getDuration(), demux->getVideoTimeBase(), demux->getWidth(), demux->getHeight(), demux->getFPS())) {
-            cout << "Error initializing Video Segmenter" << endl;
+            cerr << "Error initializing Video Segmenter" << endl;
             exit(1);
         }
 
@@ -87,7 +86,7 @@ int main(int argc, char* argv[])
 
     if (demux->hasAudio()) {
         if (!aSeg->init(demux->getDuration(), demux->getAudioTimeBase(), demux->getAudioChannels(), demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
-            cout << "Error initializing Audio Segmenter" << endl;
+            cerr << "Error initializing Audio Segmenter" << endl;
             exit(1);
         }
 
@@ -102,7 +101,6 @@ int main(int argc, char* argv[])
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
-            
             if (vSeg->addToSegment(videoFrame, vSegment)) {
                 vSegment->writeToDisk();
             }
