@@ -49,17 +49,19 @@ public:
     bool findStreams();
     Frame* const readFrame(int& gotFrame);
     
-    float getFPS(){return fps;};
-    size_t getWidth(){return width;};
-    size_t getHeight(){return height;};
-    uint32_t getVideoBitRate() {return videoBitRate;};
+    float getFPS();
+    size_t getWidth(){return videoStream->codec->width;};
+    size_t getHeight(){return videoStream->codec->height;};
+    size_t getVideoBitRate() {return videoStream->codec->bit_rate;};
+    size_t getVideoTimeBase();
     
-    uint32_t getAudioSampleRate() {return sampleRate;};
-    uint32_t getAudioChannels() {return channels;};
-    uint32_t getAudioBitsPerSample() {return bitsPerSample;};
-    uint32_t getAudioBitRate() {return audioBitRate;};
+    size_t getAudioSampleRate() {return audioStream->codec->sample_rate;};
+    size_t getAudioChannels() {return audioStream->codec->channels;};
+    size_t getAudioBitsPerSample();
+    size_t getAudioBitRate() {return audioStream->codec->bit_rate;};
+    size_t getAudioTimeBase();
     
-    std::chrono::milliseconds getDuration();
+    size_t getDuration();
     
     bool hasVideo();
     bool hasAudio();
@@ -83,24 +85,14 @@ private:
       
     AVFormatContext *fmtCtx;
     AVPacket pkt;
+    AVStream *audioStream, *videoStream;
     
     int videoStreamIdx, audioStreamIdx;
     int framesCounter;
     bool isOpen;
-    
-    uint32_t videoBitRate;
-    uint32_t audioBitRate;
-
-    float fps;
-    size_t width;
-    size_t height;
-    
-    size_t channels;
-    size_t sampleRate;
-    size_t bitsPerSample;
-    
-    uint64_t vStartTime;
-    uint64_t aStartTime;
+       
+    size_t vStartTime;
+    size_t aStartTime;
     
     AVCCFrame* const videoFrame;
     AACFrame* const audioFrame;

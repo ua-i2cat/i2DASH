@@ -26,10 +26,11 @@
 #include <iostream>
 #include <sys/stat.h>
 
-Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), videoStreamIdx(-1), 
-                    audioStreamIdx(-1), framesCounter(0), isOpen(false), 
-                    videoBitRate(0), audioBitRate(0), fps(0.0), width(0),
-                    height(0), channels(0), sampleRate(0), bitsPerSample(0),
+#define BITS_PER_BYTE 8
+
+Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), audioStream(NULL), 
+                    videoStream(NULL), videoStreamIdx(-1), 
+                    audioStreamIdx(-1), framesCounter(0), isOpen(false),
                     vStartTime(aTime), aStartTime(aTime), videoFrame(new AVCCFrame()), 
                     audioFrame(new AACFrame()), nalSizeBytes(0)
 {   
@@ -134,6 +135,9 @@ bool Demuxer::findStreams()
 
 bool Demuxer::findVideoStream()
 {
+    size_t videoBitRate, width, height;
+    float fps;
+    
     if (!isOpen){
         return false;
     }
@@ -145,50 +149,70 @@ bool Demuxer::findVideoStream()
         return false;
     }
         
-    videoBitRate = fmtCtx->streams[videoStreamIdx]->codec->bit_rate;
-    width = fmtCtx->streams[videoStreamIdx]->codec->width;
-    height = fmtCtx->streams[videoStreamIdx]->codec->height;
-    fps = (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.num / (float) fmtCtx->streams[videoStreamIdx]->avg_frame_rate.den;
+    videoStream = fmtCtx->streams[videoStreamIdx];
+    
+    videoBitRate = videoStream->codec->bit_rate;
+    width = videoStream->codec->width;
+    height = videoStream->codec->height;
+    fps = (float) videoStream->avg_frame_rate.num / (float) videoStream->avg_frame_rate.den;
 
     if (fps <= 0 || videoBitRate <= 0 || width <= 0 || height <= 0) {
+        videoStreamIdx = -1;
         return false;
     }
 
     if (!validVideoCodec()) {
+        videoStreamIdx = -1;
         return false;
     }
 
-    if (fmtCtx->streams[videoStreamIdx]->codec->extradata_size <= 0) {
+    if (videoStream->codec->extradata_size <= 0) {
+        videoStreamIdx = -1;
         return false;
     }
 
-    nalSizeBytes = getNalSizeBytes(fmtCtx->streams[videoStreamIdx]->codec->extradata);   
+    nalSizeBytes = getNalSizeBytes(videoStream->codec->extradata);   
     
     return true;
 }
 
 bool Demuxer::findAudioStream()
 {
+    size_t audioBitRate, channels, sampleRate, bitsPerSample;
+    
     if (!isOpen){
         return false;
     }
     
     audioStreamIdx = av_find_best_stream(fmtCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
-    if (audioStreamIdx >= 0 && videoStreamIdx != audioStreamIdx){
-        
-        audioBitRate = fmtCtx->streams[audioStreamIdx]->codec->bit_rate;
-        channels = fmtCtx->streams[audioStreamIdx]->codec->channels;
-        sampleRate = fmtCtx->streams[audioStreamIdx]->codec->sample_rate;
-        bitsPerSample = av_get_bytes_per_sample(fmtCtx->streams[audioStreamIdx]->codec->sample_fmt) * 8; //Bytes to bits;
-
-        if (validAudioCodec() && channels > 0 && sampleRate > 0 && sampleRate > 0 && audioBitRate > 0) {
-            return true;
-        }
+    if (audioStreamIdx < 0 || videoStreamIdx == audioStreamIdx){
+        audioStreamIdx = -1;
+        return false;
     }
     
-    audioStreamIdx = -1;
+    audioStream = fmtCtx->streams[audioStreamIdx];
     
-    return false;
+    audioBitRate = audioStream->codec->bit_rate;
+    channels = audioStream->codec->channels;
+    sampleRate = audioStream->codec->sample_rate;
+    bitsPerSample = av_get_bytes_per_sample(audioStream->codec->sample_fmt) * BITS_PER_BYTE; //Bytes to bits;
+    
+    if (channels <= 0 || sampleRate <= 0 || sampleRate <= 0 || audioBitRate <= 0 || bitsPerSample <= 0) {
+        audioStreamIdx = -1;
+        return false;
+    }
+    
+    if (!validAudioCodec()){
+        audioStreamIdx = -1;
+        return false;
+    }
+    
+    if (audioStream->codec->extradata_size <= 0) {
+        audioStreamIdx = -1;
+        return false;
+    }
+    
+    return true;
 }
 
 bool Demuxer::validVideoCodec()
@@ -323,11 +347,7 @@ size_t Demuxer::getAudioExtraDataLength()
 }
 
 Frame* const Demuxer::readFrame(int &gotFrame)
-{
-    size_t pTime;
-    size_t dTime;
-    size_t duration;
-    
+{   
     gotFrame = -1;
     
     if (!isOpen){
@@ -355,19 +375,10 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             videoFrame->setDataBuffer(pkt.data, pkt.size);
 
             videoFrame->setIntra(isIntra(pkt.data));
-            
-            pTime = (size_t) ((double) pkt.pts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
-
-            dTime = (size_t) ((double) pkt.dts * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
-
-            duration = (size_t) ((double) pkt.duration * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0) + vStartTime;
-            
-            videoFrame->setPresentationTime(std::chrono::milliseconds(pTime));
-            videoFrame->setDecodeTime(std::chrono::milliseconds(dTime));
-            videoFrame->setDuration(std::chrono::milliseconds(duration));
+                      
+            videoFrame->setPresentationTime(pkt.pts);
+            videoFrame->setDecodeTime(pkt.dts);
+            videoFrame->setDuration(pkt.duration);
 
             return videoFrame;
         }
@@ -375,18 +386,9 @@ Frame* const Demuxer::readFrame(int &gotFrame)
         if (pkt.stream_index == audioStreamIdx) {
             audioFrame->setDataBuffer(pkt.data, pkt.size);
             
-            pTime = (size_t) ((double) pkt.pts * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + aStartTime;
-
-            dTime = (size_t) ((double) pkt.dts * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + aStartTime;
-
-            duration = (size_t) ((double) pkt.duration * (double) fmtCtx->streams[audioStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[audioStreamIdx]->time_base.den * 1000.0) + vStartTime;
-
-            audioFrame->setPresentationTime(std::chrono::milliseconds(pTime));
-            audioFrame->setDecodeTime(std::chrono::milliseconds(dTime));
-            audioFrame->setDuration(std::chrono::milliseconds(duration));
+            audioFrame->setPresentationTime(pkt.pts);
+            audioFrame->setDecodeTime(pkt.dts);
+            audioFrame->setDuration(pkt.duration);
 
             return audioFrame;
         } 
@@ -395,30 +397,24 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     return NULL;
 }
 
-std::chrono::milliseconds Demuxer::getDuration()
+size_t Demuxer::getDuration()
 {
-    uint64_t aTime = 0;
-    uint64_t vTime = 0;
+    size_t aTime = 0;
+    size_t vTime = 0;
     
     if (!isOpen || (!hasVideo() && !hasAudio())){
-        return std::chrono::milliseconds(0);
+        return 0;
     }
     
     if (hasAudio()){
-        aTime = (uint64_t) ((double) fmtCtx->streams[videoStreamIdx]->duration * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0);
+        aTime = audioStream->duration;
     }
     
      if (hasVideo()){
-        vTime = (uint64_t) ((double) fmtCtx->streams[videoStreamIdx]->duration * (double) fmtCtx->streams[videoStreamIdx]->time_base.num / 
-                (double) fmtCtx->streams[videoStreamIdx]->time_base.den * 1000.0);
+        vTime = videoStream->duration;
     }
     
-    if (aTime > vTime){
-        return std::chrono::milliseconds(aTime);
-    }
-    
-    return std::chrono::milliseconds(vTime);
+    return aTime > vTime ? aTime : vTime;
 }
 
 size_t Demuxer::getNalSizeBytes(unsigned char* metadata)
@@ -446,4 +442,22 @@ bool Demuxer::isIntra(unsigned char* data)
     return isIntra;
 }
 
+float Demuxer::getFPS()
+{
+    return (float) videoStream->avg_frame_rate.num / (float) videoStream->avg_frame_rate.den;
+}
 
+size_t Demuxer::getAudioBitsPerSample()
+{
+    return av_get_bytes_per_sample(audioStream->codec->sample_fmt) * BITS_PER_BYTE;
+}
+
+size_t Demuxer::getAudioTimeBase()
+{
+    return audioStream->time_base.den / audioStream->time_base.num;
+}
+
+size_t Demuxer::getVideoTimeBase()
+{
+    return videoStream->time_base.den / videoStream->time_base.num;
+}

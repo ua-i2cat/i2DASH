@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
     // demux->dumpFormat();
 
     if (demux->hasVideo()) {
-        if (!vSeg->init(demux->getDuration(), demux->getWidth(), demux->getHeight(), demux->getFPS())) {
+        if (!vSeg->init(demux->getDuration(), demux->getVideoTimeBase(), demux->getWidth(), demux->getHeight(), demux->getFPS())) {
             cout << "Error initializing Video Segmenter" << endl;
             exit(1);
         }
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
     }
 
     if (demux->hasAudio()) {
-        if (!aSeg->init(demux->getDuration(), demux->getAudioChannels(), demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
+        if (!aSeg->init(demux->getDuration(), demux->getAudioTimeBase(), demux->getAudioChannels(), demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
             cout << "Error initializing Audio Segmenter" << endl;
             exit(1);
         }

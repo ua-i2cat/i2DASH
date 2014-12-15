@@ -1455,9 +1455,10 @@ uint32_t write_styp(byte *data, uint32_t media_type, i2ctx *context) {
 }
 
 uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
-    uint32_t count, zero_32, duration_ms, hton_duration_ms, one_32, hton_one_32;
+    uint32_t count, zero_32, duration, hton_duration, one_32, hton_one_32;
     uint32_t reference_size, hton_reference_size, size, hton_size, hton_timescale;
     uint32_t earliest_presentation_time, hton_earliest_presentation_time;
+    uint32_t time_base;
     uint8_t zero_8;
     uint16_t zero_16, one_16, hton_one_16;
     byte flag8;
@@ -1467,11 +1468,12 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
 
     if (media_type == VIDEO_TYPE) {
         earliest_presentation_time = ctxVideo->earliest_presentation_time;
-        duration_ms = ctxVideo->current_video_duration_ms;
-    }
-    else if (media_type == AUDIO_TYPE) {
+        duration = ctxVideo->current_video_duration;
+        time_base = ctxVideo->time_base;
+    } else if (media_type == AUDIO_TYPE) {
         earliest_presentation_time = ctxAudio->earliest_presentation_time;
-        duration_ms = ctxAudio->current_audio_duration_ms;
+        duration = ctxAudio->current_audio_duration;
+        time_base = ctxAudio->time_base;
     }
 
     count = 4;
@@ -1496,7 +1498,7 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     count+= 4;
 
     // timescale
-    hton_timescale = htonl(SEC_TO_MSEC);
+    hton_timescale = htonl(time_base);
     memcpy(data + count, &hton_timescale, 4);
     count+= 4;
 
@@ -1508,8 +1510,8 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     // first offset
     //TODO: review this value -> "is the distance in bytes, in the file containing media, from the anchor point, to the first byte of the indexed material"
     // ISO/IEC 14496-12:2008/FDAM 3:2011(E);
-    hton_duration_ms = htonl(duration_ms);
-    memcpy(data + count, &hton_duration_ms, 4);
+    hton_duration = htonl(duration);
+    memcpy(data + count, &hton_duration, 4);
     count+= 4;
 
     // reserved
@@ -1527,8 +1529,8 @@ uint32_t write_sidx(byte *data, uint32_t media_type, i2ctx *context) {
     count+= 4;
 
     // subsegment_duration
-    hton_duration_ms =  htonl(duration_ms);
-    memcpy(data + count, &hton_duration_ms, 4);
+    hton_duration =  htonl(duration);
+    memcpy(data + count, &hton_duration, 4);
     count+= 4;
 
     // 1st bit is reference type, the rest is reference size
@@ -1560,8 +1562,9 @@ uint32_t write_moof(byte *data, uint32_t media_type, i2ctx **context) {
 
     // write mfhd
     size_mfhd = write_mfhd(data + count, media_type, (*context));
-    if (size_mfhd < 8)
+    if (size_mfhd < 8){
         return I2ERROR_ISOFF;
+    }
     count+=size_mfhd;
 
     // write traf
@@ -1573,8 +1576,9 @@ uint32_t write_moof(byte *data, uint32_t media_type, i2ctx **context) {
     }
 
     size_traf = write_traf(data + count, media_type, context);
-    if (size_traf < 8)
+    if (size_traf < 8) {
         return I2ERROR_ISOFF;
+    }
 
     count+= size_traf;
 
@@ -1592,8 +1596,7 @@ uint32_t write_mfhd(byte *data, uint32_t media_type, i2ctx *context) {
     
     if (media_type == VIDEO_TYPE) {
         seqnum = ctxVideo->sequence_number;
-    }
-    else if (media_type == AUDIO_TYPE) {
+    } else if (media_type == AUDIO_TYPE) {
         seqnum = ctxAudio->sequence_number;
     }
     count = 0;
@@ -1782,7 +1785,7 @@ uint32_t write_trun(byte *data, uint32_t media_type, i2ctx *context) {
     for (i = 0; i < sample_num; i++)
     {
         // sample duration
-        hton_sample_duration = htonl(samples->mdat[i].duration_ms);
+        hton_sample_duration = htonl(samples->mdat[i].duration);
         memcpy(data + count, &hton_sample_duration, 4);
         count+= 4;
 

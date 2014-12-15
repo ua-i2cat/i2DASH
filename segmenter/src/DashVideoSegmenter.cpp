@@ -22,18 +22,17 @@
 #include <iostream>
 
 DashVideoSegmenter::DashVideoSegmenter() 
-: dashContext(NULL), segmentDuration(std::chrono::milliseconds(0)),  width(0), height(0), framerate(0)
+: dashContext(NULL), width(0), height(0), framerate(0)
 {
 }
 
-bool DashVideoSegmenter::init(std::chrono::milliseconds segmentDuration, size_t width, size_t height, size_t framerate) 
+bool DashVideoSegmenter::init(size_t segmentDuration, size_t timeBase, size_t width, size_t height, size_t framerate) 
 {
     uint8_t i2error;
 
     this->width = width;
     this->height = height;
     this->framerate = framerate;
-    this->segmentDuration = segmentDuration;
 
     i2error = generate_context(&dashContext, VIDEO_TYPE);
 
@@ -41,13 +40,13 @@ bool DashVideoSegmenter::init(std::chrono::milliseconds segmentDuration, size_t 
         return false;
     }
 
-    i2error = fill_video_context(&dashContext, width, height, framerate);
+    i2error = fill_video_context(&dashContext, width, height, framerate, timeBase);
 
     if (i2error != I2OK) {
         return false;
     }
 
-    set_segment_duration_ms(segmentDuration.count(), &dashContext);
+    set_segment_duration(segmentDuration, &dashContext);
     return true;
 }
 
@@ -82,12 +81,12 @@ bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment)
         return false;
     }
 
-    if (frame->getDuration().count() <= 0) {
+    if (frame->getDuration() <= 0) {
         return false;
     }
 
-    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), frame->getPresentationTime().count(), 
-                             frame->getDecodeTime().count(), segment->getSeqNumber(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
+    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration(), frame->getPresentationTime(), 
+                             frame->getDecodeTime(), segment->getSeqNumber(), VIDEO_TYPE, segment->getDataBuffer(), frame->isIntra(), &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
         return false;
