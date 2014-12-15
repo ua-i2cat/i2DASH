@@ -46,29 +46,29 @@ uint8_t get_video_size(byte *nal_sps, uint32_t *size_nal_sps, uint32_t* w, uint3
 
 
 // IMPLEMENTATION
+//void set_segment_duration(uint32_t segment_duration, i2ctx **context){
+//    (*context)->duration_ms = segment_duration * SEC_TO_MSEC;
+//}
+
 void set_segment_duration(uint32_t segment_duration, i2ctx **context){
-    (*context)->duration_ms = segment_duration * SEC_TO_MSEC;
+    (*context)->duration = segment_duration;
 }
 
-void set_segment_duration_ms(uint32_t segment_duration, i2ctx **context){
-    (*context)->duration_ms = segment_duration;
-}
+//uint32_t get_segment_duration(i2ctx *context){
+//    return (context->duration_ms / SEC_TO_MSEC);
+//}
 
 uint32_t get_segment_duration(i2ctx *context){
-    return (context->duration_ms / SEC_TO_MSEC);
+    return context->duration;
 }
 
-uint32_t get_segment_duration_ms(i2ctx *context){
-    return context->duration_ms;
-}
-
-void set_frame_rate(uint32_t frame_rate, i2ctx **context){
-    uint32_t fps_per_cent = 0;
-    (*context)->ctxvideo->frame_rate = frame_rate;
-    fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
-    // Threshold: 1/fps * %fps * 1000
-    (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate));
-}
+// void set_frame_rate(uint32_t frame_rate, i2ctx **context){
+//     uint32_t fps_per_cent = 0;
+//     (*context)->ctxvideo->frame_rate = frame_rate;
+//     fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
+//     // Threshold: 1/fps * %fps * 1000
+//     (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate));
+// }
 
 uint32_t get_frame_rate(i2ctx *context){
     return context->ctxvideo->frame_rate;
@@ -91,9 +91,10 @@ void audio_context_initializer(i2ctx **context) {
     ctxAudio->channels = 0;
     ctxAudio->sample_rate = 0;
     ctxAudio->sample_size = 0;
+    ctxAudio->time_base = 0;
     ctxAudio->sequence_number = 0;
     ctxAudio->earliest_presentation_time = 0;
-    ctxAudio->current_audio_duration_ms = 0;
+    ctxAudio->current_audio_duration = 0;
 
     audio_sample_context_initializer(&ctxAudio);
 }
@@ -118,9 +119,10 @@ void video_context_initializer(i2ctx **context) {
     ctxVideo->width = 0;
     ctxVideo->height = 0;
     ctxVideo->frame_rate = 0;
+    ctxVideo->time_base = 0;
     ctxVideo->earliest_presentation_time = 0;
     ctxVideo->sequence_number = 0;
-    ctxVideo->current_video_duration_ms = 0;
+    ctxVideo->current_video_duration = 0;
 
     video_sample_context_initializer(&ctxVideo);
 }
@@ -129,7 +131,7 @@ void context_refresh(i2ctx **context, uint32_t media_type) {
     if ((media_type == VIDEO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
         (*context)->ctxvideo->earliest_presentation_time = 0;
         (*context)->ctxvideo->sequence_number = 0;
-        (*context)->ctxvideo->current_video_duration_ms = 0;
+        (*context)->ctxvideo->current_video_duration = 0;
         (*context)->ctxvideo->segment_data_size = 0;
         (*context)->ctxvideo->ctxsample->mdat_sample_length = 0;
         (*context)->ctxvideo->ctxsample->mdat_total_size = 0;
@@ -139,7 +141,7 @@ void context_refresh(i2ctx **context, uint32_t media_type) {
     if ((media_type == AUDIO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
         (*context)->ctxaudio->earliest_presentation_time = 0;
         (*context)->ctxaudio->sequence_number = 0;
-        (*context)->ctxaudio->current_audio_duration_ms = 0;
+        (*context)->ctxaudio->current_audio_duration = 0;
         (*context)->ctxaudio->segment_data_size = 0;
         (*context)->ctxaudio->ctxsample->mdat_sample_length = 0;
         (*context)->ctxaudio->ctxsample->mdat_total_size = 0;
@@ -257,7 +259,7 @@ uint8_t generate_context(i2ctx **context, uint32_t media_type)
     return I2OK;
 }
 
-uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uint32_t framerate) 
+uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uint32_t framerate, uint32_t t_base) 
 {
     uint32_t fps_per_cent = 0;
 
@@ -272,15 +274,16 @@ uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uin
     (*context)->ctxvideo->width = width;
     (*context)->ctxvideo->height = height;
     (*context)->ctxvideo->frame_rate = framerate;
+    (*context)->ctxvideo->time_base = t_base;
 
     fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
     // Threshold: 1/fps * %fps * 1000
-    (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
+    (*context)->threshold = ((*context)->ctxvideo->time_base * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
 
     return I2OK;
 }
 
-uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_rate, uint32_t sample_size) 
+uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_rate, uint32_t sample_size, uint32_t t_base) 
 {
     if ((*context) == NULL) {
         return I2ERROR_CONTEXT_NULL;
@@ -293,35 +296,36 @@ uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_r
     (*context)->ctxaudio->channels = channels;
     (*context)->ctxaudio->sample_rate = sample_rate;
     (*context)->ctxaudio->sample_size = sample_size;
+    (*context)->ctxaudio->time_base = t_base;
 
     return I2OK;
 }
 
-uint8_t context_initializer(i2ctx **context, uint32_t media_type){
-    if ((media_type != VIDEO_TYPE) && (media_type != AUDIO_TYPE) && (media_type != AUDIOVIDEO_TYPE)) {
-        (*context) = NULL;
-        return I2ERROR_MEDIA_TYPE;
-    }
-    *context = (i2ctx *) malloc(sizeof(i2ctx));
-
-    (*context)->duration_ms = 5 * SEC_TO_MSEC;
-    (*context)->reference_size = 0;
-    if ((media_type == VIDEO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
-        uint32_t fps_per_cent = 0;
-        video_context_initializer(context);
-        fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
-        // Threshold: 1/fps * %fps * 1000
-        (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
-    } else
-        (*context)->ctxvideo = NULL;
-
-    if ((media_type == AUDIO_TYPE) || (media_type == AUDIOVIDEO_TYPE))
-        audio_context_initializer(context);
-    else
-        (*context)->ctxaudio = NULL;
-
-    return I2OK;
-}
+// uint8_t context_initializer(i2ctx **context, uint32_t media_type){
+//     if ((media_type != VIDEO_TYPE) && (media_type != AUDIO_TYPE) && (media_type != AUDIOVIDEO_TYPE)) {
+//         (*context) = NULL;
+//         return I2ERROR_MEDIA_TYPE;
+//     }
+//     *context = (i2ctx *) malloc(sizeof(i2ctx));
+// 
+//     (*context)->duration_ms = 5 * SEC_TO_MSEC;
+//     (*context)->reference_size = 0;
+//     if ((media_type == VIDEO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
+//         uint32_t fps_per_cent = 0;
+//         video_context_initializer(context);
+//         fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
+//         // Threshold: 1/fps * %fps * 1000
+//         (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
+//     } else
+//         (*context)->ctxvideo = NULL;
+// 
+//     if ((media_type == AUDIO_TYPE) || (media_type == AUDIOVIDEO_TYPE))
+//         audio_context_initializer(context);
+//     else
+//         (*context)->ctxaudio = NULL;
+// 
+//     return I2OK;
+// }
 
 void extract_video_size_from_metadata(byte *metadata, uint32_t* width, uint32_t* height) 
 {
@@ -492,8 +496,7 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
 
     if (media_type == VIDEO_TYPE) {
         seg_gen = I2OK;
-        //printf("%u %u %u\n", (*context)->duration_ms, (*context)->threshold_ms, (*context)->ctxvideo->current_video_duration_ms);
-        if ((is_intra == TRUE) && ((((*context)->duration_ms) - ((*context)->threshold_ms)) <= ((*context)->ctxvideo->current_video_duration_ms))) {
+        if ((is_intra == TRUE) && ((((*context)->duration) - ((*context)->threshold)) <= ((*context)->ctxvideo->current_video_duration))) {
             seg_gen = segmentGenerator((*context)->ctxvideo->segment_data, (*context)->ctxvideo->segment_data_size, output_data, VIDEO_TYPE, context);
             if (seg_gen > I2ERROR_MAX)
                 context_refresh(context, VIDEO_TYPE);
@@ -512,12 +515,12 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
                 (*context)->ctxvideo->sequence_number = seqNumber;
             }
 
-            (*context)->ctxvideo->current_video_duration_ms += duration_sample;
+            (*context)->ctxvideo->current_video_duration += duration_sample;
 
             // Add metadata
             samp_len = ctxSample->mdat_sample_length;
             ctxSample->mdat[samp_len].size = size_input;
-            ctxSample->mdat[samp_len].duration_ms = duration_sample;
+            ctxSample->mdat[samp_len].duration = duration_sample;
             ctxSample->mdat[samp_len].presentation_timestamp = pts;
             ctxSample->mdat[samp_len].decode_timestamp = dts;
             ctxSample->mdat[samp_len].key = is_intra;
@@ -528,7 +531,7 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
         seg_gen = I2OK;
         
         // Close segmentation
-        if ((((*context)->ctxvideo != NULL) && (is_intra == TRUE)) || (((*context)->ctxvideo == NULL) && (((*context)->duration_ms) <= ((*context)->ctxaudio->current_audio_duration_ms)))) { 
+        if ((((*context)->ctxvideo != NULL) && (is_intra == TRUE)) || (((*context)->ctxvideo == NULL) && (((*context)->duration) <= ((*context)->ctxaudio->current_audio_duration)))) { 
             seg_gen = segmentGenerator((*context)->ctxaudio->segment_data, (*context)->ctxaudio->segment_data_size, output_data, AUDIO_TYPE, context);          
             if (seg_gen > I2ERROR_MAX)
                 context_refresh(context, AUDIO_TYPE);
@@ -547,12 +550,12 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
                 (*context)->ctxaudio->sequence_number = seqNumber;
             }
 
-            (*context)->ctxaudio->current_audio_duration_ms += duration_sample;
+            (*context)->ctxaudio->current_audio_duration += duration_sample;
 
             // Add metadata
             samp_len = ctxSample->mdat_sample_length;
             ctxSample->mdat[samp_len].size = size_input;
-            ctxSample->mdat[samp_len].duration_ms = duration_sample;
+            ctxSample->mdat[samp_len].duration = duration_sample;
             ctxSample->mdat[samp_len].presentation_timestamp = pts;
             ctxSample->mdat[samp_len].decode_timestamp = dts;
             ctxSample->mdat[samp_len].key = is_intra;

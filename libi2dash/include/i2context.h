@@ -46,36 +46,36 @@ typedef unsigned char byte;
 #define I2OK    0
 #define TRUE    1
 #define FALSE   0
-#define SEC_TO_MSEC 1000
+//#define SEC_TO_MSEC 1000
 #define FRAMERATE_PER_CENT 10
-#define H264_FREQUENCY 90000
-#define H264_FREQUENCY_MS 90
-#define AAC_48K_FREQUENCY_MS 48
-#define AAC_48K_FREQUENCY 48000
-#define NAL_TYPE 0x1F
-#define NAL_UNIT_TYPE 0x1F
-#define NRI_TYPE 0x60
-#define FORBIDDEN_BIT 0x80
-#define START_BIT 0X80
-#define END_BIT 0X40
-#define FUA_TYPE 0x1C
-#define PPS_TYPE 8
-#define SPS_TYPE 7
-#define SEI_TYPE 6
-#define RTP_LENGTH_HEADER 12
-#define H264_LENGTH_HEADER 2
-#define AAC_LENGTH_HEADER 2
-#define AU_LENGTH_HEADER 2
-#define BYTE_SIZE 8
-#define LENGTH_SIZE 4
-#define INTRA_TYPE 5
+//#define H264_FREQUENCY 90000
+//#define H264_FREQUENCY_MS 90
+//#define AAC_48K_FREQUENCY_MS 48
+//#define AAC_48K_FREQUENCY 48000
+//#define NAL_TYPE 0x1F
+//#define NAL_UNIT_TYPE 0x1F
+//#define NRI_TYPE 0x60
+//#define FORBIDDEN_BIT 0x80
+//#define START_BIT 0X80
+//#define END_BIT 0X40
+//#define FUA_TYPE 0x1C
+//#define PPS_TYPE 8
+//#define SPS_TYPE 7
+//#define SEI_TYPE 6
+//#define RTP_LENGTH_HEADER 12
+//#define H264_LENGTH_HEADER 2
+//#define AAC_LENGTH_HEADER 2
+//#define AU_LENGTH_HEADER 2
+//#define BYTE_SIZE 8
+//#define LENGTH_SIZE 4
+//#define INTRA_TYPE 5
 
 #include <netinet/in.h>
 #include "i2nalparser.h"
 
 typedef struct {
     uint32_t        size;
-    uint32_t        duration_ms;
+    uint32_t        duration;
     uint32_t        presentation_timestamp;
     unsigned        key:1;//Flags mp4parser.com
     uint32_t        index;
@@ -95,15 +95,16 @@ typedef struct {
 typedef struct {
     byte            *pps_sps_data;
     uint32_t        pps_sps_data_length;
-	nalHeader		nalsHeader;
+    nalHeader	    nalsHeader;
     byte            segment_data[MAX_DAT];
     uint32_t        segment_data_size;
+    uint32_t        time_base;
     uint16_t        width;
     uint16_t        height;
     uint32_t        frame_rate;
     uint32_t        earliest_presentation_time;
     uint32_t        sequence_number;
-    uint32_t        current_video_duration_ms;
+    uint32_t        current_video_duration;
     i2ctx_sample    *ctxsample;
 } i2ctx_video;
 
@@ -112,20 +113,21 @@ typedef struct {
     uint32_t        aac_data_length;
     byte            segment_data[MAX_DAT];
     uint32_t        segment_data_size;
+    uint32_t        time_base;
     uint16_t        channels;
     uint16_t        sample_rate;
     uint16_t        sample_size;
     uint32_t        earliest_presentation_time;
     uint32_t        sequence_number;
-    uint32_t        current_audio_duration_ms;
+    uint32_t        current_audio_duration;
     i2ctx_sample    *ctxsample;
 } i2ctx_audio;
 
 typedef struct {
     i2ctx_audio     *ctxaudio;
     i2ctx_video     *ctxvideo;
-    uint32_t        duration_ms;
-    uint32_t        threshold_ms;
+    uint32_t        duration;
+    uint32_t        threshold;
     uint32_t        reference_size;//TODO: refactor
     uint8_t         audio_segment_flag;
 } i2ctx;

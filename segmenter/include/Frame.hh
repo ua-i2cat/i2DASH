@@ -23,7 +23,6 @@
 #define _FRAME_HH
 
 #include <cstddef>
-#include <chrono>
 
 class Frame {
     
@@ -37,21 +36,21 @@ public:
 
     void setDataBuffer(unsigned char *buff, size_t length);
     
-    void setPresentationTime(std::chrono::milliseconds pTime);
-    void setDecodeTime(std::chrono::milliseconds dTime);
-    void setDuration(std::chrono::milliseconds dur);
-    std::chrono::milliseconds getPresentationTime() {return presentationTime;};
-    std::chrono::milliseconds getDecodeTime() {return decodeTime;};
-    std::chrono::milliseconds getDuration() {return duration;};
+    void setPresentationTime(size_t pTime);
+    void setDecodeTime(size_t dTime);
+    void setDuration(size_t dur);
+    size_t getPresentationTime() {return presentationTime;};
+    size_t getDecodeTime() {return decodeTime;};
+    size_t getDuration() {return duration;};
     
     virtual void clearFrame() = 0;
     
 protected:
     unsigned char *frameBuff;
     size_t frameLen;
-    std::chrono::milliseconds presentationTime;
-    std::chrono::milliseconds decodeTime;
-    std::chrono::milliseconds duration;
+    size_t presentationTime;
+    size_t decodeTime;
+    size_t duration;
 };
 
 class AVCCFrame : public Frame {

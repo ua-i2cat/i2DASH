@@ -23,18 +23,17 @@
 
 
 DashAudioSegmenter::DashAudioSegmenter() 
-: dashContext(NULL), segmentDuration(std::chrono::milliseconds(0)), channels(0), sampleRate(0), sampleSize(0)
+: dashContext(NULL), channels(0), sampleRate(0), sampleSize(0)
 {
     
 }
 
-bool DashAudioSegmenter::init(std::chrono::milliseconds segmentDuration, size_t channels, size_t sampleRate, size_t sampleSize) 
+bool DashAudioSegmenter::init(size_t segmentDuration, size_t timeBase, size_t channels, size_t sampleRate, size_t sampleSize) 
 {
     uint8_t i2error;
     this->channels = channels;
     this->sampleRate = sampleRate;
     this->sampleSize = sampleSize;
-    this->segmentDuration = segmentDuration;
     
     i2error = generate_context(&dashContext, AUDIO_TYPE);
 
@@ -42,13 +41,13 @@ bool DashAudioSegmenter::init(std::chrono::milliseconds segmentDuration, size_t 
         return false;
     }
 
-    i2error = fill_audio_context(&dashContext, channels, sampleRate, sampleSize); 
+    i2error = fill_audio_context(&dashContext, channels, sampleRate, sampleSize, timeBase); 
 
     if (i2error != I2OK) {
         return false;
     }
 
-    set_segment_duration_ms(segmentDuration.count(), &dashContext);
+    set_segment_duration(segmentDuration, &dashContext);
     return true;
 }
 
@@ -83,12 +82,12 @@ bool DashAudioSegmenter::addToSegment(AACFrame* frame, DashSegment* segment)
         return false;
     }
 
-    if (frame->getDuration().count() <= 0) {
+    if (frame->getDuration() <= 0) {
         return false;
     }
 
-    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration().count(), frame->getPresentationTime().count(), 
-                             frame->getDecodeTime().count(), segment->getSeqNumber(), AUDIO_TYPE, segment->getDataBuffer(), 1, &dashContext);
+    segmentSize = add_sample(frame->getDataBuffer(), frame->getDataLength(), frame->getDuration(), frame->getPresentationTime(), 
+                             frame->getDecodeTime(), segment->getSeqNumber(), AUDIO_TYPE, segment->getDataBuffer(), 1, &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
         return false;

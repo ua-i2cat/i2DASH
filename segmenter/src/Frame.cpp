@@ -21,26 +21,28 @@
 
 #include "Frame.hh"
 
-Frame::Frame() : frameBuff(NULL), frameLen(0)
+Frame::Frame() : frameBuff(NULL), frameLen(0),
+                presentationTime(0), decodeTime(0),
+                duration(0)
 {
-    presentationTime = std::chrono::milliseconds(-1);
+
 }
 
 Frame::~Frame()
 {
 }
 
-void Frame::setPresentationTime(std::chrono::milliseconds pTime)
+void Frame::setPresentationTime(size_t pTime)
 {
     presentationTime = pTime;
 }
 
-void Frame::setDecodeTime(std::chrono::milliseconds dTime)
+void Frame::setDecodeTime(size_t dTime)
 {
     decodeTime = dTime;
 }
 
-void Frame::setDuration(std::chrono::milliseconds dur) 
+void Frame::setDuration(size_t dur) 
 {
     duration = dur;
 }
