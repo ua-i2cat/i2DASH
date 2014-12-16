@@ -27,6 +27,16 @@
 
 #include "DashAudioSegmenter.hh"
 
+#define TEST_SEGMENT_DURATION 477184
+#define TEST_AUDIO_TIME_BASE 48000
+#define TEST_AUDIO_SAMPLE_DURATION 1024
+#define TEST_AUDIO_CHANNELS 2
+#define TEST_AUDIO_SAMPLE_RATE 48000
+#define TEST_AUDIO_BITS_PER_SAMPLE 32
+#define TEST_FRAME_PTS 1024
+#define TEST_FRAME_DTS 0
+#define TEST_FRAME_DURATION 512
+
 using namespace std;
 
 class dashAudioSegmenterTestSuite : public Test::Suite {
@@ -67,10 +77,28 @@ private:
     void generateInit();
     void tear_down();
 
-    int inputDataSize;
-    int outputDataSize;
+    size_t inputDataSize;
+    size_t outputDataSize;
     unsigned char* inputData;
     unsigned char* outputData;
+};
+
+class generateSegmentTestSuite : public dashAudioSegmenterTestSuite {
+public:
+    generateSegmentTestSuite() {
+        TEST_ADD(generateSegmentTestSuite::addToSegment);
+        TEST_ADD(generateSegmentTestSuite::finishSegment);
+    }
+    
+private:
+    void setup();
+    void addToSegment();
+    void finishSegment();
+    void tear_down();
+
+    DashSegment* segment;
+    AACFrame* frame;
+
 };
 
 void dashAudioSegmenterTestSuite::tear_down()
@@ -97,7 +125,8 @@ void initTestSuite::init()
         return;
     }
 
-    TEST_ASSERT_MSG(aSeg->init(), "AudioSegmenter init failed");
+    TEST_ASSERT_MSG(aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
+                               TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE), "AudioSegmenter init failed");
 }
 
 void generateInitTestSuite::setup()
@@ -113,7 +142,8 @@ void generateInitTestSuite::setup()
         return;
     }
 
-    if (!aSeg->init()) {
+    if (!aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
+                               TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE)) {
         TEST_FAIL("Segmenter init failed. Check init test\n");
         return;
     }
@@ -147,22 +177,23 @@ void generateInitTestSuite::setup()
 
 void generateInitTestSuite::generateInit()
 {
+    std::string dummyPath("");
+    int dummySeqNumber = 0;
+    DashSegment* initSegment = new DashSegment(dummyPath, aSeg->getMaxSegmentLength(), dummySeqNumber);
+
     int diff = 0;
-    size_t initBufferLen = 0;
-    size_t bufferMaxLen = 1024*1024; //1MB
-    unsigned char* initBuffer = new unsigned char[bufferMaxLen];
 
-    initBufferLen = aSeg->generateInit(inputData, inputDataSize, initBuffer);
+    aSeg->generateInit(inputData, inputDataSize, initSegment);
 
-    if (initBufferLen != outputDataSize) {
+    if (initSegment->getDataLength() != outputDataSize) {
         TEST_FAIL("Init buffer length invalid");
     }
 
-    diff = memcmp(initBuffer, outputData, initBufferLen);
+    diff = memcmp(initSegment->getDataBuffer(), outputData, initSegment->getDataLength());
 
     TEST_ASSERT_MSG(diff == 0, "Init does not coincide with init file model");
 
-    delete initBuffer;
+    delete initSegment;
 }
 
 void generateInitTestSuite::tear_down()
@@ -172,6 +203,54 @@ void generateInitTestSuite::tear_down()
     delete aSeg;
 }
 
+void generateSegmentTestSuite::setup()
+{
+    aSeg = new DashAudioSegmenter();
+    if (aSeg == NULL) {
+        TEST_FAIL("Segmenter instance is null. Check constructor test\n");
+        return;
+    }
+
+    if (!aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
+                               TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE)) {
+        TEST_FAIL("Segmenter init failed. Check init test\n");
+        return;
+    }
+
+    std::string dummyPath("");
+    int dummySeqNumber = 0;
+    int maxData = aSeg->getMaxSegmentLength();
+    unsigned char* dummyBuffer = new unsigned char[maxData];
+    
+    frame = new AACFrame();
+    segment = new DashSegment(dummyPath, maxData, dummySeqNumber);
+
+    frame->setDataBuffer(dummyBuffer, maxData);
+    frame->setPresentationTime(TEST_FRAME_PTS);
+    frame->setDecodeTime(TEST_FRAME_DTS);
+    frame->setDuration(TEST_FRAME_DURATION);
+}
+
+void generateSegmentTestSuite::addToSegment()
+{
+    TEST_ASSERT_MSG(TEST_SEGMENT_DURATION > TEST_FRAME_DURATION, "Frame duration larger than segment duration");
+    TEST_ASSERT_MSG(!aSeg->addToSegment(frame, segment), "AddToSegment detected segment end too early");
+}
+
+void generateSegmentTestSuite::finishSegment()
+{
+    TEST_ASSERT_MSG(!aSeg->finishSegment(segment), "FinishSegment returned true with no segment data prepared");
+    TEST_ASSERT_MSG(!aSeg->addToSegment(frame, segment), "AddToSegment detected segment end too early");
+    TEST_ASSERT_MSG(aSeg->finishSegment(segment), "FinishSegment failed");
+}
+
+void generateSegmentTestSuite::tear_down()
+{
+    delete aSeg;
+    delete frame;
+    delete segment;
+}
+
 int main(int argc, char* argv[])
 {
     try{
@@ -179,6 +258,7 @@ int main(int argc, char* argv[])
         ts.add(auto_ptr<Test::Suite>(new constructorTestSuite()));
         ts.add(auto_ptr<Test::Suite>(new initTestSuite()));
         ts.add(auto_ptr<Test::Suite>(new generateInitTestSuite()));
+        ts.add(auto_ptr<Test::Suite>(new generateSegmentTestSuite()));
 
         Test::TextOutput output(Test::TextOutput::Verbose);
         ts.run(output, true);
