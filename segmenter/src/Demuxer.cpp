@@ -27,8 +27,9 @@
 #include <sys/stat.h>
 
 #define BITS_PER_BYTE 8
+#define TO_MILLISECONDS 1000
 
-Demuxer::Demuxer(uint64_t vTime, uint64_t aTime): fmtCtx(NULL), audioStream(NULL), 
+Demuxer::Demuxer(size_t vTime, size_t aTime): fmtCtx(NULL), audioStream(NULL), 
                     videoStream(NULL), videoStreamIdx(-1), 
                     audioStreamIdx(-1), framesCounter(0), isOpen(false),
                     vStartTime(aTime), aStartTime(aTime), videoFrame(new AVCCFrame()), 
@@ -376,8 +377,8 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
             videoFrame->setIntra(isIntra(pkt.data));
             
-            videoFrame->setPresentationTime(pkt.pts);
-            videoFrame->setDecodeTime(pkt.dts);
+            videoFrame->setPresentationTime(pkt.pts + vStartTime);
+            videoFrame->setDecodeTime(pkt.dts + vStartTime);
             videoFrame->setDuration(pkt.duration);
 
             return videoFrame;
@@ -386,8 +387,8 @@ Frame* const Demuxer::readFrame(int &gotFrame)
         if (pkt.stream_index == audioStreamIdx) {
             audioFrame->setDataBuffer(pkt.data, pkt.size);
             
-            audioFrame->setPresentationTime(pkt.pts);
-            audioFrame->setDecodeTime(pkt.dts);
+            audioFrame->setPresentationTime(pkt.pts + aStartTime);
+            audioFrame->setDecodeTime(pkt.dts + aStartTime);
             audioFrame->setDuration(pkt.duration);
 
             return audioFrame;
@@ -397,24 +398,56 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     return NULL;
 }
 
-size_t Demuxer::getDuration()
-{
-    size_t aTime = 0;
-    size_t vTime = 0;
-    
-    if (!isOpen || (!hasVideo() && !hasAudio())){
+size_t Demuxer::getAudioDuration()
+{   
+    if (!isOpen){
         return 0;
     }
     
-    if (hasAudio()){
-        aTime = audioStream->duration;
+    if (!hasAudio()){
+        return 0;
     }
     
-     if (hasVideo()){
-        vTime = videoStream->duration;
+    return audioStream->duration / getAudioTimeBase() * TO_MILLISECONDS;
+}
+
+size_t Demuxer::getVideoDuration()
+{    
+    if (!isOpen){
+        return 0;
     }
     
-    return aTime > vTime ? aTime : vTime;
+    if (!hasVideo()){
+        return 0;
+    }
+    
+    return videoStream->duration / getVideoTimeBase() * TO_MILLISECONDS;
+}
+
+size_t Demuxer::getAudioSampleDuration()
+{    
+    if (!isOpen){
+        return 0;
+    }
+    
+    if (!hasAudio()){
+        return 0;
+    }
+    
+    return audioStream->duration / audioStream->nb_frames;
+}
+
+size_t Demuxer::getVideoSampleDuration()
+{   
+    if (!isOpen){
+        return 0;
+    }
+    
+    if (!hasVideo()){
+        return 0;
+    }
+    
+    return videoStream->duration / videoStream->nb_frames;
 }
 
 size_t Demuxer::getNalSizeBytes(unsigned char* metadata)
