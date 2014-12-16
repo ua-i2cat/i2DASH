@@ -25,8 +25,6 @@
 #include "../include/i2libdash.h"
 #include "../include/i2nalparser.h"
 
-#define TO_MILLISECONDS 1000
-
 // PRIVATE FUNCTIONS DECLARATION
 void context_refresh(i2ctx **context, uint32_t media_type);
 
@@ -54,14 +52,6 @@ void set_segment_duration(uint32_t segment_duration, i2ctx **context){
 uint32_t get_segment_duration(i2ctx *context){
     return context->duration;
 }
-
-// void set_frame_rate(uint32_t frame_rate, i2ctx **context){
-//     uint32_t fps_per_cent = 0;
-//     (*context)->ctxvideo->frame_rate = frame_rate;
-//     fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
-//     // Threshold: 1/fps * %fps * 1000
-//     (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate));
-// }
 
 uint32_t get_frame_rate(i2ctx *context){
     return context->ctxvideo->frame_rate;
@@ -272,7 +262,7 @@ uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uin
 
     fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
     // Threshold: 1/fps * %fps * 1000
-    (*context)->threshold = (TO_MILLISECONDS * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
+    (*context)->threshold = ((*context)->ctxvideo->time_base * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
 
     return I2OK;
 }
@@ -436,8 +426,6 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
                     uint32_t seqNumber, uint32_t media_type, byte *output_data, uint8_t is_intra, i2ctx **context) 
 {
     uint32_t seg_gen, samp_len;
-    uint32_t current_video_duration_ms;
-    uint32_t current_audio_duration_ms;
 
     seg_gen = 0;
 
@@ -467,12 +455,10 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
 
     if (media_type == VIDEO_TYPE) {
         seg_gen = I2OK;
-        current_video_duration_ms = ((*context)->ctxvideo->current_video_duration/(*context)->ctxvideo->time_base)*TO_MILLISECONDS;
-        if ((is_intra == TRUE) && (((*context)->duration - (*context)->threshold) <= current_video_duration_ms)) {
+        if ((is_intra == TRUE) && ((((*context)->duration) - ((*context)->threshold)) <= ((*context)->ctxvideo->current_video_duration))) {
             seg_gen = segmentGenerator((*context)->ctxvideo->segment_data, (*context)->ctxvideo->segment_data_size, output_data, VIDEO_TYPE, context);
-            if (seg_gen > I2ERROR_MAX) {
+            if (seg_gen > I2ERROR_MAX)
                 context_refresh(context, VIDEO_TYPE);
-            }
         }
         
         // Add sample or Init new segmentation
@@ -502,14 +488,12 @@ uint32_t add_sample(byte *input_data, uint32_t size_input, uint32_t duration_sam
 
     } else if(media_type == AUDIO_TYPE) {
         seg_gen = I2OK;
-
-        current_audio_duration_ms = ((*context)->ctxaudio->current_audio_duration/(*context)->ctxaudio->time_base)*TO_MILLISECONDS;
+        
         // Close segmentation
-        if (((*context)->ctxvideo != NULL && is_intra == TRUE) || ((*context)->ctxvideo == NULL && ((*context)->duration <= current_audio_duration_ms))) { 
+        if ((((*context)->ctxvideo != NULL) && (is_intra == TRUE)) || (((*context)->ctxvideo == NULL) && (((*context)->duration) <= ((*context)->ctxaudio->current_audio_duration)))) { 
             seg_gen = segmentGenerator((*context)->ctxaudio->segment_data, (*context)->ctxaudio->segment_data_size, output_data, AUDIO_TYPE, context);          
-            if (seg_gen > I2ERROR_MAX) {
+            if (seg_gen > I2ERROR_MAX)
                 context_refresh(context, AUDIO_TYPE);
-            }
         }
         
         // Add sample or Init new segmentation
