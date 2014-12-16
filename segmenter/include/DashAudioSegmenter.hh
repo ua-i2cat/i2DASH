@@ -31,7 +31,7 @@ public:
     DashAudioSegmenter();
     ~DashAudioSegmenter();
 
-    bool init(size_t segmentDuration, size_t timeBase, size_t channels, size_t sampleRate, size_t sampleSize);
+    bool init(size_t segmentDuration, size_t timeBase, size_t sampleDuration, size_t channels, size_t sampleRate, size_t sampleSize);
     bool generateInit(unsigned char* metadata, size_t metadataSize, DashSegment* segment);
     bool addToSegment(AACFrame* frame, DashSegment* segment);
     bool finishSegment(DashSegment* segment);

@@ -99,6 +99,7 @@ typedef struct {
     byte            segment_data[MAX_DAT];
     uint32_t        segment_data_size;
     uint32_t        time_base;
+    uint32_t        sample_duration;
     uint16_t        width;
     uint16_t        height;
     uint32_t        frame_rate;
@@ -114,6 +115,7 @@ typedef struct {
     byte            segment_data[MAX_DAT];
     uint32_t        segment_data_size;
     uint32_t        time_base;
+    uint32_t        sample_duration;
     uint16_t        channels;
     uint16_t        sample_rate;
     uint16_t        sample_size;

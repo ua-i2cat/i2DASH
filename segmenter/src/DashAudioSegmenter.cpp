@@ -28,7 +28,7 @@ DashAudioSegmenter::DashAudioSegmenter()
     
 }
 
-bool DashAudioSegmenter::init(size_t segmentDuration, size_t timeBase, size_t channels, size_t sampleRate, size_t sampleSize) 
+bool DashAudioSegmenter::init(size_t segmentDuration, size_t timeBase, size_t sampleDuration, size_t channels, size_t sampleRate, size_t sampleSize) 
 {
     uint8_t i2error;
     this->channels = channels;
@@ -41,7 +41,7 @@ bool DashAudioSegmenter::init(size_t segmentDuration, size_t timeBase, size_t ch
         return false;
     }
 
-    i2error = fill_audio_context(&dashContext, channels, sampleRate, sampleSize, timeBase); 
+    i2error = fill_audio_context(&dashContext, channels, sampleRate, sampleSize, timeBase, sampleDuration); 
 
     if (i2error != I2OK) {
         return false;

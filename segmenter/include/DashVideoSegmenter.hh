@@ -31,7 +31,7 @@ public:
     DashVideoSegmenter();
     ~DashVideoSegmenter();
 
-    bool init(size_t segmentDuration, size_t timeBase, size_t width, size_t height, size_t framerate); 
+    bool init(size_t segmentDuration, size_t timeBase, size_t sampleDuration, size_t width, size_t height, size_t framerate); 
     bool generateInit(unsigned char* metadata, size_t metadataSize, DashSegment* segment);
     bool addToSegment(AVCCFrame* frame, DashSegment* segment);
     bool finishSegment(DashSegment* segment);
