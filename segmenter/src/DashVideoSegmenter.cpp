@@ -25,7 +25,7 @@ DashVideoSegmenter::DashVideoSegmenter()
 {
 }
 
-bool DashVideoSegmenter::init(size_t segmentDuration, size_t timeBase, size_t width, size_t height, size_t framerate) 
+bool DashVideoSegmenter::init(size_t segmentDuration, size_t timeBase, size_t sampleDuration, size_t width, size_t height, size_t framerate) 
 {
     uint8_t i2error;
 
@@ -39,7 +39,7 @@ bool DashVideoSegmenter::init(size_t segmentDuration, size_t timeBase, size_t wi
         return false;
     }
 
-    i2error = fill_video_context(&dashContext, width, height, framerate, timeBase);
+    i2error = fill_video_context(&dashContext, width, height, framerate, timeBase, sampleDuration);
 
     if (i2error != I2OK) {
         return false;

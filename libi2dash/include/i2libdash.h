@@ -36,9 +36,9 @@
 
 uint8_t generate_context(i2ctx **context, uint32_t media_type); 
 
-uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uint32_t framerate, uint32_t t_base);
+uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uint32_t framerate, uint32_t t_base, uint32_t sample_duration);
 
-uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_rate, uint32_t sample_size, uint32_t t_base); 
+uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_rate, uint32_t sample_size, uint32_t t_base, uint32_t sample_duration); 
 
 //TODO: metadata1, 2 and 3 refactor (inside sps)
 uint32_t init_video_handler(byte *metadata, uint32_t metadata_size, byte *metadata2, uint32_t metadata2_size, byte *sps_data, uint32_t *sps_size, byte *metadata3, uint32_t metadata3_size, byte *pps_data, uint32_t pps_size, byte *output_data, i2ctx **context);

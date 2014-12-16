@@ -259,7 +259,7 @@ uint8_t generate_context(i2ctx **context, uint32_t media_type)
     return I2OK;
 }
 
-uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uint32_t framerate, uint32_t t_base) 
+uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uint32_t framerate, uint32_t t_base, uint32_t sample_duration) 
 {
     uint32_t fps_per_cent = 0;
 
@@ -275,6 +275,7 @@ uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uin
     (*context)->ctxvideo->height = height;
     (*context)->ctxvideo->frame_rate = framerate;
     (*context)->ctxvideo->time_base = t_base;
+    (*context)->ctxvideo->sample_duration = sample_duration;
 
     fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
     // Threshold: 1/fps * %fps * 1000
@@ -283,7 +284,7 @@ uint8_t fill_video_context(i2ctx **context, uint32_t width, uint32_t height, uin
     return I2OK;
 }
 
-uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_rate, uint32_t sample_size, uint32_t t_base) 
+uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_rate, uint32_t sample_size, uint32_t t_base, uint32_t sample_duration) 
 {
     if ((*context) == NULL) {
         return I2ERROR_CONTEXT_NULL;
@@ -297,35 +298,10 @@ uint8_t fill_audio_context(i2ctx **context, uint32_t channels, uint32_t sample_r
     (*context)->ctxaudio->sample_rate = sample_rate;
     (*context)->ctxaudio->sample_size = sample_size;
     (*context)->ctxaudio->time_base = t_base;
+    (*context)->ctxaudio->sample_duration = sample_duration;
 
     return I2OK;
 }
-
-// uint8_t context_initializer(i2ctx **context, uint32_t media_type){
-//     if ((media_type != VIDEO_TYPE) && (media_type != AUDIO_TYPE) && (media_type != AUDIOVIDEO_TYPE)) {
-//         (*context) = NULL;
-//         return I2ERROR_MEDIA_TYPE;
-//     }
-//     *context = (i2ctx *) malloc(sizeof(i2ctx));
-// 
-//     (*context)->duration_ms = 5 * SEC_TO_MSEC;
-//     (*context)->reference_size = 0;
-//     if ((media_type == VIDEO_TYPE) || (media_type == AUDIOVIDEO_TYPE)) {
-//         uint32_t fps_per_cent = 0;
-//         video_context_initializer(context);
-//         fps_per_cent = ((*context)->ctxvideo->frame_rate * FRAMERATE_PER_CENT)/100;
-//         // Threshold: 1/fps * %fps * 1000
-//         (*context)->threshold_ms = (SEC_TO_MSEC * fps_per_cent)/(((*context)->ctxvideo->frame_rate)); 
-//     } else
-//         (*context)->ctxvideo = NULL;
-// 
-//     if ((media_type == AUDIO_TYPE) || (media_type == AUDIOVIDEO_TYPE))
-//         audio_context_initializer(context);
-//     else
-//         (*context)->ctxaudio = NULL;
-// 
-//     return I2OK;
-// }
 
 void extract_video_size_from_metadata(byte *metadata, uint32_t* width, uint32_t* height) 
 {

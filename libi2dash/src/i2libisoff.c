@@ -424,7 +424,17 @@ uint32_t write_mvex(byte *data, uint32_t media_type, i2ctx *context) {
 }
 
 uint32_t write_trex(byte *data, uint32_t media_type, i2ctx *context) {
-    uint32_t count, size, hton_size, flag32, hton_flag32;
+    uint32_t count, size, hton_size, flag32, hton_flag32, sample_duration;
+
+    if ((media_type == VIDEO_TYPE)) {
+        sample_duration = context->ctxvideo->sample_duration;
+    } else if (media_type == AUDIO_TYPE) {
+        sample_duration = context->ctxaudio->sample_duration;
+    } else {
+        return I2ERROR_ISOFF;
+    }
+
+    printf("Sample duration: %u\n", sample_duration);
     
     count = 0;
 
@@ -456,11 +466,12 @@ uint32_t write_trex(byte *data, uint32_t media_type, i2ctx *context) {
     count+= 4;
 
     // Default sample duration
-    flag32 = 0;
-    memcpy(data + count, &flag32, 4);
+    flag32 = sample_duration;
+    hton_flag32 = htonl(flag32);
+    memcpy(data + count, &hton_flag32, 4);
     count+= 4;
 
-    // Default sample size, 1024 for AAC
+    // Default sample size, 1024 for AAC; 
     flag32 = 0;
     memcpy(data + count, &flag32, 4);
     count+= 4;

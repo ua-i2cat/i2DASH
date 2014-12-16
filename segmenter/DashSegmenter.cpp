@@ -33,6 +33,10 @@
 
 using namespace std;
 
+int getSeqNumberFromPath(std::string filePath);
+void constructVideoSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength);
+void constructAudioSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength);
+
 int main(int argc, char* argv[])
 {
     Demuxer* demux = NULL;
@@ -47,34 +51,31 @@ int main(int argc, char* argv[])
     AACFrame* audioFrame;
     Frame* frame;
     int gotFrame = 0;
+    int seqNumber = -1;
 
     std::string filePath = argv[1];
-    size_t b = filePath.find_last_of("_");
-    size_t e = filePath.find_last_of(".");
+    seqNumber = getSeqNumberFromPath(filePath);
 
-    std::string stringSequenceNumber = filePath.substr(b+1,e-b-1);
-    int seqNumber = stoi(stringSequenceNumber);
-
-    std::string vPath = filePath.substr(0,e) + ".m4v";
-    std::string aPath = filePath.substr(0,e) + ".m4a";
-    std::string vInitPath = filePath.substr(0,e) + "_init.m4v";
-    std::string aInitPath = filePath.substr(0,e) + "_init.m4a";
 
     demux = new Demuxer();
     vSeg = new DashVideoSegmenter();
     aSeg = new DashAudioSegmenter();
-    vSegment = new DashSegment(vPath, vSeg->getMaxSegmentLength(), seqNumber);
-    aSegment = new DashSegment(aPath, aSeg->getMaxSegmentLength(), seqNumber);
-    vInitSegment = new DashSegment(vInitPath, vSeg->getMaxSegmentLength(), seqNumber);
-    aInitSegment = new DashSegment(aInitPath, aSeg->getMaxSegmentLength(), seqNumber);
-
-
+    
     demux->openInput(argv[1]);
     demux->findStreams();
 
     if (demux->hasVideo()) {
-        if (!vSeg->init(demux->getDuration(), demux->getVideoTimeBase(), demux->getWidth(), demux->getHeight(), demux->getFPS())) {
+        if (!vSeg->init(demux->getVideoDuration(), demux->getVideoTimeBase(), 
+                        demux->getVideoSampleDuration(), 
+                        demux->getWidth(), demux->getHeight(), demux->getFPS())) {
             cerr << "Error initializing Video Segmenter" << endl;
+            exit(1);
+        }
+
+        constructVideoSegments(vSegment, vInitSegment, filePath, seqNumber, vSeg->getMaxSegmentLength());
+
+        if (!vSegment || !vInitSegment) {
+            cerr << "Error constructing video DashSegment objects" << endl;
             exit(1);
         }
 
@@ -84,10 +85,20 @@ int main(int argc, char* argv[])
     }
 
     if (demux->hasAudio()) {
-        if (!aSeg->init(demux->getDuration(), demux->getAudioTimeBase(), demux->getAudioChannels(), demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
+        if (!aSeg->init(demux->getAudioDuration(), demux->getAudioTimeBase(), demux->getAudioSampleDuration(), 
+                        demux->getAudioChannels(), demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
             cerr << "Error initializing Audio Segmenter" << endl;
             exit(1);
         }
+
+        constructAudioSegments(aSegment, aInitSegment, filePath, seqNumber, aSeg->getMaxSegmentLength());
+
+        if (!aSegment || !aInitSegment) {
+            cerr << "Error constructing audio DashSegment objects" << endl;
+            exit(1);
+        }
+
+        
 
         if (aSeg->generateInit(demux->getAudioExtraData(), demux->getAudioExtraDataLength(), aInitSegment)) {
             aInitSegment->writeToDisk();
@@ -130,4 +141,37 @@ int main(int argc, char* argv[])
     delete aInitSegment;
     
     return 0;
-} 
+}
+
+int getSeqNumberFromPath(std::string filePath)
+{
+    int seqNumber = -1;
+
+    size_t b = filePath.find_last_of("_");
+    size_t e = filePath.find_last_of(".");
+
+    std::string stringSequenceNumber = filePath.substr(b+1,e-b-1);
+    seqNumber = stoi(stringSequenceNumber);
+
+    return seqNumber;
+}
+
+void constructVideoSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength)
+{
+    size_t e = filePath.find_last_of(".");
+
+    std::string vPath = filePath.substr(0,e) + ".m4v";
+    std::string vInitPath = filePath.substr(0,e) + "_init.m4v";
+    segment = new DashSegment(vPath, segmentMaxLength, seqNumber);
+    initSegment = new DashSegment(vInitPath, segmentMaxLength, seqNumber);
+}
+
+void constructAudioSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength)
+{
+    size_t e = filePath.find_last_of(".");
+
+    std::string aPath = filePath.substr(0,e) + ".m4a";
+    std::string aInitPath = filePath.substr(0,e) + "_init.m4a";
+    segment = new DashSegment(aPath, segmentMaxLength, seqNumber);
+    initSegment = new DashSegment(aInitPath, segmentMaxLength, seqNumber);
+}
