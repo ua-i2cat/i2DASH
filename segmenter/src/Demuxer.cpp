@@ -380,6 +380,11 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             videoFrame->setDecodeTime(pkt.dts);
             videoFrame->setDuration(pkt.duration);
 
+            if (pkt.duration < 0) {
+                std::cerr << "Negative duration, demuxer will discard video frame" << std::endl;
+                return NULL;
+            }
+
             return videoFrame;
         }
 
@@ -389,6 +394,11 @@ Frame* const Demuxer::readFrame(int &gotFrame)
             audioFrame->setPresentationTime(pkt.pts);
             audioFrame->setDecodeTime(pkt.dts);
             audioFrame->setDuration(pkt.duration);
+
+            if (pkt.duration < 0) {
+                std::cerr << "Negative duration, demuxer will discard audio frame" << std::endl;
+                return NULL;
+            }
 
             return audioFrame;
         } 
