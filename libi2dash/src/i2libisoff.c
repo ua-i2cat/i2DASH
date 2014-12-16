@@ -434,8 +434,6 @@ uint32_t write_trex(byte *data, uint32_t media_type, i2ctx *context) {
         return I2ERROR_ISOFF;
     }
 
-    printf("Sample duration: %u\n", sample_duration);
-    
     count = 0;
 
     // Box size
