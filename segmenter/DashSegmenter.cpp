@@ -34,8 +34,8 @@
 using namespace std;
 
 int getSeqNumberFromPath(std::string filePath);
-void constructVideoSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength);
-void constructAudioSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength);
+void constructVideoSegments(DashSegment*& segment, DashSegment*& initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength);
+void constructAudioSegments(DashSegment*& segment, DashSegment*& initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength);
 
 int main(int argc, char* argv[])
 {
@@ -98,13 +98,10 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
-        
-
         if (aSeg->generateInit(demux->getAudioExtraData(), demux->getAudioExtraDataLength(), aInitSegment)) {
             aInitSegment->writeToDisk();
         }
     }
-
 
     while (gotFrame >= 0){
 
@@ -156,7 +153,7 @@ int getSeqNumberFromPath(std::string filePath)
     return seqNumber;
 }
 
-void constructVideoSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength)
+void constructVideoSegments(DashSegment*& segment, DashSegment*& initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength)
 {
     size_t e = filePath.find_last_of(".");
 
@@ -164,9 +161,14 @@ void constructVideoSegments(DashSegment *segment, DashSegment *initSegment, std:
     std::string vInitPath = filePath.substr(0,e) + "_init.m4v";
     segment = new DashSegment(vPath, segmentMaxLength, seqNumber);
     initSegment = new DashSegment(vInitPath, segmentMaxLength, seqNumber);
+
+    if (!segment || !initSegment) {
+        std::cout << "ERROR IN CONSTRUCT" << std::endl;
+    }
+
 }
 
-void constructAudioSegments(DashSegment *segment, DashSegment *initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength)
+void constructAudioSegments(DashSegment*& segment, DashSegment*& initSegment, std::string filePath, int seqNumber, size_t segmentMaxLength)
 {
     size_t e = filePath.find_last_of(".");
 
@@ -174,4 +176,8 @@ void constructAudioSegments(DashSegment *segment, DashSegment *initSegment, std:
     std::string aInitPath = filePath.substr(0,e) + "_init.m4a";
     segment = new DashSegment(aPath, segmentMaxLength, seqNumber);
     initSegment = new DashSegment(aInitPath, segmentMaxLength, seqNumber);
+
+    if (!segment || !initSegment) {
+        std::cout << "ERROR IN CONSTRUCT" << std::endl;
+    }
 }
