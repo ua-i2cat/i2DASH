@@ -29,7 +29,6 @@
 #include "Frame.hh"
 
 #define BIG_START_TIME 4294967296 // 2^32
-#define FRAME_DEVIATION 1024 
 
 class DemuxerSuite : public Test::Suite
 {

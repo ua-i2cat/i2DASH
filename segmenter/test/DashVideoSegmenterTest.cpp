@@ -24,14 +24,19 @@
 #include <iostream>
 #include <fstream>
 #include <cpptest.h>
-#include <chrono>
 
 #include "DashVideoSegmenter.hh"
 
-#define TEST_SEGMENT_DURATION 1000
+#define TEST_SEGMENT_DURATION 127488
+#define TEST_VIDEO_TIME_BASE 12800
+#define TEST_VIDEO_SAMPLE_DURATION 512
 #define TEST_VIDEO_WIDTH 1280
-#define TEST_VIDEO_HEIGHT 534
-#define TEST_VIDEO_FPS 24
+#define TEST_VIDEO_HEIGHT 720
+#define TEST_VIDEO_FPS 25
+#define TEST_FRAME_PTS 1024
+#define TEST_FRAME_DTS 0
+#define TEST_FRAME_DURATION 512
+#define TEST_FRAME_IS_INTRA false
 
 using namespace std;
 
@@ -79,6 +84,25 @@ private:
     unsigned char* outputData;
 };
 
+class generateSegmentTestSuite : public dashVideoSegmenterTestSuite {
+public:
+    generateSegmentTestSuite() {
+        TEST_ADD(generateSegmentTestSuite::addToSegment);
+        TEST_ADD(generateSegmentTestSuite::finishSegment);
+    }
+    
+private:
+    void setup();
+    void addToSegment();
+    void finishSegment();
+    void tear_down();
+
+    DashSegment* segment;
+    AVCCFrame* frame;
+
+};
+
+
 void dashVideoSegmenterTestSuite::tear_down()
 {
     delete vSeg;
@@ -103,7 +127,7 @@ void initTestSuite::init()
         return;
     }
 
-    TEST_ASSERT_MSG(vSeg->init(std::chrono::milliseconds(TEST_SEGMENT_DURATION), TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS), 
+    TEST_ASSERT_MSG(vSeg->init(TEST_SEGMENT_DURATION, TEST_VIDEO_TIME_BASE, TEST_VIDEO_SAMPLE_DURATION, TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS), 
                      "VideoSegmenter init failed");
 }
 
@@ -120,7 +144,7 @@ void generateInitTestSuite::setup()
         return;
     }
 
-    if (!vSeg->init(std::chrono::milliseconds(TEST_SEGMENT_DURATION), TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS)) {
+    if (!vSeg->init(TEST_SEGMENT_DURATION, TEST_VIDEO_TIME_BASE, TEST_VIDEO_SAMPLE_DURATION, TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS)) {
         TEST_FAIL("Segmenter init failed. Check init test\n");
         return;
     }
@@ -155,7 +179,8 @@ void generateInitTestSuite::setup()
 void generateInitTestSuite::generateInit()
 {
     std::string dummyPath("");
-    DashSegment* initSegment = new DashSegment(dummyPath);
+    int dummySeqNumber = 0;
+    DashSegment* initSegment = new DashSegment(dummyPath, vSeg->getMaxSegmentLength(), dummySeqNumber);
 
     int diff = 0;
 
@@ -179,6 +204,54 @@ void generateInitTestSuite::tear_down()
     delete vSeg;
 }
 
+void generateSegmentTestSuite::setup()
+{
+    vSeg = new DashVideoSegmenter();
+    if (vSeg == NULL) {
+        TEST_FAIL("Segmenter instance is null. Check constructor test\n");
+        return;
+    }
+
+    if (!vSeg->init(TEST_SEGMENT_DURATION, TEST_VIDEO_TIME_BASE, TEST_VIDEO_SAMPLE_DURATION, TEST_VIDEO_WIDTH, TEST_VIDEO_HEIGHT, TEST_VIDEO_FPS)) {
+        TEST_FAIL("Segmenter init failed. Check init test\n");
+        return;
+    }
+
+    std::string dummyPath("");
+    int dummySeqNumber = 0;
+    int maxData = vSeg->getMaxSegmentLength();
+    unsigned char* dummyBuffer = new unsigned char[maxData];
+    
+    frame = new AVCCFrame();
+    segment = new DashSegment(dummyPath, maxData, dummySeqNumber);
+
+    frame->setDataBuffer(dummyBuffer, maxData);
+    frame->setPresentationTime(TEST_FRAME_PTS);
+    frame->setDecodeTime(TEST_FRAME_DTS);
+    frame->setDuration(TEST_FRAME_DURATION);
+    frame->setIntra(TEST_FRAME_IS_INTRA);
+}
+
+void generateSegmentTestSuite::addToSegment()
+{
+    TEST_ASSERT_MSG(TEST_SEGMENT_DURATION > TEST_FRAME_DURATION, "Frame duration larger than segment duration");
+    TEST_ASSERT_MSG(!vSeg->addToSegment(frame, segment), "AddToSegment detected segment end too early");
+}
+
+void generateSegmentTestSuite::finishSegment()
+{
+    TEST_ASSERT_MSG(!vSeg->finishSegment(segment), "FinishSegment returned true with no segment data prepared");
+    TEST_ASSERT_MSG(!vSeg->addToSegment(frame, segment), "AddToSegment detected segment end too early");
+    TEST_ASSERT_MSG(vSeg->finishSegment(segment), "FinishSegment failed");
+}
+
+void generateSegmentTestSuite::tear_down()
+{
+    delete vSeg;
+    delete frame;
+    delete segment;
+}
+
 int main(int argc, char* argv[])
 {
     try{
@@ -186,6 +259,7 @@ int main(int argc, char* argv[])
         ts.add(auto_ptr<Test::Suite>(new constructorTestSuite()));
         ts.add(auto_ptr<Test::Suite>(new initTestSuite()));
         ts.add(auto_ptr<Test::Suite>(new generateInitTestSuite()));
+        ts.add(auto_ptr<Test::Suite>(new generateSegmentTestSuite()));
 
         Test::TextOutput output(Test::TextOutput::Verbose);
         ts.run(output, true);
