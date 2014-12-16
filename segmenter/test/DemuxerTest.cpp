@@ -23,14 +23,13 @@
 #include <string>
 #include <iostream>
 #include <cpptest.h>
-#include <chrono>
 #include <algorithm>
 
 #include "Demuxer.hh"
 #include "Frame.hh"
 
 #define BIG_START_TIME 4294967296 // 2^32
-#define ONE_FRAME_DEVIATION 40 //ms
+#define FRAME_DEVIATION 1024 
 
 class DemuxerSuite : public Test::Suite
 {
@@ -137,15 +136,15 @@ void DemuxerSuite::findStreams()
         TEST_ASSERT(demux->getFPS() > 0);
         TEST_ASSERT(demux->getWidth() > 0);
         TEST_ASSERT(demux->getHeight() > 0);
+        TEST_ASSERT(demux->getVideoDuration() > 0);
     } 
     if (demux->hasAudio()){
         TEST_ASSERT(demux->getAudioBitRate() > 0);
         TEST_ASSERT(demux->getAudioSampleRate() > 0);
         TEST_ASSERT(demux->getAudioBitsPerSample() > 0);
         TEST_ASSERT(demux->getAudioChannels() > 0);
+        TEST_ASSERT(demux->getAudioDuration() > 0);
     } 
-    
-    TEST_ASSERT(demux->getDuration() > std::chrono::milliseconds(0));
 }
 
 void DemuxerSuite::readFrame()
@@ -156,14 +155,16 @@ void DemuxerSuite::readFrame()
     int gotFrame;
     bool videoFrame = false;
     bool audioFrame = false;
-    std::chrono::milliseconds duration;
-    std::chrono::milliseconds maxTime;
+    size_t aDuration;
+    size_t vDuration;
     
     TEST_ASSERT(demux != NULL);
     TEST_ASSERT(!demux->openInput(argv_[1]));
     TEST_ASSERT(demux->findStreams());
-    duration = demux->getDuration();
-    TEST_ASSERT(duration > std::chrono::milliseconds(0));
+    aDuration = demux->getAudioDuration();
+    TEST_ASSERT(aDuration > 0);
+    vDuration = demux->getVideoDuration();
+    TEST_ASSERT(vDuration > 0);
     
     do {
         frame = demux->readFrame(gotFrame);
@@ -172,31 +173,30 @@ void DemuxerSuite::readFrame()
             videoFrame = true;
             TEST_ASSERT(vFrame->getDataBuffer() != NULL);
             TEST_ASSERT(vFrame->getDataLength() > 0);
-            maxTime = std::max(maxTime, vFrame->getPresentationTime());
+            TEST_ASSERT(vFrame->getDuration() > 0);
         } else if (dynamic_cast<AACFrame*>(frame)){
             aFrame = dynamic_cast<AACFrame*>(frame);
             audioFrame = true;
             TEST_ASSERT(aFrame->getDataBuffer() != NULL);
             TEST_ASSERT(aFrame->getDataLength() > 0);
-            maxTime = std::max(maxTime, aFrame->getPresentationTime());
+            TEST_ASSERT(aFrame->getDuration() > 0);
         }
     } while(gotFrame >= 0);
     
     if (demux->hasVideo()){
         TEST_ASSERT(videoFrame == true);
         TEST_ASSERT(vFrame != NULL);
-        TEST_ASSERT(vFrame->getPresentationTime() > std::chrono::milliseconds(startTime));
+        TEST_ASSERT(vFrame->getPresentationTime() > startTime);
     } 
     
     if (demux->hasAudio()){
         TEST_ASSERT(audioFrame == true);
         TEST_ASSERT(aFrame != NULL);
-        TEST_ASSERT(aFrame->getPresentationTime() > std::chrono::milliseconds(startTime));
+        TEST_ASSERT(aFrame->getPresentationTime() > startTime);
     }
     
-    std::cout << "maxTime: " << maxTime.count() << " duration: " << duration.count() << " duration+startT: " << duration.count() + std::chrono::milliseconds(startTime).count() << std::endl;
+    std::cout << " vDur: " << vDuration << " aDur: " << aDuration << std::endl;
     
-    TEST_ASSERT(maxTime + std::chrono::milliseconds(ONE_FRAME_DEVIATION) >= (duration + std::chrono::milliseconds(startTime)));
 }
 
 int main(int argc, char* argv[])

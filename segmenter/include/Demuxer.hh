@@ -40,7 +40,7 @@ extern "C" {
 
 class Demuxer {
 public:
-    Demuxer(uint64_t vTime = 0, uint64_t aTime = 0);
+    Demuxer(size_t vTime = 0, size_t aTime = 0);
     ~Demuxer();
     
     bool openInput(std::string filename);
@@ -54,14 +54,16 @@ public:
     size_t getHeight(){return videoStream->codec->height;};
     size_t getVideoBitRate() {return videoStream->codec->bit_rate;};
     size_t getVideoTimeBase();
+    size_t getVideoDuration(); //ms
+    size_t getVideoSampleDuration();
     
     size_t getAudioSampleRate() {return audioStream->codec->sample_rate;};
     size_t getAudioChannels() {return audioStream->codec->channels;};
     size_t getAudioBitsPerSample();
     size_t getAudioBitRate() {return audioStream->codec->bit_rate;};
     size_t getAudioTimeBase();
-    
-    size_t getDuration();
+    size_t getAudioDuration(); //ms
+    size_t getAudioSampleDuration();
     
     bool hasVideo();
     bool hasAudio();
@@ -91,8 +93,8 @@ private:
     int framesCounter;
     bool isOpen;
        
-    size_t vStartTime;
-    size_t aStartTime;
+    size_t vStartTime; //Video TimeBase Ticks
+    size_t aStartTime; //Audio TimeBase Ticks
     
     AVCCFrame* const videoFrame;
     AACFrame* const audioFrame;
