@@ -55,7 +55,6 @@ int main(int argc, char* argv[])
     std::string stringSequenceNumber = filePath.substr(b+1,e-b-1);
     int seqNumber = stoi(stringSequenceNumber);
 
-
     std::string vPath = filePath.substr(0,e) + ".m4v";
     std::string aPath = filePath.substr(0,e) + ".m4a";
     std::string vInitPath = filePath.substr(0,e) + "_init.m4v";
@@ -114,11 +113,11 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (vSeg->finishSegment(vSegment)) {
+    if (demux->hasVideo() && vSeg->finishSegment(vSegment)) {
         vSegment->writeToDisk();
     }
 
-    if (aSeg->finishSegment(aSegment)) {
+    if (demux->hasAudio() && aSeg->finishSegment(aSegment)) {
         aSegment->writeToDisk();
     }
 
