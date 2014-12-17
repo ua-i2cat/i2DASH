@@ -40,38 +40,123 @@ extern "C" {
 
 class Demuxer {
 public:
+
+    /**
+    * Class constructor
+    * @param vTime Video timestamp initial value
+    * @param aTime Audio timestamp initial value
+    */
     Demuxer(size_t vTime = 0, size_t aTime = 0);
+
+    /**
+    * Class destructor
+    */
     ~Demuxer();
     
+    /**
+    * Open input file
+    * @param filename File name
+    * @return true if succeeded and false if not
+    */
     bool openInput(std::string filename);
+
+    /**
+    * Close input file and internal structures related to it
+    */
     void closeInput();
+
+    /**
+    * Dump file format information to stdout
+    */
     void dumpFormat();
+
+    /**
+    * Search audio and video streams in the file and configures the demuxer to start reading.
+    * It must be done before executing readFrame()
+    * @return true if succeeded and false if not
+    */
     bool findStreams();
+
+    /**
+    * It reads a frame from the file
+    * @param gotFrame indicates if we have read a complete frame
+    * @return Pointer to the read frame if succeeded and NULL if not
+    * see @Frame
+    */
     Frame* const readFrame(int& gotFrame);
     
     float getFPS();
     size_t getWidth(){return videoStream->codec->width;};
     size_t getHeight(){return videoStream->codec->height;};
     size_t getVideoBitRate() {return videoStream->codec->bit_rate;};
+
+    /**
+    * @return Video time base in ticks
+    */
     size_t getVideoTimeBase();
-    size_t getVideoDuration(); //ms
+
+    /**
+    * @return Video duration in time base units
+    */
+    size_t getVideoDuration();
+
+    /**
+    * @return Estimated video sample duration in time base units
+    */
     size_t getVideoSampleDuration();
     
     size_t getAudioSampleRate() {return audioStream->codec->sample_rate;};
     size_t getAudioChannels() {return audioStream->codec->channels;};
     size_t getAudioBitsPerSample();
     size_t getAudioBitRate() {return audioStream->codec->bit_rate;};
+
+    /**
+    * @return audio time base in ticks
+    */
     size_t getAudioTimeBase();
-    size_t getAudioDuration(); //ms
+
+    /**
+    * @return audio duration in time base units
+    */
+    size_t getAudioDuration();
+
+    /**
+    * @return Estimated audio sample duration in time base units
+    */ 
     size_t getAudioSampleDuration();
     
+    /**
+    * @return True if file has at least one video stream
+    */ 
     bool hasVideo();
+
+    /**
+    * @return True if file has at least one audio stream
+    */ 
     bool hasAudio();
 
+    /**
+    * Get video metadata from the media container
+    * @return Pointer to data
+    */ 
     unsigned char* getVideoExtraData();
+
+    /**
+    * Get video metadata size
+    * @return Video metadata size in bytes
+    */ 
     size_t getVideoExtraDataLength();
 
+    /**
+    * Get audio metadata from the media container
+    * @return Pointer to data
+    */ 
     unsigned char* getAudioExtraData();
+
+    /**
+    * Get audio metadata size
+    * @return Audio metadata size in bytes
+    */ 
     size_t getAudioExtraDataLength();
         
 private:

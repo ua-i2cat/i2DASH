@@ -28,13 +28,60 @@
 class DashAudioSegmenter {
     
 public:
+    /**
+    * Class constructor
+    */
     DashAudioSegmenter();
+
+    /**
+    * Class destructor
+    */
     ~DashAudioSegmenter();
 
+    /**
+    * Init and configure internal structures. It is necessary to execute it before generateInit(), addToSegment() and finishSegment()
+    * @param segmentDuration Total segment duration in timeBase units
+    * @param timeBase Time base in ticks per second
+    * @param timeBase Estimate sample duration (consider sample == frame)
+    * @param channels Audio channels
+    * @param sampleRate Audio sample rate (in Hz)
+    * @param sampleSize Audio bits per sample
+    * @return true if succeeded and false if not
+    */
     bool init(size_t segmentDuration, size_t timeBase, size_t sampleDuration, size_t channels, size_t sampleRate, size_t sampleSize);
+    
+    /**
+    * Generates init file
+    * @param metadata Audio metadata extracted from the media container
+    * @param metadataSize Audio matadata size
+    * @param segment Destination DashSegment. Each of its attributes must be set to a correct value before executing generateInit()
+    * @return true if succeeded and false if not
+    * see @DashSegment
+    */ 
     bool generateInit(unsigned char* metadata, size_t metadataSize, DashSegment* segment);
+    
+    /**
+    * Add frame to a dash segment
+    * @param frame Origin AVCCFrame. Each of its attributes must be set to a correct value before executing addToSegment()
+    * @param segment Destination DashSegment. Each of its attributes must be set to a correct value before executing addToSegment()
+    * @return true if segment is completed and false if not
+    * see @DashSegment
+    * see @AVCCFrame
+    */ 
     bool addToSegment(AACFrame* frame, DashSegment* segment);
+
+    /**
+    * Finish and close a dash segment
+    * @param segment Target DashSegment. Each of its attributes must be set to a correct value before executing finishSegment()
+    * @return true if segment is completed and false if not
+    * see @DashSegment
+    * see @AVCCFrame
+    */ 
     bool finishSegment(DashSegment* segment);
+
+    /**
+    * @return Max segment length in bytes
+    */ 
     size_t getMaxSegmentLength(){return MAX_DAT;}; 
 
 private:
