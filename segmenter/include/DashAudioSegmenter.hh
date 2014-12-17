@@ -25,6 +25,9 @@
 #include "Frame.hh"
 #include "DashSegment.hh"
 
+/*! It is used to create audio dash segments. It has to be initializaed after creating it using init(). After that, use
+    addToSegment() to add audio frames to a segment and finishSegment() to close it */ 
+
 class DashAudioSegmenter {
     
 public:
