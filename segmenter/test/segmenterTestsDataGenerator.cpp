@@ -43,12 +43,6 @@ int main(int argc, char* argv[])
     DashSegment* vInitSegment = NULL;
     DashSegment* aInitSegment = NULL;
 
-    AVCCFrame* videoFrame;
-    AACFrame* audioFrame;
-    Frame* frame;
-    int gotFrame = 0;
-    int seqNumber = -1;
-
     std::string filePath = argv[1];
 
     demux = new Demuxer();
@@ -103,24 +97,6 @@ int main(int argc, char* argv[])
         if (aSeg->generateInit(demux->getAudioExtraData(), demux->getAudioExtraDataLength(), aInitSegment)) {
             aInitSegment->writeToDisk();
             aHeaderFile.write((char*)demux->getAudioExtraData(), demux->getAudioExtraDataLength());
-        }
-    }
-
-    while (gotFrame >= 0){
-
-        frame = demux->readFrame(gotFrame);
-
-        if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
-            if (vSeg->addToSegment(videoFrame, vSegment)) {
-                vSegment->writeToDisk();
-            }
-        }
-
-        if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
-
-            if (aSeg->addToSegment(audioFrame, aSegment)) {
-                aSegment->writeToDisk();
-            }
         }
     }
 

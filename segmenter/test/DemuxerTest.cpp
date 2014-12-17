@@ -33,12 +33,8 @@
 class DemuxerSuite : public Test::Suite
 {
 public:
-    DemuxerSuite(int argc, char **argv)
+    DemuxerSuite()
     {
-        //TODO: check the best way to pass parameters to the test suite
-        argc_ = argc;
-        argv_ = argv;
-        TEST_ADD(DemuxerSuite::correctParams)
         TEST_ADD(DemuxerSuite::constructorTest)
         TEST_ADD(DemuxerSuite::openInput)
         TEST_ADD(DemuxerSuite::dumpFormat)
@@ -57,10 +53,9 @@ public:
     }
     
 private:
-    int argc_;
-    char **argv_;
     uint64_t startTime;
     Demuxer* demux = NULL;
+    std::string filePath = "testData/DemuxerTest_input_data.mp4";
     void constructorTest();
     void correctParams();
     void destructorTest();
@@ -72,11 +67,6 @@ private:
     void alternateConstructorTest();
 };
 
-
-void DemuxerSuite::correctParams()
-{
-    TEST_ASSERT(argc_ >= 2);
-}
 
 void DemuxerSuite::constructorTest()
 {
@@ -103,9 +93,9 @@ void DemuxerSuite::openInput()
     TEST_ASSERT(demux != NULL);
     TEST_ASSERT(!demux->hasVideo());
     TEST_ASSERT(!demux->hasAudio());
-    TEST_ASSERT(demux->openInput(argv_[1]));
+    TEST_ASSERT(demux->openInput(filePath));
     //TODO: redirect cerr
-    TEST_ASSERT(!demux->openInput(argv_[1]));
+    TEST_ASSERT(!demux->openInput(filePath));
     TEST_ASSERT(!demux->hasVideo());
     TEST_ASSERT(!demux->hasAudio());
 }
@@ -121,7 +111,7 @@ void DemuxerSuite::closeInput()
 void DemuxerSuite::dumpFormat()
 {
     TEST_ASSERT(demux != NULL);
-    TEST_ASSERT(!demux->openInput(argv_[1]));
+    TEST_ASSERT(!demux->openInput(filePath));
     //TODO: assert format is correct
     demux->dumpFormat();
 }
@@ -158,7 +148,7 @@ void DemuxerSuite::readFrame()
     size_t vDuration;
     
     TEST_ASSERT(demux != NULL);
-    TEST_ASSERT(!demux->openInput(argv_[1]));
+    TEST_ASSERT(!demux->openInput(filePath));
     TEST_ASSERT(demux->findStreams());
     aDuration = demux->getAudioDuration();
     TEST_ASSERT(aDuration > 0);
@@ -202,7 +192,7 @@ int main(int argc, char* argv[])
 {
     try{
         Test::Suite ts;
-        ts.add(std::auto_ptr<Test::Suite>(new DemuxerSuite(argc, argv)));
+        ts.add(std::auto_ptr<Test::Suite>(new DemuxerSuite()));
 
         Test::TextOutput output(Test::TextOutput::Verbose);
         ts.run(output, true);
