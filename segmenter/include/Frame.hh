@@ -24,6 +24,9 @@
 
 #include <cstddef>
 
+/*! It represents a media frame. It is AVCCFrame and AACFrame parent class. It contains a pointer to the frame data (it doesn't allocate memory) 
+    and its length. Moreover, it contains frame time information: presentation timestamp, decode timestamp and duration */ 
+
 class Frame {
     
 public:
@@ -103,8 +106,10 @@ protected:
     size_t duration;
 };
 
+/*! It represents a H264 video frame, which must be in AVCC format. It contains video specific data: video size and intra frame flag */ 
+
 class AVCCFrame : public Frame {
-    
+
 public:
 
     /**
@@ -154,6 +159,8 @@ private:
     int width, height;
     bool intra;
 };
+
+/*! It represents a AAC audio frame. It contains audio specific data such as sample rate */ 
 
 class AACFrame : public Frame {
     

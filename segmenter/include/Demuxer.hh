@@ -38,6 +38,10 @@ extern "C" {
 #define IDR_NAL_TYPE 5
 #define SEI_NAL_TYPE 6
 
+/*! It is a media demuxer based on libavformat. It is used to read a file, to demux it extracting the different audio and video streams and to
+    read streams frame by frame. It is constrained to MP4 container, H264 video codec and AAC audio codec. It is also limited to one video stream
+    and one audio stream per file (it choose them automatically if the file contains more than one stream of the same type) */ 
+
 class Demuxer {
 public:
 
