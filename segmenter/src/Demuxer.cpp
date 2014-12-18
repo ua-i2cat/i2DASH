@@ -383,7 +383,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
         if (pkt.duration < 0) {
             audioFrame->setDuration(getVideoSampleDuration());
-            std::cerr << "Negative duration, setting estimate frame duration" << std::endl;
+            std::cerr << "Negative duration, setting estimate frame duration " << std::endl;
         }
 
         return videoFrame;
@@ -398,7 +398,7 @@ Frame* const Demuxer::readFrame(int &gotFrame)
 
         if (pkt.duration < 0) {
             audioFrame->setDuration(getAudioSampleDuration());
-            std::cerr << "Negative duration, setting estimate frame duration" << std::endl;
+            std::cerr << "Negative duration, setting estimate frame duration: " << std::endl;
         }
 
         return audioFrame;
@@ -427,7 +427,7 @@ size_t Demuxer::getVideoDuration()
 
 size_t Demuxer::getAudioSampleDuration()
 {    
-    if (!isOpen || hasAudio()) {
+    if (!isOpen || !hasAudio()) {
         return 0;
     }
     
