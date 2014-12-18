@@ -37,6 +37,12 @@ void constructAudioSegments(DashSegment*& segment, DashSegment*& initSegment, st
 
 int main(int argc, char* argv[])
 {
+
+    if (argc < 2) {
+        std::cout << "Usage: segmenterTestDataGenerator <input_file.mp4>" << std::endl;
+        exit(1);
+    }
+
     Demuxer* demux = NULL;
     DashVideoSegmenter* vSeg = NULL;
     DashAudioSegmenter* aSeg = NULL;

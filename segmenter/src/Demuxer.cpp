@@ -56,7 +56,7 @@ bool Demuxer::openInput(std::string filename)
 {
     std::string format;
     
-    if (isOpen){
+    if (isOpen) {
         std::cerr << "Input already open, close it first"<< std::endl;
         return false;
     }
@@ -108,6 +108,8 @@ void Demuxer::dumpFormat()
 
 bool Demuxer::findStreams()
 {
+    bool streamsFound = false;
+
     if (!isOpen){
         return false;
     }
@@ -127,11 +129,10 @@ bool Demuxer::findStreams()
         return false;
     }
     
-    if (findVideoStream() | findAudioStream()){
-        return true;
-    }
+    streamsFound = findVideoStream();
+    streamsFound |= findAudioStream();
     
-    return false;
+    return streamsFound;
 }
 
 bool Demuxer::findVideoStream()
@@ -222,7 +223,7 @@ bool Demuxer::validVideoCodec()
         return false;
     }
     
-    if (fmtCtx->streams[videoStreamIdx]->codec->codec_id != CODEC_ID_H264){
+    if (fmtCtx->streams[videoStreamIdx]->codec->codec_id != CODEC_ID_H264) {
         std::cerr << "Invalid video codec. IT must be H264" << std::endl;
         return false;
     }
@@ -232,11 +233,11 @@ bool Demuxer::validVideoCodec()
 
 bool Demuxer::validAudioCodec()
 {
-    if (!isOpen || audioStreamIdx < 0){
+    if (!isOpen || audioStreamIdx < 0) { 
         return false;
     }
     
-    if (fmtCtx->streams[audioStreamIdx]->codec->codec_id != CODEC_ID_AAC){
+    if (fmtCtx->streams[audioStreamIdx]->codec->codec_id != CODEC_ID_AAC) {
         std::cerr << "Invalid audio codec. It must be AAC" << std::endl;
         return false;
     }
@@ -247,7 +248,7 @@ bool Demuxer::validAudioCodec()
 
 bool Demuxer::hasVideo()
 {
-    if (!isOpen || fmtCtx == NULL){
+    if (!isOpen || fmtCtx == NULL) {
         return false;
     }
     
@@ -256,7 +257,7 @@ bool Demuxer::hasVideo()
 
 bool Demuxer::hasAudio()
 {
-    if (!isOpen || fmtCtx == NULL){
+    if (!isOpen || fmtCtx == NULL) {
         return false;
     }
     
@@ -364,57 +365,51 @@ Frame* const Demuxer::readFrame(int &gotFrame)
     pkt.size = 0;
     gotFrame = av_read_frame(fmtCtx, &pkt);
     
-    if (pkt.size <= 0){
+    if (gotFrame < 0 || pkt.size <= 0) {
         return NULL;
     }
     
-    if (gotFrame >= 0) {
-        videoFrame->clearFrame();
-        audioFrame->clearFrame();
+    videoFrame->clearFrame();
+    audioFrame->clearFrame();
 
-        if (pkt.stream_index == videoStreamIdx) {
-            videoFrame->setDataBuffer(pkt.data, pkt.size);
+    if (pkt.stream_index == videoStreamIdx) {
+        videoFrame->setDataBuffer(pkt.data, pkt.size);
 
-            videoFrame->setIntra(isIntra(pkt.data));
-            
-            videoFrame->setPresentationTime(pkt.pts + vStartTime);
-            videoFrame->setDecodeTime(pkt.dts + vStartTime);
-            videoFrame->setDuration(pkt.duration);
+        videoFrame->setIntra(isIntra(pkt.data));
+        
+        videoFrame->setPresentationTime(pkt.pts + vStartTime);
+        videoFrame->setDecodeTime(pkt.dts + vStartTime);
+        videoFrame->setDuration(pkt.duration);
 
-            if (pkt.duration < 0) {
-                audioFrame->setDuration(getVideoSampleDuration());
-                std::cerr << "Negative duration, setting estimate frame duration" << std::endl;
-            }
-
-            return videoFrame;
+        if (pkt.duration < 0) {
+            audioFrame->setDuration(getVideoSampleDuration());
+            std::cerr << "Negative duration, setting estimate frame duration" << std::endl;
         }
 
-        if (pkt.stream_index == audioStreamIdx) {
-            audioFrame->setDataBuffer(pkt.data, pkt.size);
-            
-            audioFrame->setPresentationTime(pkt.pts + aStartTime);
-            audioFrame->setDecodeTime(pkt.dts + aStartTime);
-            audioFrame->setDuration(pkt.duration);
-
-            if (pkt.duration < 0) {
-                audioFrame->setDuration(getAudioSampleDuration());
-                std::cerr << "Negative duration, setting estimate frame duration" << std::endl;
-            }
-
-            return audioFrame;
-        } 
+        return videoFrame;
     }
+
+    if (pkt.stream_index == audioStreamIdx) {
+        audioFrame->setDataBuffer(pkt.data, pkt.size);
+        
+        audioFrame->setPresentationTime(pkt.pts + aStartTime);
+        audioFrame->setDecodeTime(pkt.dts + aStartTime);
+        audioFrame->setDuration(pkt.duration);
+
+        if (pkt.duration < 0) {
+            audioFrame->setDuration(getAudioSampleDuration());
+            std::cerr << "Negative duration, setting estimate frame duration" << std::endl;
+        }
+
+        return audioFrame;
+    } 
     
     return NULL;
 }
 
 size_t Demuxer::getAudioDuration()
 {   
-    if (!isOpen){
-        return 0;
-    }
-    
-    if (!hasAudio()){
+    if (!isOpen || !hasAudio()) {
         return 0;
     }
     
@@ -423,11 +418,7 @@ size_t Demuxer::getAudioDuration()
 
 size_t Demuxer::getVideoDuration()
 {    
-    if (!isOpen){
-        return 0;
-    }
-    
-    if (!hasVideo()){
+    if (!isOpen || !hasVideo()) {
         return 0;
     }
     
@@ -436,11 +427,7 @@ size_t Demuxer::getVideoDuration()
 
 size_t Demuxer::getAudioSampleDuration()
 {    
-    if (!isOpen){
-        return 0;
-    }
-    
-    if (!hasAudio()){
+    if (!isOpen || hasAudio()) {
         return 0;
     }
     
@@ -449,11 +436,7 @@ size_t Demuxer::getAudioSampleDuration()
 
 size_t Demuxer::getVideoSampleDuration()
 {   
-    if (!isOpen){
-        return 0;
-    }
-    
-    if (!hasVideo()){
+    if (!isOpen || !hasVideo()) {
         return 0;
     }
     
