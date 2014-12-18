@@ -79,9 +79,12 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
-        if (vSeg->generateInit(demux->getVideoExtraData(), demux->getVideoExtraDataLength(), vInitSegment)) {
-            vInitSegment->writeToDisk();
+        if (!vSeg->generateInit(demux->getVideoExtraData(), demux->getVideoExtraDataLength(), vInitSegment)) {
+            cerr << "Error constructing video init" << endl;
+            exit(1);
         }
+        
+        vInitSegment->writeToDisk();
     }
 
     if (demux->hasAudio()) {
@@ -98,9 +101,12 @@ int main(int argc, char* argv[])
             exit(1);
         }
 
-        if (aSeg->generateInit(demux->getAudioExtraData(), demux->getAudioExtraDataLength(), aInitSegment)) {
-            aInitSegment->writeToDisk();
+        if (!aSeg->generateInit(demux->getAudioExtraData(), demux->getAudioExtraDataLength(), aInitSegment)) {
+            cerr << "Error constructing audio DashSegment objects" << endl;
+            exit(1);
         }
+        
+        aInitSegment->writeToDisk();
     }
 
     while (gotFrame >= 0){

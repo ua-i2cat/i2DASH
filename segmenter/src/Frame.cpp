@@ -93,5 +93,6 @@ void AACFrame::clearFrame()
 {
     frameLen = 0;
     frameBuff = NULL;
+    sampleRate = 0;
 }
 
