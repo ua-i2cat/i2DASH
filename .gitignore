@@ -3,10 +3,11 @@
 bin
 build
 doc
-
-*.mp4
+*.mpd
 *.ppm
 
 *.swp
 *.*~
-
+*.a
+*.so.*
+*~
