@@ -4,7 +4,6 @@ bin
 build
 doc
 *.mpd
-*.mp4
 *.ppm
 
 *.swp
