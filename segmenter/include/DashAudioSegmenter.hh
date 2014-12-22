@@ -21,7 +21,12 @@
 #ifndef _DASH_AUDIO_SEGMENTER_HH
 #define _DASH_AUDIO_SEGMENTER_HH
 
+#if defined (__cplusplus)
+extern "C" {
 #include "i2libdash.h"
+}
+#endif
+
 #include "Frame.hh"
 #include "DashSegment.hh"
 
