@@ -23,7 +23,6 @@
  */
 
 #include "../include/i2libdash.h"
-#include "../include/i2nalparser.h"
 
 // PRIVATE FUNCTIONS DECLARATION
 void context_refresh(i2ctx **context, uint32_t media_type);
