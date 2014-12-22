@@ -11,3 +11,7 @@ doc
 *.a
 *.so.*
 *~
+
+.project
+.cproject
+.settings
