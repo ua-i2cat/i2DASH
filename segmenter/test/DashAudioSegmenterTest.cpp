@@ -27,6 +27,9 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <cppunit/ui/text/TextTestRunner.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/XmlOutputter.h>
 
 #include "DashAudioSegmenter.hh"
 
@@ -42,21 +45,20 @@
 
 using namespace std;
 
-class dashAudioSegmenterTestSuite : public CppUnit::TestCase {
+class dashAudioSegmenterTestSuite : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE(dashAudioSegmenterTestSuite);
 	CPPUNIT_TEST(constructor);
 	CPPUNIT_TEST(init);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-	void setup();
-    void tear_down();
+	void setUp();
+    void tearDown();
     
 protected:
     void constructor();
     void init();
     
-private:
     DashAudioSegmenter* aSeg;
 };
 
@@ -66,8 +68,8 @@ class generateInitTestSuite : public dashAudioSegmenterTestSuite {
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-    void setup();
-    void tear_down();
+    void setUp();
+    void tearDown();
 
 protected:
     void generateInit();
@@ -86,8 +88,8 @@ class generateSegmentTestSuite : public dashAudioSegmenterTestSuite {
 	CPPUNIT_TEST_SUITE_END();
 
 public:
-    void setup();
-    void tear_down();
+    void setUp();
+    void tearDown();
 
 protected:
     void addToSegment();
@@ -98,12 +100,12 @@ private:
     AACFrame* frame;
 };
 
-void dashAudioSegmenterTestSuite::setup()
+void dashAudioSegmenterTestSuite::setUp()
 {
     aSeg = new DashAudioSegmenter();
 }
 
-void dashAudioSegmenterTestSuite::tear_down()
+void dashAudioSegmenterTestSuite::tearDown()
 {
     delete aSeg;
 }
@@ -119,7 +121,7 @@ void dashAudioSegmenterTestSuite::init()
                                TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE));
 }
 
-void generateInitTestSuite::setup()
+void generateInitTestSuite::setUp()
 {
     inputDataSize = 0;
     outputDataSize = 0;
@@ -165,7 +167,7 @@ void generateInitTestSuite::setup()
     outputDataFile.close();
 }
 
-void generateInitTestSuite::tear_down()
+void generateInitTestSuite::tearDown()
 {
     delete inputData;
     delete outputData;
@@ -192,15 +194,32 @@ void generateInitTestSuite::generateInit()
     delete initSegment;
 }
 
-void generateSegmentTestSuite::setup()
+void generateSegmentTestSuite::setUp()
 {
+   aSeg = new DashAudioSegmenter();
+    if (aSeg == NULL) {
+        CPPUNIT_FAIL("Segmenter instance is null. Check constructor test\n");
+        return;
+    }
+
+    if (!aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
+                               TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE)) {
+        CPPUNIT_FAIL("Segmenter init failed. Check init test\n");
+        return;
+    }
+    
     std::string dummyPath("");
     int dummySeqNumber = 0;
     int maxData = aSeg->getMaxSegmentLength();
     unsigned char* dummyBuffer = new unsigned char[maxData];
     
+    CPPUNIT_ASSERT(dummyBuffer != NULL);
+
     frame = new AACFrame();
     segment = new DashSegment(dummyPath, maxData, dummySeqNumber);
+
+    CPPUNIT_ASSERT(frame != NULL);
+    CPPUNIT_ASSERT(segment != NULL);
 
     frame->setDataBuffer(dummyBuffer, maxData);
     frame->setPresentationTime(TEST_FRAME_PTS);
@@ -208,7 +227,7 @@ void generateSegmentTestSuite::setup()
     frame->setDuration(TEST_FRAME_DURATION);
 }
 
-void generateSegmentTestSuite::tear_down()
+void generateSegmentTestSuite::tearDown()
 {
     delete frame;
     delete segment;
@@ -227,29 +246,22 @@ void generateSegmentTestSuite::finishSegment()
 	CPPUNIT_ASSERT_MESSAGE("FinishSegment failed", aSeg->finishSegment(segment));
 }
 
+CPPUNIT_TEST_SUITE_REGISTRATION( dashAudioSegmenterTestSuite );
+CPPUNIT_TEST_SUITE_REGISTRATION( generateInitTestSuite );
+CPPUNIT_TEST_SUITE_REGISTRATION( generateSegmentTestSuite );
+
 int main(int argc, char* argv[])
 {
-	/*
-    try{
-        Test::Suite ts;
-        ts.add(auto_ptr<Test::Suite>(new constructorTestSuite()));
-        ts.add(auto_ptr<Test::Suite>(new initTestSuite()));
-        ts.add(auto_ptr<Test::Suite>(new generateInitTestSuite()));
-        ts.add(auto_ptr<Test::Suite>(new generateSegmentTestSuite()));
+    CPPUNIT_NS::TextTestRunner runner;
+    CPPUNIT_NS::TestResult results;
+    CPPUNIT_NS::TestResultCollector collector;
+    CPPUNIT_NS::XmlOutputter *outputter = new CPPUNIT_NS::XmlOutputter(&collector, std::ofstream("cppTestBasicMathResults.xml"));
 
-        Test::TextOutput output(Test::TextOutput::Verbose);
-        ts.run(output, true);
-    } catch (int e) {
-        cout << "Unexpected exception encountered: " << e << endl;
-        return EXIT_FAILURE;
-    }
-    
-    return EXIT_SUCCESS;
-    */
+    results.addListener( &collector );
+    runner.setOutputter( outputter );
+    runner.addTest( CppUnit::TestFactoryRegistry::getRegistry().makeTest() );
+    runner.run( results );
+    outputter->write();
 
-    CppUnit::TextTestRunner runner;
-    CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
-    runner.addTest( registry.makeTest() );
-    bool wasSuccessful = runner.run( "", false );
-    return !wasSuccessful;
+    return collector.wasSuccessful() ? 0 : 1;
 } 
