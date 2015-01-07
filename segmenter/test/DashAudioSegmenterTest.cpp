@@ -23,7 +23,10 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <cpptest.h>
+
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/ui/text/TextTestRunner.h>
 
 #include "DashAudioSegmenter.hh"
 
@@ -39,44 +42,37 @@
 
 using namespace std;
 
-class dashAudioSegmenterTestSuite : public Test::Suite {
-protected:
+class dashAudioSegmenterTestSuite : public CppUnit::TestCase {
+	CPPUNIT_TEST_SUITE(dashAudioSegmenterTestSuite);
+	CPPUNIT_TEST(constructor);
+	CPPUNIT_TEST(init);
+	CPPUNIT_TEST_SUITE_END();
+
+public:
+	void setup();
     void tear_down();
+    
+protected:
+    void constructor();
+    void init();
+    
+private:
     DashAudioSegmenter* aSeg;
 };
 
-class constructorTestSuite : public dashAudioSegmenterTestSuite {
-public:
-    constructorTestSuite() {
-        TEST_ADD(constructorTestSuite::constructorTest);
-    }
-    
-private:
-    void constructorTest();
-};
-
-class initTestSuite : public dashAudioSegmenterTestSuite {
-public:
-    initTestSuite() {
-        TEST_ADD(initTestSuite::init);
-    }
-    
-private:
-    void setup();
-    void init();
-};
-
 class generateInitTestSuite : public dashAudioSegmenterTestSuite {
+	CPPUNIT_TEST_SUB_SUITE(generateInitTestSuite, dashAudioSegmenterTestSuite);
+	CPPUNIT_TEST(generateInit);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-    generateInitTestSuite() {
-        TEST_ADD(generateInitTestSuite::generateInit);
-    }
-    
-private:
     void setup();
-    void generateInit();
     void tear_down();
 
+protected:
+    void generateInit();
+
+private:
     size_t inputDataSize;
     size_t outputDataSize;
     unsigned char* inputData;
@@ -84,49 +80,43 @@ private:
 };
 
 class generateSegmentTestSuite : public dashAudioSegmenterTestSuite {
+	CPPUNIT_TEST_SUB_SUITE(generateSegmentTestSuite, dashAudioSegmenterTestSuite);
+	CPPUNIT_TEST(addToSegment);
+	CPPUNIT_TEST(finishSegment);
+	CPPUNIT_TEST_SUITE_END();
+
 public:
-    generateSegmentTestSuite() {
-        TEST_ADD(generateSegmentTestSuite::addToSegment);
-        TEST_ADD(generateSegmentTestSuite::finishSegment);
-    }
-    
-private:
     void setup();
-    void addToSegment();
-    void finishSegment();
     void tear_down();
 
+protected:
+    void addToSegment();
+    void finishSegment();
+
+private:
     DashSegment* segment;
     AACFrame* frame;
-
 };
+
+void dashAudioSegmenterTestSuite::setup()
+{
+    aSeg = new DashAudioSegmenter();
+}
 
 void dashAudioSegmenterTestSuite::tear_down()
 {
     delete aSeg;
 }
 
-
-void constructorTestSuite::constructorTest()
+void dashAudioSegmenterTestSuite::constructor()
 {
-    aSeg = new DashAudioSegmenter();
-    TEST_ASSERT(aSeg != NULL);
+    CPPUNIT_ASSERT(aSeg != NULL);
 }
 
-void initTestSuite::setup()
+void dashAudioSegmenterTestSuite::init()
 {
-    aSeg = new DashAudioSegmenter();
-}
-
-void initTestSuite::init()
-{
-    if (aSeg == NULL) {
-        TEST_FAIL("Segmenter instance is null. Check constructor test\n");
-        return;
-    }
-
-    TEST_ASSERT_MSG(aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
-                               TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE), "AudioSegmenter init failed");
+    CPPUNIT_ASSERT_MESSAGE("AudioSegmenter init failed", aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION,
+                               TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE));
 }
 
 void generateInitTestSuite::setup()
@@ -138,13 +128,13 @@ void generateInitTestSuite::setup()
     
     aSeg = new DashAudioSegmenter();
     if (aSeg == NULL) {
-        TEST_FAIL("Segmenter instance is null. Check constructor test\n");
+        CPPUNIT_FAIL("Segmenter instance is null. Check constructor test\n");
         return;
     }
 
     if (!aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
                                TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE)) {
-        TEST_FAIL("Segmenter init failed. Check init test\n");
+        CPPUNIT_FAIL("Segmenter init failed. Check init test\n");
         return;
     }
 
@@ -152,7 +142,7 @@ void generateInitTestSuite::setup()
     ifstream outputDataFile("testData/DashAudioSegmenterTest_init_model.m4a", ios::in|ios::binary|ios::ate);
     
     if (!inputDataFile.is_open() || !outputDataFile.is_open()) {
-        TEST_FAIL("Error opening test files. Check paths\n");
+        CPPUNIT_FAIL("Error opening test files. Check paths\n");
         return;
     }
 
@@ -167,12 +157,18 @@ void generateInitTestSuite::setup()
     outputDataFile.read((char *)outputData, outputDataSize);
 
     if (!inputData || !outputData) {
-        TEST_FAIL("Error filling buffers from files");
+        CPPUNIT_FAIL("Error filling buffers from files");
         return;
     }
 
     inputDataFile.close();
     outputDataFile.close();
+}
+
+void generateInitTestSuite::tear_down()
+{
+    delete inputData;
+    delete outputData;
 }
 
 void generateInitTestSuite::generateInit()
@@ -186,37 +182,18 @@ void generateInitTestSuite::generateInit()
     aSeg->generateInit(inputData, inputDataSize, initSegment);
 
     if (initSegment->getDataLength() != outputDataSize) {
-        TEST_FAIL("Init buffer length invalid");
+        CPPUNIT_FAIL("Init buffer length invalid");
     }
 
     diff = memcmp(initSegment->getDataBuffer(), outputData, initSegment->getDataLength());
 
-    TEST_ASSERT_MSG(diff == 0, "Init does not coincide with init file model");
+    CPPUNIT_ASSERT_MESSAGE("Init does not coincide with init file model", diff == 0);
 
     delete initSegment;
 }
 
-void generateInitTestSuite::tear_down()
-{
-    delete inputData;
-    delete outputData;
-    delete aSeg;
-}
-
 void generateSegmentTestSuite::setup()
 {
-    aSeg = new DashAudioSegmenter();
-    if (aSeg == NULL) {
-        TEST_FAIL("Segmenter instance is null. Check constructor test\n");
-        return;
-    }
-
-    if (!aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
-                               TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE)) {
-        TEST_FAIL("Segmenter init failed. Check init test\n");
-        return;
-    }
-
     std::string dummyPath("");
     int dummySeqNumber = 0;
     int maxData = aSeg->getMaxSegmentLength();
@@ -231,28 +208,28 @@ void generateSegmentTestSuite::setup()
     frame->setDuration(TEST_FRAME_DURATION);
 }
 
-void generateSegmentTestSuite::addToSegment()
-{
-    TEST_ASSERT_MSG(TEST_SEGMENT_DURATION > TEST_FRAME_DURATION, "Frame duration larger than segment duration");
-    TEST_ASSERT_MSG(!aSeg->addToSegment(frame, segment), "AddToSegment detected segment end too early");
-}
-
-void generateSegmentTestSuite::finishSegment()
-{
-    TEST_ASSERT_MSG(!aSeg->finishSegment(segment), "FinishSegment returned true with no segment data prepared");
-    TEST_ASSERT_MSG(!aSeg->addToSegment(frame, segment), "AddToSegment detected segment end too early");
-    TEST_ASSERT_MSG(aSeg->finishSegment(segment), "FinishSegment failed");
-}
-
 void generateSegmentTestSuite::tear_down()
 {
-    delete aSeg;
     delete frame;
     delete segment;
 }
 
+void generateSegmentTestSuite::addToSegment()
+{
+    CPPUNIT_ASSERT_MESSAGE("Frame duration larger than segment duration", TEST_SEGMENT_DURATION > TEST_FRAME_DURATION);
+    CPPUNIT_ASSERT_MESSAGE("AddToSegment detected segment end too early", !aSeg->addToSegment(frame, segment));
+}
+
+void generateSegmentTestSuite::finishSegment()
+{
+	CPPUNIT_ASSERT_MESSAGE("FinishSegment returned true with no segment data prepared", !aSeg->finishSegment(segment));
+	CPPUNIT_ASSERT_MESSAGE("AddToSegment detected segment end too early", !aSeg->addToSegment(frame, segment));
+	CPPUNIT_ASSERT_MESSAGE("FinishSegment failed", aSeg->finishSegment(segment));
+}
+
 int main(int argc, char* argv[])
 {
+	/*
     try{
         Test::Suite ts;
         ts.add(auto_ptr<Test::Suite>(new constructorTestSuite()));
@@ -268,4 +245,11 @@ int main(int argc, char* argv[])
     }
     
     return EXIT_SUCCESS;
+    */
+
+    CppUnit::TextTestRunner runner;
+    CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+    runner.addTest( registry.makeTest() );
+    bool wasSuccessful = runner.run( "", false );
+    return !wasSuccessful;
 } 
