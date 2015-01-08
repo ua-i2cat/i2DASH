@@ -45,9 +45,9 @@
 
 using namespace std;
 
-class dashAudioSegmenterTestSuite : public CppUnit::TestFixture {
+class dashAudioSegmenterTestSuite : public CppUnit::TestFixture
+{
 	CPPUNIT_TEST_SUITE(dashAudioSegmenterTestSuite);
-	CPPUNIT_TEST(constructor);
 	CPPUNIT_TEST(init);
 	CPPUNIT_TEST_SUITE_END();
 
@@ -62,7 +62,8 @@ protected:
     DashAudioSegmenter* aSeg;
 };
 
-class generateInitTestSuite : public dashAudioSegmenterTestSuite {
+class generateInitTestSuite : public dashAudioSegmenterTestSuite
+{
 	CPPUNIT_TEST_SUB_SUITE(generateInitTestSuite, dashAudioSegmenterTestSuite);
 	CPPUNIT_TEST(generateInit);
 	CPPUNIT_TEST_SUITE_END();
@@ -81,7 +82,8 @@ private:
     unsigned char* outputData;
 };
 
-class generateSegmentTestSuite : public dashAudioSegmenterTestSuite {
+class generateSegmentTestSuite : public dashAudioSegmenterTestSuite
+{
 	CPPUNIT_TEST_SUB_SUITE(generateSegmentTestSuite, dashAudioSegmenterTestSuite);
 	CPPUNIT_TEST(addToSegment);
 	CPPUNIT_TEST(finishSegment);
@@ -108,11 +110,6 @@ void dashAudioSegmenterTestSuite::setUp()
 void dashAudioSegmenterTestSuite::tearDown()
 {
     delete aSeg;
-}
-
-void dashAudioSegmenterTestSuite::constructor()
-{
-    CPPUNIT_ASSERT(aSeg != NULL);
 }
 
 void dashAudioSegmenterTestSuite::init()
@@ -254,10 +251,8 @@ int main(int argc, char* argv[])
 {
 	std::ofstream xmlout("DashAudioSegmenterTestResult.xml");
     CPPUNIT_NS::TextTestRunner runner;
-
     CPPUNIT_NS::XmlOutputter *outputter = new CPPUNIT_NS::XmlOutputter(&runner.result(), xmlout);
 
-    runner.setOutputter( outputter );
     runner.addTest( CppUnit::TestFactoryRegistry::getRegistry().makeTest() );
     runner.run( "", false );
     outputter->write();
