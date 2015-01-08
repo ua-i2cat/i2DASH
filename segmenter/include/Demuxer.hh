@@ -70,6 +70,11 @@ public:
     void closeInput();
 
     /**
+    * @return True if input file is open
+    */
+    bool isInputOpen();
+
+    /**
     * Dump file format information to stdout
     */
     void dumpFormat();
