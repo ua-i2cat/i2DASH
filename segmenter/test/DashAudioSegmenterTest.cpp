@@ -252,16 +252,15 @@ CPPUNIT_TEST_SUITE_REGISTRATION( generateSegmentTestSuite );
 
 int main(int argc, char* argv[])
 {
+	std::ofstream xmlout("DashAudioSegmenterTestResult.xml");
     CPPUNIT_NS::TextTestRunner runner;
-    CPPUNIT_NS::TestResult results;
-    CPPUNIT_NS::TestResultCollector collector;
-    CPPUNIT_NS::XmlOutputter *outputter = new CPPUNIT_NS::XmlOutputter(&collector, std::ofstream("cppTestBasicMathResults.xml"));
 
-    results.addListener( &collector );
+    CPPUNIT_NS::XmlOutputter *outputter = new CPPUNIT_NS::XmlOutputter(&runner.result(), xmlout);
+
     runner.setOutputter( outputter );
     runner.addTest( CppUnit::TestFactoryRegistry::getRegistry().makeTest() );
-    runner.run( results );
+    runner.run( "", false );
     outputter->write();
 
-    return collector.wasSuccessful() ? 0 : 1;
+    return runner.result().wasSuccessful() ? 0 : 1;
 } 
