@@ -93,6 +93,11 @@ void Demuxer::closeInput()
     isOpen = false;
 }
 
+bool Demuxer::isInputOpen()
+{
+    return isOpen;
+}
+
 bool Demuxer::sourceExists(std::string filename)
 {
     struct stat buffer;
