@@ -63,7 +63,7 @@ protected:
 
 class generateInitTestSuite : public dashAudioSegmenterTestSuite
 {
-	CPPUNIT_TEST_SUB_SUITE(generateInitTestSuite, dashAudioSegmenterTestSuite);
+	CPPUNIT_TEST_SUITE(generateInitTestSuite);
 	CPPUNIT_TEST(generateInit);
 	CPPUNIT_TEST_SUITE_END();
 
