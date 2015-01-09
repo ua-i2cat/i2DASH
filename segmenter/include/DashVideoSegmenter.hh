@@ -93,12 +93,6 @@ public:
     */ 
     size_t getMaxSegmentLength(){return MAX_DAT;}; 
 
-    unsigned char *frameBuff;
-    size_t frameLen;
-    size_t presentationTime;
-    size_t decodeTime;
-    size_t duration;
-    
 private:
     i2ctx* dashContext;
     size_t width;
