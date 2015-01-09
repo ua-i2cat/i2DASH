@@ -83,7 +83,7 @@ private:
 
 class generateSegmentTestSuite : public dashAudioSegmenterTestSuite
 {
-	CPPUNIT_TEST_SUB_SUITE(generateSegmentTestSuite, dashAudioSegmenterTestSuite);
+	CPPUNIT_TEST_SUITE(generateSegmentTestSuite);
 	CPPUNIT_TEST(addToSegment);
 	CPPUNIT_TEST(finishSegment);
 	CPPUNIT_TEST_SUITE_END();
