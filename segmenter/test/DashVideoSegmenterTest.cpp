@@ -23,7 +23,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <cpptest.h>
 
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/extensions/HelperMacros.h>
