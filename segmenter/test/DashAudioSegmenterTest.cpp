@@ -56,7 +56,6 @@ public:
     void tearDown();
     
 protected:
-    void constructor();
     void init();
     
     DashAudioSegmenter* aSeg;
@@ -105,6 +104,9 @@ private:
 void dashAudioSegmenterTestSuite::setUp()
 {
     aSeg = new DashAudioSegmenter();
+    if (aSeg == NULL) {
+        CPPUNIT_FAIL("Cannot instantiate DashAudioSegmenter. Out of memory!?\n");
+    }
 }
 
 void dashAudioSegmenterTestSuite::tearDown()
@@ -127,13 +129,13 @@ void generateInitTestSuite::setUp()
     
     aSeg = new DashAudioSegmenter();
     if (aSeg == NULL) {
-        CPPUNIT_FAIL("Segmenter instance is null. Check constructor test\n");
+        CPPUNIT_FAIL("Cannot instantiate DashAudioSegmenter. Out of memory!?\n");
         return;
     }
 
     if (!aSeg->init(TEST_SEGMENT_DURATION, TEST_AUDIO_TIME_BASE, TEST_AUDIO_SAMPLE_DURATION, 
                                TEST_AUDIO_CHANNELS, TEST_AUDIO_SAMPLE_RATE, TEST_AUDIO_BITS_PER_SAMPLE)) {
-        CPPUNIT_FAIL("Segmenter init failed. Check init test\n");
+        CPPUNIT_FAIL("Segmenter init failed\n");
         return;
     }
 
@@ -195,7 +197,7 @@ void generateSegmentTestSuite::setUp()
 {
    aSeg = new DashAudioSegmenter();
     if (aSeg == NULL) {
-        CPPUNIT_FAIL("Segmenter instance is null. Check constructor test\n");
+        CPPUNIT_FAIL("Cannot instantiate DashAudioSegmenter. Out of memory!?\n");
         return;
     }
 
