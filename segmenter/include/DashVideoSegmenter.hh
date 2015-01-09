@@ -30,7 +30,7 @@ extern "C" {
 #include "Frame.hh"
 #include "DashSegment.hh"
 
-/*! It is used to create video dash segments. It has to be initializaed after creating it using init(). After that, use
+/*! It is used to create video dash segments. It has to be initialized after creating it using init(). After that, use
     addToSegment() to add video frames to a segment and finishSegment() to close it */ 
 
 
