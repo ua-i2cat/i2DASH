@@ -64,7 +64,7 @@ protected:
 
 class generateInitTestSuite : public dashVideoSegmenterTestSuite
 {
-    CPPUNIT_TEST_SUB_SUITE(generateInitTestSuite, dashVideoSegmenterTestSuite);
+    CPPUNIT_TEST_SUITE(generateInitTestSuite);
     CPPUNIT_TEST(generateInit);
     CPPUNIT_TEST_SUITE_END();
 
@@ -84,7 +84,7 @@ private:
 
 class generateSegmentTestSuite : public dashVideoSegmenterTestSuite
 {
-    CPPUNIT_TEST_SUB_SUITE(generateSegmentTestSuite, dashVideoSegmenterTestSuite);
+    CPPUNIT_TEST_SUITE(generateSegmentTestSuite);
     CPPUNIT_TEST(addToSegment);
     CPPUNIT_TEST(finishSegment);
     CPPUNIT_TEST_SUITE_END();
