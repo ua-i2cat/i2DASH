@@ -1,4 +1,17 @@
 *.o
+
 bin
 build
 doc
+*.mpd
+*.ppm
+
+*.swp
+*.*~
+*.a
+*.so.*
+*~
+
+.project
+.cproject
+.settings
