@@ -1,14 +1,13 @@
 AC_INIT([i2dash], [1.0])
-AC_CONFIG_SRCDIR([segmenter/src/DashSegment.cpp])
-AC_CONFIG_SRCDIR([segmenter/test/DemuxerTest.cpp])
-AM_INIT_AUTOMAKE([foreign])
+#AC_CONFIG_SRCDIR([segmenter/src/DashSegment.cpp])
+#AC_CONFIG_SRCDIR([segmenter/test/DemuxerTest.cpp])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_PROG_CC
 AC_PROG_CXX
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
  Makefile
- segmenter/src/Makefile
- segmenter/test/Makefile
+ segmenter/Makefile
 ])
 AC_CHECK_LIB([avformat], [av_dump_format], [])
 AC_CHECK_LIB([avcodec], [av_free_packet], [])
