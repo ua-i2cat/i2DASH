@@ -1,5 +1,5 @@
 /*
- *  DemuxerTest.cpp - Demuxer class test
+ *  DashSegmenter.cpp - DashSegmenter class
  *  Copyright (C) 2014  Fundació i2CAT, Internet i Innovació digital a Catalunya
  *
  *  This program is free software: you can redistribute it and/or modify
