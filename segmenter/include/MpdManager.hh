@@ -26,6 +26,9 @@ class MpdManager
 public:
     MpdManager();
     virtual ~MpdManager();
+
+    bool writeSkeleton(const char* fileName);
+    bool updateMpd(const char* fileName);
 };
 
 #endif /* _MPD_MANAGER_HH_ */

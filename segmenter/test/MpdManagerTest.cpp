@@ -19,6 +19,7 @@
  *
  *
  */
+#include <unistd.h>
 
 #include "MpdManager.hh"
 
@@ -32,6 +33,8 @@
 class MpdManagerTest : public CppUnit::TestFixture
 {
     CPPUNIT_TEST_SUITE(MpdManagerTest);
+    CPPUNIT_TEST(buildFirstMpd);
+    CPPUNIT_TEST(updateMpd);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -39,6 +42,8 @@ public:
     void tearDown();
 
 protected:
+    void buildFirstMpd();
+    void updateMpd();
 
 protected:
     MpdManager* manager = NULL;
@@ -54,6 +59,27 @@ void MpdManagerTest::tearDown()
     delete manager;
 }
 
+void MpdManagerTest::buildFirstMpd()
+{
+    const char *TEST_FILE_OK = "/tmp/test.mpd";
+    const char *TEST_FILE_KO = "/test.mpd";
+
+    CPPUNIT_ASSERT(manager->writeSkeleton(TEST_FILE_OK));
+    CPPUNIT_ASSERT(!manager->writeSkeleton(TEST_FILE_KO));
+    CPPUNIT_ASSERT(unlink(TEST_FILE_OK) == 0);
+}
+
+void MpdManagerTest::updateMpd()
+{
+    const char *TEST_FILE_OK = "/tmp/test.mpd";
+    const char *TEST_FILE_KO = "/test.mpd";
+
+    CPPUNIT_ASSERT(manager->writeSkeleton(TEST_FILE_OK));
+    CPPUNIT_ASSERT(manager->updateMpd(TEST_FILE_OK));
+    CPPUNIT_ASSERT(unlink(TEST_FILE_OK) == 0);
+
+    CPPUNIT_ASSERT(!manager->updateMpd(TEST_FILE_KO));
+}
 
 CPPUNIT_TEST_SUITE_REGISTRATION( MpdManagerTest );
 

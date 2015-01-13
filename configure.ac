@@ -13,6 +13,7 @@ AC_CHECK_LIB([avformat], [av_dump_format], [])
 AC_CHECK_LIB([avcodec], [av_free_packet], [])
 AC_CHECK_LIB([avutil], [av_get_bytes_per_sample], [])
 AC_CHECK_LIB([cppunit], [main], [])
+AC_CHECK_LIB([tinyxml2], [main], [])
 AC_PROG_RANLIB
 AC_OUTPUT
 
