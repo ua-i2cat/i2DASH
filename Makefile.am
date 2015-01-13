@@ -1,3 +1,3 @@
-SUBDIRS = segmenter/src segmenter/test
-dist_doc_DATA = README
+SUBDIRS = segmenter
+dist_doc_DATA = README.md
 
