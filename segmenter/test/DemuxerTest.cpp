@@ -22,124 +22,134 @@
 
 #include <string>
 #include <iostream>
-#include <cpptest.h>
 #include <algorithm>
+
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/ui/text/TextTestRunner.h>
+#include <cppunit/TestResult.h>
+#include <cppunit/TestResultCollector.h>
+#include <cppunit/XmlOutputter.h>
 
 #include "Demuxer.hh"
 #include "Frame.hh"
 
 #define BIG_START_TIME 4294967296 // 2^32
 
-class DemuxerSuite : public Test::Suite
+class DemuxerTest : public CppUnit::TestFixture
 {
+    CPPUNIT_TEST_SUITE(DemuxerTest);
+    CPPUNIT_TEST(openCloseInput);
+    CPPUNIT_TEST(dumpFormat);
+    CPPUNIT_TEST(findStreams);
+    CPPUNIT_TEST(readFrame);
+    CPPUNIT_TEST_SUITE_END();
+
 public:
-    DemuxerSuite()
-    {
-        TEST_ADD(DemuxerSuite::constructorTest)
-        TEST_ADD(DemuxerSuite::openInput)
-        TEST_ADD(DemuxerSuite::dumpFormat)
-        TEST_ADD(DemuxerSuite::findStreams)
-        TEST_ADD(DemuxerSuite::readFrame)
-        TEST_ADD(DemuxerSuite::closeInput)
-        TEST_ADD(DemuxerSuite::destructorTest)
-        
-        TEST_ADD(DemuxerSuite::alternateConstructorTest)
-        TEST_ADD(DemuxerSuite::openInput)
-        TEST_ADD(DemuxerSuite::dumpFormat)
-        TEST_ADD(DemuxerSuite::findStreams)
-        TEST_ADD(DemuxerSuite::readFrame)
-        TEST_ADD(DemuxerSuite::closeInput)
-        TEST_ADD(DemuxerSuite::destructorTest)
-    }
-    
-private:
-    uint64_t startTime;
-    Demuxer* demux = NULL;
-    std::string filePath = "testData/DemuxerTest_input_data.mp4";
-    void constructorTest();
-    void correctParams();
-    void destructorTest();
-    void openInput();
-    void closeInput();
+    void setUp();
+    void tearDown();
+
+protected:
+    void openCloseInput();
     void dumpFormat();
     void findStreams();
     void readFrame();
-    void alternateConstructorTest();
+
+protected:
+    uint64_t startTime;
+    Demuxer* demux = NULL;
+    std::string filePath = "testData/DemuxerTest_input_data.mp4";
+    std::stringstream voidstream;
 };
 
+class BigDemuxerTest : public DemuxerTest
+{
+    CPPUNIT_TEST_SUITE(BigDemuxerTest);
+    CPPUNIT_TEST(openCloseInput);
+    CPPUNIT_TEST(dumpFormat);
+    CPPUNIT_TEST(findStreams);
+    CPPUNIT_TEST(readFrame);
+    CPPUNIT_TEST_SUITE_END();
 
-void DemuxerSuite::constructorTest()
+public:
+    void setUp();
+    void tearDown();
+
+};
+
+void DemuxerTest::setUp()
 {
     demux = new Demuxer();
-    TEST_ASSERT(demux != NULL);
     startTime = 0;
+    std::cerr.rdbuf(voidstream.rdbuf());
 }
 
-void DemuxerSuite::alternateConstructorTest()
+void DemuxerTest::tearDown()
 {
-    demux = new Demuxer(BIG_START_TIME, BIG_START_TIME);
-    TEST_ASSERT(demux != NULL);
-    startTime = BIG_START_TIME;
-}
-
-void DemuxerSuite::destructorTest()
-{
-    TEST_ASSERT(demux != NULL);
     delete demux;
 }
 
-void DemuxerSuite::openInput()
+void BigDemuxerTest::setUp()
 {
-    TEST_ASSERT(demux != NULL);
-    TEST_ASSERT(!demux->hasVideo());
-    TEST_ASSERT(!demux->hasAudio());
-    TEST_ASSERT(demux->openInput(filePath));
-    //TODO: redirect cerr
-    TEST_ASSERT(!demux->openInput(filePath));
-    TEST_ASSERT(!demux->hasVideo());
-    TEST_ASSERT(!demux->hasAudio());
+    demux = new Demuxer(BIG_START_TIME, BIG_START_TIME);
+    startTime = BIG_START_TIME;
+    std::cerr.rdbuf(voidstream.rdbuf());
 }
 
-void DemuxerSuite::closeInput()
+void BigDemuxerTest::tearDown()
 {
-    TEST_ASSERT(demux != NULL);
-    demux->closeInput();
-    //TODO: redirect cerr
-    demux->closeInput();
+    delete demux;
 }
 
-void DemuxerSuite::dumpFormat()
+void DemuxerTest::openCloseInput()
 {
-    TEST_ASSERT(demux != NULL);
-    TEST_ASSERT(!demux->openInput(filePath));
-    //TODO: assert format is correct
+    CPPUNIT_ASSERT(demux != NULL);
+    CPPUNIT_ASSERT(!demux->hasVideo());
+    CPPUNIT_ASSERT(!demux->hasAudio());
+    CPPUNIT_ASSERT(demux->openInput(filePath));
+
+    CPPUNIT_ASSERT(!demux->openInput(filePath));
+    CPPUNIT_ASSERT(!demux->hasVideo());
+    CPPUNIT_ASSERT(!demux->hasAudio());
+    demux->closeInput();
+    CPPUNIT_ASSERT(!demux->isInputOpen());
+}
+
+void DemuxerTest::dumpFormat()
+{
+    CPPUNIT_ASSERT(demux != NULL);
+    CPPUNIT_ASSERT(demux->openInput(filePath));
+
     demux->dumpFormat();
+    demux->closeInput();
 }
 
-void DemuxerSuite::findStreams()
+void DemuxerTest::findStreams()
 {
-    TEST_ASSERT(demux != NULL);
-    TEST_ASSERT(demux->findStreams());
+    CPPUNIT_ASSERT(demux != NULL);
+    CPPUNIT_ASSERT(demux->openInput(filePath));
+    CPPUNIT_ASSERT(demux->findStreams());
     if (demux->hasVideo()){
-        TEST_ASSERT(demux->getVideoBitRate() > 0);
-        TEST_ASSERT(demux->getFPS() > 0);
-        TEST_ASSERT(demux->getWidth() > 0);
-        TEST_ASSERT(demux->getHeight() > 0);
-        TEST_ASSERT(demux->getVideoDuration() > 0);
-    } 
+        CPPUNIT_ASSERT(demux->getVideoBitRate() > 0);
+        CPPUNIT_ASSERT(demux->getFPS() > 0);
+        CPPUNIT_ASSERT(demux->getWidth() > 0);
+        CPPUNIT_ASSERT(demux->getHeight() > 0);
+        CPPUNIT_ASSERT(demux->getVideoDuration() > 0);
+    }
     if (demux->hasAudio()){
-        TEST_ASSERT(demux->getAudioBitRate() > 0);
-        TEST_ASSERT(demux->getAudioSampleRate() > 0);
-        TEST_ASSERT(demux->getAudioBitsPerSample() > 0);
-        TEST_ASSERT(demux->getAudioChannels() > 0);
-        TEST_ASSERT(demux->getAudioDuration() > 0);
-    } 
+        CPPUNIT_ASSERT(demux->getAudioBitRate() > 0);
+        CPPUNIT_ASSERT(demux->getAudioSampleRate() > 0);
+        CPPUNIT_ASSERT(demux->getAudioBitsPerSample() > 0);
+        CPPUNIT_ASSERT(demux->getAudioChannels() > 0);
+        CPPUNIT_ASSERT(demux->getAudioDuration() > 0);
+    }
+    demux->closeInput();
 }
 
-void DemuxerSuite::readFrame()
+void DemuxerTest::readFrame()
 {
-    AVCCFrame* vFrame;
-    AACFrame* aFrame;
+    AVCCFrame* vFrame = NULL;
+    AACFrame* aFrame = NULL;
     Frame* frame;
     int gotFrame;
     bool videoFrame = false;
@@ -147,59 +157,60 @@ void DemuxerSuite::readFrame()
     size_t aDuration;
     size_t vDuration;
     
-    TEST_ASSERT(demux != NULL);
-    TEST_ASSERT(!demux->openInput(filePath));
-    TEST_ASSERT(demux->findStreams());
+    CPPUNIT_ASSERT(demux != NULL);
+    CPPUNIT_ASSERT(demux->openInput(filePath));
+    CPPUNIT_ASSERT(demux->findStreams());
     aDuration = demux->getAudioDuration();
-    TEST_ASSERT(aDuration > 0);
+    CPPUNIT_ASSERT(aDuration > 0);
     vDuration = demux->getVideoDuration();
-    TEST_ASSERT(vDuration > 0);
+    CPPUNIT_ASSERT(vDuration > 0);
     
     do {
         frame = demux->readFrame(gotFrame);
         if (dynamic_cast<AVCCFrame*>(frame)){
             vFrame = dynamic_cast<AVCCFrame*>(frame);
             videoFrame = true;
-            TEST_ASSERT(vFrame->getDataBuffer() != NULL);
-            TEST_ASSERT(vFrame->getDataLength() > 0);
-            TEST_ASSERT(vFrame->getDuration() > 0);
+            CPPUNIT_ASSERT(vFrame->getDataBuffer() != NULL);
+            CPPUNIT_ASSERT(vFrame->getDataLength() > 0);
+            CPPUNIT_ASSERT(vFrame->getDuration() > 0);
         } else if (dynamic_cast<AACFrame*>(frame)){
             aFrame = dynamic_cast<AACFrame*>(frame);
             audioFrame = true;
-            TEST_ASSERT(aFrame->getDataBuffer() != NULL);
-            TEST_ASSERT(aFrame->getDataLength() > 0);
-            TEST_ASSERT(aFrame->getDuration() > 0);
+            CPPUNIT_ASSERT(aFrame->getDataBuffer() != NULL);
+            CPPUNIT_ASSERT(aFrame->getDataLength() > 0);
+            CPPUNIT_ASSERT(aFrame->getDuration() > 0);
         }
     } while(gotFrame >= 0);
     
     if (demux->hasVideo()){
-        TEST_ASSERT(videoFrame == true);
-        TEST_ASSERT(vFrame != NULL);
-        TEST_ASSERT(vFrame->getPresentationTime() > startTime);
+        CPPUNIT_ASSERT(videoFrame == true);
+        CPPUNIT_ASSERT(vFrame != NULL);
+        CPPUNIT_ASSERT(vFrame->getPresentationTime() > startTime);
     } 
     
     if (demux->hasAudio()){
-        TEST_ASSERT(audioFrame == true);
-        TEST_ASSERT(aFrame != NULL);
-        TEST_ASSERT(aFrame->getPresentationTime() > startTime);
+        CPPUNIT_ASSERT(audioFrame == true);
+        CPPUNIT_ASSERT(aFrame != NULL);
+        CPPUNIT_ASSERT(aFrame->getPresentationTime() > startTime);
     }
     
     std::cout << " vDur: " << vDuration << " aDur: " << aDuration << std::endl;
     
+    demux->closeInput();
 }
+
+CPPUNIT_TEST_SUITE_REGISTRATION( DemuxerTest );
+CPPUNIT_TEST_SUITE_REGISTRATION( BigDemuxerTest );
 
 int main(int argc, char* argv[])
 {
-    try{
-        Test::Suite ts;
-        ts.add(std::auto_ptr<Test::Suite>(new DemuxerSuite()));
+    std::ofstream xmlout("DemuxerTestResult.xml");
+    CPPUNIT_NS::TextTestRunner runner;
+    CPPUNIT_NS::XmlOutputter *outputter = new CPPUNIT_NS::XmlOutputter(&runner.result(), xmlout);
 
-        Test::TextOutput output(Test::TextOutput::Verbose);
-        ts.run(output, true);
-    } catch (int e) {
-        std::cout << "Unexpected exception encountered: " << e << std::endl;
-        return EXIT_FAILURE;
-    }
-    
-    return EXIT_SUCCESS;
+    runner.addTest( CppUnit::TestFactoryRegistry::getRegistry().makeTest() );
+    runner.run( "", false );
+    outputter->write();
+
+    return runner.result().wasSuccessful() ? 0 : 1;
 } 

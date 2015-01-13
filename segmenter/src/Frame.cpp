@@ -18,6 +18,7 @@
  *  Authors: David Cassany <david.cassany@i2cat.net> 
  *          
  */
+#include <iostream>
 
 #include "Frame.hh"
 

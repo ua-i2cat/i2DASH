@@ -30,7 +30,7 @@ extern "C" {
 #include "Frame.hh"
 #include "DashSegment.hh"
 
-/*! It is used to create video dash segments. It has to be initializaed after creating it using init(). After that, use
+/*! It is used to create video dash segments. It has to be initialized after creating it using init(). After that, use
     addToSegment() to add video frames to a segment and finishSegment() to close it */ 
 
 
@@ -93,12 +93,6 @@ public:
     */ 
     size_t getMaxSegmentLength(){return MAX_DAT;}; 
 
-    unsigned char *frameBuff;
-    size_t frameLen;
-    size_t presentationTime;
-    size_t decodeTime;
-    size_t duration;
-    
 private:
     i2ctx* dashContext;
     size_t width;
