@@ -1,7 +1,7 @@
 AC_INIT([i2dash], [1.0])
 AC_CONFIG_SRCDIR([segmenter/src/DashSegment.cpp])
 AC_CONFIG_SRCDIR([segmenter/test/DemuxerTest.cpp])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 AC_PROG_CC
 AC_PROG_CXX
 AC_CONFIG_HEADERS([config.h])
