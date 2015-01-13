@@ -18,7 +18,11 @@
  *  Authors: Xavier Carol <xavier.carol@i2cat.net>
  */
 
+#include <fstream>
+#include <tinyxml2.h>
+
 #include "MpdManager.hh"
+#include "MpdSkeleton.hh"
 
 MpdManager::MpdManager()
 {
@@ -28,3 +32,28 @@ MpdManager::~MpdManager()
 {
 }
 
+bool MpdManager::writeSkeleton(const char* fileName)
+{
+    std::ofstream outfile(fileName, std::ofstream::out);
+
+    if (outfile.fail())
+        return false;
+
+    outfile << MPD_SKELETON;
+
+    if (outfile.good())
+        return true;
+
+    return false;
+}
+
+bool MpdManager::updateMpd(const char* fileName)
+{
+    tinyxml2::XMLDocument doc;
+
+    doc.LoadFile(fileName);
+    if (doc.ErrorID())
+        return false;
+
+    return true;
+}
