@@ -32,11 +32,10 @@ class DashSegment {
 public:
     /**
     * Class constructor
-    * @param outputFile Output file name
     * @param maxSize Segment data max length
     * @param seqNum Segment sequence number
     */ 
-    DashSegment(std::string outputFile, size_t maxSize, size_t seqNum);
+    DashSegment(size_t maxSize, size_t seqNum);
 
     /**
     * Class destructor
@@ -64,15 +63,27 @@ public:
     size_t getSeqNumber(){return seqNumber;};
 
     /**
-    * Writes segment to disk
+    * @return Segment sequence number
     */ 
-    void writeToDisk();
+    size_t getTimestamp(){return timestamp;};
+
+    /**
+    * @return Segment sequence number
+    */ 
+    void setTimestamp(size_t ts);
+
+    /**
+    * Writes segment to disk
+    * @params Path to write
+    */ 
+    void writeToDisk(std::string path);
 
 
 private:
     unsigned char* data;
     size_t dataLength;
     size_t seqNumber;
+    size_t timestamp;
     std::string path;
 
 };

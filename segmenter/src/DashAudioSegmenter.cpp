@@ -89,6 +89,7 @@ bool DashAudioSegmenter::addToSegment(AACFrame* frame, DashSegment* segment)
         return false;
     }
 
+    segment->setTimestamp(dashContext->ctxaudio->earliest_presentation_time);
     segment->setDataLength(segmentSize);
     return true;
 }
@@ -101,6 +102,7 @@ bool DashAudioSegmenter::finishSegment(DashSegment* segment)
         return false;
     }
 
+    segment->setTimestamp(dashContext->ctxaudio->earliest_presentation_time);
     segmentSize = finish_segment(AUDIO_TYPE, segment->getDataBuffer(), &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {
