@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
     aInitSegment = new DashSegment(aSeg->getMaxSegmentLength(), seqNumber);
 
     if (!demux || !vSeg || !aSeg || !vSegment || !vInitSegment || !aSegment || !aInitSegment) {
-        cerr << "Error constructing video DashSegment objects" << endl;
+        cerr << "Error constructing objects" << endl;
         exit(1);
     }
     
@@ -158,7 +158,7 @@ int getSeqNumberFromPath(std::string filePath)
 std::string getVideoInitPath(std::string filePath)
 {
     std::string path;
-    size_t e = filePath.find_last_of(".");
+    size_t e = filePath.find_last_of("_");
     path = filePath.substr(0,e) + "_init.m4v";
 
     return path;
@@ -167,7 +167,7 @@ std::string getVideoInitPath(std::string filePath)
 std::string getAudioInitPath(std::string filePath)
 {
     std::string path;
-    size_t e = filePath.find_last_of(".");
+    size_t e = filePath.find_last_of("_");
     path = filePath.substr(0,e) + "_init.m4a";
 
     return path;
@@ -177,7 +177,7 @@ std::string getVideoPath(std::string filePath, size_t ts)
 {
     std::string path;
     std::string timestamp = std::to_string(ts);
-    size_t e = filePath.find_last_of(".");
+    size_t e = filePath.find_last_of("_");
     path = filePath.substr(0,e) + "_" + timestamp + ".m4v";
 
     return path;
@@ -187,7 +187,7 @@ std::string getAudioPath(std::string filePath, size_t ts)
 {
     std::string path;
     std::string timestamp = std::to_string(ts);
-    size_t e = filePath.find_last_of(".");
+    size_t e = filePath.find_last_of("_");
     path = filePath.substr(0,e) + "_" + timestamp + ".m4a";
 
     return path;
