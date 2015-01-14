@@ -11,6 +11,7 @@
 #include "DashVideoSegmenter.hh"
 #include "DashAudioSegmenter.hh"
 #include "DashSegment.hh"
+#include <sys/stat.h>
 
 int run = 1;
 
@@ -19,39 +20,58 @@ void signalHandler( int signum )
     run = 0;
 }
 
-void testFunct(std::string fileName){
-    std::cout << "this is test funct, found file: " << fileName << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    if (std::remove(fileName.c_str()) == 0){
-        std::cout << "deleted file: " << fileName << std::endl;
-    } else {
-        std::cout << "Coudn't delete file: " << fileName << std::endl;
-    }
-}
-
-std::string destinationPath = "./dash";
+std::string destinationPath;
 
 int getSeqNumberFromPath(std::string filePath);
 std::string getVideoInitPath(std::string filePath);
 std::string getAudioInitPath(std::string filePath);
 std::string getVideoPath(std::string filePath, size_t ts);
 std::string getAudioPath(std::string filePath, size_t ts);
+void produceFile(std::string filePath);
+
+bool testFolder(std::string folderName)
+{   
+    struct stat buffer;
+    return (stat(folderName.c_str(), &buffer) == 0 && S_ISDIR(buffer.st_mode));
+}
 
 int main(int argc, char* argv[])
 {
+    std::string watchPath;
+    
+    if (argc != 3) {
+        std::cerr << "Error invalid number of parameters" << std::endl;
+        return 1;
+    }
+    
+    watchPath = argv[1];
+    destinationPath = argv[2];
+    
+    if (! testFolder(watchPath)){
+        std::cerr << "Invalid watch path" << std::endl;
+        return 1;
+    }
+    
+    if (! testFolder(destinationPath)){
+        std::cerr << "Invalid destination path" << std::endl;
+        return 1;
+    }
+    
     CloseWriteWatcher *watch = new CloseWriteWatcher();
     
-    watch->setWatchFolder("./tmp");
-    watch->setCallback(testFunct);
+    watch->setWatchFolder(watchPath);
+    watch->setCallback(produceFile);
     
     watch->startWatching(run);
     
     delete watch;
+    
+    return 0;
 };
 
 
 
-void testFunct2(std::string filePath)
+void produceFile(std::string filePath)
 {
     Demuxer* demux = NULL;
     DashVideoSegmenter* vSeg = NULL;
@@ -141,6 +161,10 @@ void testFunct2(std::string filePath)
     if (demux->hasAudio() && aSeg->finishSegment(aSegment)) {
         aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
     }
+    
+    if (std::remove(filePath.c_str()) != 0){
+        std::cout << "Coudn't delete file: " << filePath << std::endl;
+    }
 
     delete demux;
     delete vSeg;
@@ -149,7 +173,6 @@ void testFunct2(std::string filePath)
     delete aSegment;
     delete vInitSegment;
     delete aInitSegment;
-
 }
 
 int getSeqNumberFromPath(std::string filePath)
@@ -198,7 +221,7 @@ std::string getVideoPath(std::string filePath, size_t ts)
     size_t e = filePath.find_last_of("_");
     path = filePath.substr(0,e) + "_" + timestamp + ".m4v";
     e = path.find_last_of("/");
-     if (e != std::string::npos){
+    if (e != std::string::npos){
         path = destinationPath + path.substr(e);
     }
 

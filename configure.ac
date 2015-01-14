@@ -10,6 +10,7 @@ AC_CONFIG_FILES([
  segmenter/src/Makefile
  segmenter/test/Makefile
 ])
+LDFLAGS="$LDFLAGS -L/usr/local/lib"
 AC_CHECK_LIB([avformat], [av_dump_format], [])
 AC_CHECK_LIB([avcodec], [av_free_packet], [])
 AC_CHECK_LIB([avutil], [av_get_bytes_per_sample], [])
