@@ -30,15 +30,43 @@
 #define EVENT_BUF_LEN   (1024 * (EVENT_SIZE + 16))
 #define SLEEP_TIME_USEC 2500
 
+/*! This class represents a folder watchdog monitoring only IN_CLOSE_WRITE events. After writing a file in the folder the watcher 
+    executes a given callback passing the file name that triggered the event as a parameter.*/ 
+
 class CloseWriteWatcher {
 public:
+    /**
+    * Class constructor
+    */ 
     CloseWriteWatcher();
+    /**
+    * Class destructor
+    */ 
     ~CloseWriteWatcher();
     
+    /**
+    * Sets the folder to monitor
+    * @param folder Path to write
+    * @return returns TRUE if the folder exists, FALSE otherwise
+    */ 
     bool setWatchFolder(std::string folder);
+    
+    /**
+    * Configured watch folder getter
+    * @return returns the path string of the targeted folder
+    */ 
     std::string getWatchFolder() {return folderPath;};
+    
+    /**
+    * Sets the callback to execute for every IN_CLOSE_WRITE event
+    * @param funct it is the callback fucntion pointer
+    */
     void setCallback(std::function<void (std::string fileName)> funct);
     
+    /**
+    * Starts monitoring the configured folder, this functions only ends if watch = 0
+    * @param watch this is the running flag, set watch = 0 to stop startWatching function.
+    */
     void startWatching(int &watch);
     
     
