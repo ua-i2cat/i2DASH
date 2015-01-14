@@ -1,5 +1,5 @@
 /*
- *  closeWriteWatcher - Class to monitor written files in a directory
+ *  CloseWriteWatcher - Class to monitor written files in a directory
  *  Copyright (C) 2015  Fundació i2CAT, Internet i Innovació digital a Catalunya
  *
  *  This program is free software: you can redistribute it and/or modify

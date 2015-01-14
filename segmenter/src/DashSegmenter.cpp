@@ -61,10 +61,14 @@ int main(int argc, char* argv[])
     demux = new Demuxer();
     vSeg = new DashVideoSegmenter();
     aSeg = new DashAudioSegmenter();
-    vSegment = new DashSegment(vSeg->getMaxSegmentLength(), seqNumber);
-    vInitSegment = new DashSegment(vSeg->getMaxSegmentLength(), seqNumber);
-    aSegment = new DashSegment(aSeg->getMaxSegmentLength(), seqNumber);
-    aInitSegment = new DashSegment(aSeg->getMaxSegmentLength(), seqNumber);
+    vSegment = new DashSegment(vSeg->getMaxSegmentLength());
+    vSegment->setSeqNumber(seqNumber);
+    vInitSegment = new DashSegment(vSeg->getMaxSegmentLength());
+    vInitSegment->setSeqNumber(seqNumber);
+    aSegment = new DashSegment(aSeg->getMaxSegmentLength());
+    aSegment->setSeqNumber(seqNumber);
+    aInitSegment = new DashSegment(aSeg->getMaxSegmentLength());
+    aInitSegment->setSeqNumber(seqNumber);
 
     if (!demux || !vSeg || !aSeg || !vSegment || !vInitSegment || !aSegment || !aInitSegment) {
         cerr << "Error constructing objects" << endl;

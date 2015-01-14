@@ -35,7 +35,7 @@ public:
     * @param maxSize Segment data max length
     * @param seqNum Segment sequence number
     */ 
-    DashSegment(size_t maxSize, size_t seqNum);
+    DashSegment(size_t maxSize);
 
     /**
     * Class destructor
@@ -60,6 +60,11 @@ public:
     /**
     * @return Segment sequence number
     */ 
+    void setSeqNumber(size_t seqNum);
+    
+    /**
+    * @return Segment sequence number
+    */ 
     size_t getSeqNumber(){return seqNumber;};
 
     /**
@@ -78,14 +83,21 @@ public:
     */ 
     void writeToDisk(std::string path);
 
+    /**
+    * Clears segment data
+    */ 
+    void clear();
+    
+    /**
+    * @return true if the segment has no data
+    */ 
+    bool isEmpty() {return (dataLength == 0 && seqNumber == 0 && timestamp == 0);};
 
 private:
     unsigned char* data;
     size_t dataLength;
     size_t seqNumber;
     size_t timestamp;
-    std::string path;
-
 };
 
 
