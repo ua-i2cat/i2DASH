@@ -169,8 +169,7 @@ void generateInitTestSuite::setUp()
 
 void generateInitTestSuite::generateInit()
 {
-    int dummySeqNumber = 0;
-    DashSegment* initSegment = new DashSegment(vSeg->getMaxSegmentLength(), dummySeqNumber);
+    DashSegment* initSegment = new DashSegment(vSeg->getMaxSegmentLength());
 
     int diff = 0;
 
@@ -207,12 +206,11 @@ void generateSegmentTestSuite::setUp()
         return;
     }
 
-    int dummySeqNumber = 0;
     int maxData = vSeg->getMaxSegmentLength();
     unsigned char* dummyBuffer = new unsigned char[maxData];
     
     frame = new AVCCFrame();
-    segment = new DashSegment(maxData, dummySeqNumber);
+    segment = new DashSegment(maxData);
 
     frame->setDataBuffer(dummyBuffer, maxData);
     frame->setPresentationTime(TEST_FRAME_PTS);

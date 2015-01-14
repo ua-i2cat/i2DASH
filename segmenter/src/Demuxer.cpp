@@ -91,6 +91,10 @@ void Demuxer::closeInput()
   
     fmtCtx = NULL;
     isOpen = false;
+    audioStream = NULL;
+    videoStream = NULL;
+    videoStreamIdx = -1;
+    audioStreamIdx = -1;
 }
 
 bool Demuxer::isInputOpen()
