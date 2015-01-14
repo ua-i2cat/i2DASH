@@ -62,6 +62,7 @@ void CloseWriteWatcher::startWatching(int &watch)
 {
     int i;
     int length;
+    std::string targetFile;
     
     if (folderPath.empty() || callback == NULL){
         return;
@@ -90,7 +91,9 @@ void CloseWriteWatcher::startWatching(int &watch)
             if (event->len > 0) {
                 if (event->mask & IN_CLOSE_WRITE) {
                     if (! (event->mask & IN_ISDIR)) {
-                        callback(event->name);
+                        targetFile = event->name;
+                        targetFile = folderPath + "/" + targetFile;
+                        callback(targetFile);
                     }
                 }
                 i += EVENT_SIZE + event->len;
