@@ -71,11 +71,13 @@ void CloseWriteWatcher::startWatching(int &watch)
     fd = inotify_init1(IN_NONBLOCK);
     if ( fd < 0 ) {
         std::cerr << "inotify initialization failed!" << std::endl;
+        return;
     }
     
     wd = inotify_add_watch( fd, folderPath.c_str(), IN_CLOSE_WRITE);
     if ( wd < 0 ) {
         std::cerr << "inotify add watch failed!" << std::endl;
+        return;
     }
     
     while(watch){
