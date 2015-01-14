@@ -25,6 +25,8 @@
 #include <deque>
 #include "tinyxml2.h"
 
+#define MAX_SEGMENTS_IN_MPD 3
+
 class Mpd;
 class AdaptationSet;
 class VideoAdaptationSet;
@@ -38,8 +40,7 @@ public:
     MpdManager();
     virtual ~MpdManager();
 
-    bool writeSkeleton(const char* fileName);
-    bool updateMpd(const char* fileName);
+    Mpd* getMpd();
 
 private:
     Mpd* mpd;
@@ -52,6 +53,11 @@ public:
     virtual ~Mpd();
 
     void writeToDisk(const char* fileName);
+    void setLocation(std::string loc);
+    AdaptationSet* createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur, int fps);
+    AdaptationSet* createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur);
+    bool addAdaptationSet(std::string id, AdaptationSet* adaptationSet);
+    AdaptationSet* getAdaptationSet(std::string id);
 
 private:
     std::string minimumUpdatePeriod;
@@ -61,15 +67,17 @@ private:
     std::string location;
 
     std::map<std::string, AdaptationSet*> adaptationSets;
-
 };
 
 class AdaptationSet
 {
 public:
-    AdaptationSet();
+    AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur);
     virtual ~AdaptationSet();
-    virtual void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet);
+    virtual void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet) = 0;
+    virtual bool addVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth) = 0;
+    virtual bool addAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels) = 0;
+    void updateTimestamp(int ts);
 
 protected:
     bool segmentAlignment;
@@ -88,9 +96,11 @@ protected:
 class VideoAdaptationSet : public AdaptationSet 
 {
 public:
-    VideoAdaptationSet();
+    VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur, int fps);
     virtual ~VideoAdaptationSet();
     void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet);
+    bool addVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth);
+    bool addAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels){return false;};
 
 private:
     std::map<std::string, VideoRepresentation*> representations;
@@ -104,23 +114,24 @@ private:
 class AudioAdaptationSet : public AdaptationSet 
 {
 public:
-    AudioAdaptationSet();
+    AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur);
     virtual ~AudioAdaptationSet();
     void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet);
+    bool addVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth){return false;};
+    bool addAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels);
 
 private:
     std::map<std::string, AudioRepresentation*> representations;
 
     std::string lang;
-    int audioSamplingRate;
     std::string roleSchemeIdUri;
-    int roleValue;
+    std::string roleValue;
 };
 
 class VideoRepresentation
 {
 public:
-    VideoRepresentation();
+    VideoRepresentation(std::string vCodec, int vWidth, int vHeight, int vBandwidth);
     virtual ~VideoRepresentation();
 
     std::string getCodec() {return codec;};
@@ -140,7 +151,7 @@ private:
 class AudioRepresentation
 {
 public:
-    AudioRepresentation();
+    AudioRepresentation(std::string aCodec, int aSampleRate, int aBandwidth, int channels);
     virtual ~AudioRepresentation();
 
     std::string getCodec() {return codec;};

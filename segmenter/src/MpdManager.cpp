@@ -22,7 +22,6 @@
 #include <tinyxml2.h>
 
 #include "MpdManager.hh"
-#include "MpdSkeleton.hh"
 
 MpdManager::MpdManager()
 {
@@ -30,32 +29,6 @@ MpdManager::MpdManager()
 
 MpdManager::~MpdManager()
 {
-}
-
-bool MpdManager::writeSkeleton(const char* fileName)
-{
-    std::ofstream outfile(fileName, std::ofstream::out);
-
-    if (outfile.fail())
-        return false;
-
-    outfile << MPD_SKELETON;
-
-    if (outfile.good())
-        return true;
-
-    return false;
-}
-
-bool MpdManager::updateMpd(const char* fileName)
-{
-    tinyxml2::XMLDocument doc;
-
-    doc.LoadFile(fileName);
-    if (doc.ErrorID())
-        return false;
-
-    return true;
 }
 
 void Mpd::writeToDisk(const char* fileName)
@@ -100,6 +73,112 @@ void Mpd::writeToDisk(const char* fileName)
 
     root->InsertFirstChild(period);
     doc.SaveFile("SavedData.xml");
+}
+
+void Mpd::setLocation(std::string loc)
+{
+    location = loc;
+}
+
+AdaptationSet* Mpd::createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur, int fps)
+{
+    AdaptationSet* adaptSet = NULL;
+
+    adaptSet = new VideoAdaptationSet(timescale, segmentTempl, initTempl, segmentDur, fps);
+
+    return adaptSet;
+}
+
+AdaptationSet* Mpd::createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+{
+    AdaptationSet* adaptSet = NULL;
+
+    adaptSet = new AudioAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
+
+    return adaptSet;
+}
+
+bool Mpd::addAdaptationSet(std::string id, AdaptationSet* adaptationSet)
+{
+    if (adaptationSets.count(id) > 0) {
+        return false;
+    }
+
+    adaptationSets[id] = adaptationSet;
+    return true;
+}
+
+
+AdaptationSet* Mpd::getAdaptationSet(std::string id)
+{
+    if (adaptationSets.count(id) <= 0) {
+        return NULL;
+    }
+
+    return adaptationSets[id];
+}
+
+AdaptationSet::AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
+{
+    timescale = segTimescale;
+    segTemplate = segTempl;
+    initTemplate = initTempl;
+    segmentDuration = segDur;
+    segmentAlignment = true;
+    startWithSAP = 1;
+    subsegmentAlignment = true;
+    subsegmentStartsWithSAP = 1;
+}
+
+AdaptationSet::~AdaptationSet()
+{ 
+}
+
+void AdaptationSet::updateTimestamp(int ts)
+{
+    if (timestamps.size() >= MAX_SEGMENTS_IN_MPD) {
+        timestamps.pop_front();
+    }
+
+    timestamps.push_back(ts);
+}
+
+
+VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur, int fps)
+: AdaptationSet(segTimescale, segTempl, initTempl, segDur)
+{
+    mimeType = "video/mp4";
+    frameRate = fps;
+    maxWidth = 0;
+    maxHeight = 0;
+    par = "";
+}
+
+VideoAdaptationSet::~VideoAdaptationSet()
+{ 
+}
+
+bool VideoAdaptationSet::addVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth)
+{
+    VideoRepresentation* vRepr;
+
+    if (representations.count(id) > 0) {
+        return false;
+    }
+
+    vRepr = new VideoRepresentation(codec, width, height, bandwidth);
+    representations[id] = vRepr;
+
+    if (maxWidth < width) {
+        maxWidth = width;
+    }
+
+    if (maxHeight < height) {
+        maxHeight = height;
+    }
+
+    //TODO: calculate par
+    return true;
 }
 
 void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet)
@@ -149,6 +228,45 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     adaptSet->InsertEndChild(segmentTemplate);
 }
 
+VideoRepresentation::VideoRepresentation(std::string vCodec, int vWidth, int vHeight, int vBandwidth)
+{
+    codec = vCodec;
+    width = vWidth;
+    height = vHeight;
+    bandwidth = vBandwidth;
+    sar = "1:1";
+}
+
+VideoRepresentation::~VideoRepresentation()
+{
+}
+
+AudioAdaptationSet::AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
+: AdaptationSet(segTimescale, segTempl, initTempl, segDur)
+{
+    mimeType = "audio/mp4";
+    lang = "eng";
+    roleSchemeIdUri = "urn:mpeg:dash:role:2011";
+    roleValue = "main";
+}
+
+AudioAdaptationSet::~AudioAdaptationSet()
+{ 
+}
+
+bool AudioAdaptationSet::addAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels)
+{
+    AudioRepresentation* aRepr;
+
+    if (representations.count(id) > 0) {
+        return false;
+    }
+
+    aRepr = new AudioRepresentation(codec, sampleRate, bandwidth, channels);
+    representations[id] = aRepr;
+    return true;
+}
+
 void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet)
 {
     tinyxml2::XMLElement* segmentTemplate;
@@ -167,7 +285,7 @@ void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
 
     role = doc.NewElement("Role");
     role->SetAttribute("schemeIdUri", roleSchemeIdUri.c_str());
-    role->SetAttribute("value", roleValue);
+    role->SetAttribute("value", roleValue.c_str());
     adaptSet->InsertEndChild(role);
 
     segmentTemplate = doc.NewElement("SegmentTemplate");
@@ -202,4 +320,17 @@ void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     }
 
     adaptSet->InsertEndChild(segmentTemplate);
+}
+
+AudioRepresentation::AudioRepresentation(std::string aCodec, int aSampleRate, int aBandwidth, int channels)
+{
+    codec = aCodec;
+    sampleRate = aSampleRate;
+    bandwidth = aBandwidth;
+    audioChannelConfigSchemeIdUri = "urn:mpeg:dash:23003:3:audio_channel_configuration:2011";
+    audioChannelConfigValue = channels;
+}
+
+AudioRepresentation::~AudioRepresentation()
+{
 }
