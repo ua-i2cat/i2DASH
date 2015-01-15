@@ -140,10 +140,8 @@ void MP4ToDashConverter::produceFile(std::string filePath)
     //NOTE: hardcoded 
     std::string mpdPath = destinationPath + "/test.mpd";
     mpdManager->getMpd()->setLocation("http://192.168.10.116/test/dash/test.mpd");
-    mpdManager->getMpd()->setMinimumUpdatePeriod(10);
-    mpdManager->getMpd()->setMinBufferTime(2);
-    mpdManager->getMpd()->setSuggestedPresentationDelay(3);
-    mpdManager->getMpd()->setTimeShiftBufferDepth(30);
+    mpdManager->getMpd()->setMinBufferTime(MIN_BUFFER_TIME);
+    mpdManager->getMpd()->setSuggestedPresentationDelay(PRESENTATION_DELAY);
 
     seqNumber = getSeqNumberFromPath(filePath);
     representationId = getRepresentationIdFromPath(filePath);
@@ -184,6 +182,8 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             exit(1);
         }
 
+        mpdManager->getMpd()->setMinimumUpdatePeriod(demux->getVideoDuration()/demux->getVideoTimeBase());
+        mpdManager->getMpd()->setTimeShiftBufferDepth((demux->getVideoDuration()/demux->getVideoTimeBase())*MAX_SEGMENTS_IN_MPD);
         //NOTE: hardcoded segment name and codec 
         mpdManager->getMpd()->updateVideoAdaptationSet(V_ADAPT_SET_ID, demux->getVideoTimeBase(), 
                                                        "segmentsTest_segNum_$RepresentationID$_$Time$.m4v", 
@@ -215,6 +215,8 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             exit(1);
         }
         
+        mpdManager->getMpd()->setMinimumUpdatePeriod(demux->getVideoDuration()/demux->getVideoTimeBase());
+        mpdManager->getMpd()->setTimeShiftBufferDepth((demux->getVideoDuration()/demux->getVideoTimeBase())*MAX_SEGMENTS_IN_MPD);
         //NOTE: hardcoded segment name and codec 
         mpdManager->getMpd()->updateAudioAdaptationSet(A_ADAPT_SET_ID, demux->getAudioTimeBase(), 
                                                        ""/*std::string segmentTempl*/, ""/*std::string initTempl*/, 
