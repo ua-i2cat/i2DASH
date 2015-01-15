@@ -119,7 +119,6 @@ private:
     std::map<std::string, VideoRepresentation*> representations;
     int maxWidth;
     int maxHeight;
-    std::string par;
     int frameRate;
 };
 

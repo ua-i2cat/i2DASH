@@ -31,6 +31,8 @@
 
 #define V_ADAPT_SET_ID "0"
 #define A_ADAPT_SET_ID "1"
+#define VIDEO_CODEC "avc1.42c01e"
+#define AUDIO_CODEC "mp4a.40.2"
 #define MIN_BUFFER_TIME 2
 #define PRESENTATION_DELAY 3
 
@@ -42,6 +44,11 @@ public:
     void produceFile(std::string filePath);
     
 private:
+
+    std::string getVideoSegTemplateFromPath(std::string filePath);
+    std::string getAudioSegTemplateFromPath(std::string filePath);
+    std::string getVideoInitTemplateFromPath(std::string filePath);
+    std::string getAudioInitTemplateFromPath(std::string filePath);
 
     std::string getRepresentationIdFromPath(std::string filePath);
     std::string getMpdNameFromLocation(std::string location);

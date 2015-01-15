@@ -255,7 +255,6 @@ VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, s
     frameRate = 0;
     maxWidth = 0;
     maxHeight = 0;
-    par = "";
 }
 
 VideoAdaptationSet::~VideoAdaptationSet()
@@ -281,10 +280,9 @@ void VideoAdaptationSet::updateVideoRepresentation(std::string id, std::string c
     if (!vRepr) {
         vRepr = createRepresentation(codec, width, height, bandwidth, fps);
         addRepresentation(id, vRepr);
-        return;
+    } else {
+        vRepr->update(codec, width, height, bandwidth);
     }
-
-    vRepr->update(codec, width, height, bandwidth);
 
     if (maxWidth < width) {
         maxWidth = width;
@@ -295,7 +293,6 @@ void VideoAdaptationSet::updateVideoRepresentation(std::string id, std::string c
     }
 
     frameRate = fps;
-    //TODO: calculate par
 }
 
 VideoRepresentation* VideoAdaptationSet::createRepresentation(std::string codec, int width, int height, int bandwidth, int fps)
@@ -324,7 +321,6 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     adaptSet->SetAttribute("mimeType", mimeType.c_str());
     adaptSet->SetAttribute("maxWidth", maxWidth);
     adaptSet->SetAttribute("maxHeight", maxHeight);
-    // adaptSet->SetAttribute("par", par.c_str());
     adaptSet->SetAttribute("frameRate", frameRate);
     adaptSet->SetAttribute("segmentAlignment", segmentAlignment);
     adaptSet->SetAttribute("startWithSAP", startWithSAP);
@@ -346,6 +342,7 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     }
 
     segmentTemplate->InsertEndChild(segmentTimeline);
+    adaptSet->InsertEndChild(segmentTemplate);
 
     for (auto r : representations) {
         repr = doc.NewElement("Representation");
@@ -357,8 +354,6 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
         repr->SetAttribute("bandwidth", r.second->getBandwidth());
         adaptSet->InsertEndChild(repr);
     }
-
-    adaptSet->InsertEndChild(segmentTemplate);
 }
 
 AudioAdaptationSet::AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
