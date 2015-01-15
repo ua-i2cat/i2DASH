@@ -32,7 +32,7 @@ MP4ToDashConverter::MP4ToDashConverter(std::string destination)
     aSeg = new DashAudioSegmenter();
     vSegment = new DashSegment(vSeg->getMaxSegmentLength());
     aSegment = new DashSegment(aSeg->getMaxSegmentLength());
-    //new MPDmanager
+    mpdManager = new MpdManager();
     destinationPath = destination;
 }
 
@@ -43,7 +43,7 @@ MP4ToDashConverter::~MP4ToDashConverter()
     delete aSeg;
     delete vSegment;
     delete aSegment;
-    //delte mpdmanager
+    delete mpdManager;
 }
 
 int MP4ToDashConverter::getSeqNumberFromPath(std::string filePath)
@@ -120,9 +120,18 @@ void MP4ToDashConverter::produceFile(std::string filePath)
     Frame* frame;
     int gotFrame = 0;
     int seqNumber = -1;
+    std::string mpdPath = destinationPath + "/test.mpd";
+    mpdManager->getMpd()->setLocation("http://192.168.10.116/test/dash/test.mpd");
+    mpdManager->getMpd()->setMinimumUpdatePeriod(10);
+    mpdManager->getMpd()->setMinBufferTime(2);
+    mpdManager->getMpd()->setSuggestedPresentationDelay(3);
+    mpdManager->getMpd()->setTimeShiftBufferDepth(30);
 
     seqNumber = getSeqNumberFromPath(filePath);
-    //getRepresentationIDFromPath
+    //TODO:getRepresentationIDFromPath
+    int bandwidth = 500000;
+    std::string reprId = "500";
+
 
     if (!demux || !vSeg || !aSeg || !vSegment || !aSegment) {
         std::cerr << "Error constructing objects" << std::endl;
@@ -159,10 +168,14 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             exit(1);
         }
 
-        //Update/New adaptation set
-        //Update/New representation
+        mpdManager->getMpd()->updateVideoAdaptationSet(V_ADAPT_SET_ID, demux->getVideoTimeBase(), 
+                                                       "segmentsTest_segNum_$RepresentationID$_$Time$.m4v", 
+                                                       "segmentsTest_segNum_$RepresentationID$_init.m4v",
+                                                       demux->getVideoDuration());
+        mpdManager->getMpd()->updateVideoRepresentation(V_ADAPT_SET_ID, reprId, "avc1.42c01e", 
+                                  demux->getWidth(), demux->getHeight(), bandwidth, demux->getFPS());
         vSegment->writeToDisk(getVideoInitPath(filePath));
-        //mpd write to disk
+        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
         vSegment->clear();
     }
 
@@ -185,10 +198,12 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             exit(1);
         }
         
-        //Update/New adaptation set
-        //Update/New representation
-        aSegment->writeToDisk(getAudioInitPath(filePath));
-        //mpd write to disk
+        mpdManager->getMpd()->updateAudioAdaptationSet(A_ADAPT_SET_ID, demux->getAudioTimeBase(), 
+                                                       ""/*std::string segmentTempl*/, ""/*std::string initTempl*/, 
+                                                       demux->getAudioDuration());
+        mpdManager->getMpd()->updateAudioRepresentation(A_ADAPT_SET_ID, "id", "codec", 
+                                       demux->getAudioSampleRate(), 0, demux->getAudioChannels());
+        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
         aSegment->clear();
     }
 
@@ -196,33 +211,45 @@ void MP4ToDashConverter::produceFile(std::string filePath)
 
         frame = demux->readFrame(gotFrame);
 
-        if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
-            if (vSeg->addToSegment(videoFrame, vSegment)) {
-                vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
-                //update timestamp(id, vSegment->getTimestamp())
-                //mpd write to disk
+        if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL && vSeg->addToSegment(videoFrame, vSegment)) {
+            vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
+            
+            if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp())) {
+                std::cerr << "Error updating video timestamp. Adaptation set does not exist" << std::endl;
             }
+
+            mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
         }
 
-        if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
-            if (aSeg->addToSegment(audioFrame, aSegment)) {
-                aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
-                //update timestamp(id, aSegment->getTimestamp())
-                //mpd write to disk
+        if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL && aSeg->addToSegment(audioFrame, aSegment)) {
+            aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
+
+            if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp())) {
+                std::cerr << "Error updating audio timestamp. Adaptation set does not exist" << std::endl;
             }
+
+            mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
         }
     }
 
     if (demux->hasVideo() && vSeg->finishSegment(vSegment)) {
         vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
-        //update timestamp(id, vSegment->getTimestamp())
-        //mpd write to disk
+        
+        if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp())) {
+            std::cerr << "Error updating video timestamp. Adaptation set does not exist" << std::endl;
+        }
+        
+        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
     }
 
     if (demux->hasAudio() && aSeg->finishSegment(aSegment)) {
         aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
-        //update timestamp(id, vSegment->getTimestamp())
-        //mpd write to disk
+        
+        if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp())) {
+            std::cerr << "Error updating audio timestamp. Adaptation set does not exist" << std::endl;
+        }
+        
+        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
     }
     
     if (std::remove(filePath.c_str()) != 0){
