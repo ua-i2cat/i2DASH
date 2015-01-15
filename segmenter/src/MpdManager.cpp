@@ -233,6 +233,12 @@ AdaptationSet::~AdaptationSet()
 
 void AdaptationSet::updateTimestamp(int ts)
 {
+    for (auto listTs : timestamps){
+        if (listTs == ts) {
+            return;
+        }
+    }
+
     if (timestamps.size() >= MAX_SEGMENTS_IN_MPD) {
         timestamps.pop_front();
     }
@@ -445,6 +451,7 @@ void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     }
 
     segmentTemplate->InsertEndChild(segmentTimeline);
+    adaptSet->InsertEndChild(segmentTemplate);
 
     for (auto r : representations) {
         repr = doc.NewElement("Representation");
@@ -458,10 +465,8 @@ void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
         audioChannelConfiguration->SetAttribute("value", r.second->getAudioChannelConfigValue());
         repr->InsertEndChild(audioChannelConfiguration);
 
-        segmentTemplate->InsertEndChild(repr);
+        adaptSet->InsertEndChild(repr);
     }
-
-    adaptSet->InsertEndChild(segmentTemplate);
 }
 
 VideoRepresentation::VideoRepresentation(std::string vCodec, int vWidth, int vHeight, int vBandwidth)
