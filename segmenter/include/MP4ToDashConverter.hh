@@ -27,6 +27,10 @@
 #include "DashVideoSegmenter.hh"
 #include "DashAudioSegmenter.hh"
 #include "DashSegment.hh"
+#include "MpdManager.hh"
+
+#define V_ADAPT_SET_ID "0"
+#define A_ADAPT_SET_ID "1"
 
 class MP4ToDashConverter {
 public:
@@ -47,6 +51,7 @@ private:
     DashAudioSegmenter* aSeg;
     DashSegment* aSegment;
     DashSegment* vSegment;
+    MpdManager* mpdManager;
     
     std::string destinationPath;
 };

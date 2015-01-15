@@ -20,15 +20,18 @@
 
 #include <fstream>
 #include <tinyxml2.h>
+#include <iostream>
 
 #include "MpdManager.hh"
 
 MpdManager::MpdManager()
 {
+    mpd = new Mpd();
 }
 
 MpdManager::~MpdManager()
 {
+    delete mpd;
 }
 
 Mpd::Mpd()
@@ -65,6 +68,7 @@ void Mpd::writeToDisk(const char* fileName)
     tinyxml2::XMLElement* root;
     tinyxml2::XMLElement* period;
     tinyxml2::XMLElement* el;
+    tinyxml2::XMLElement* title;
     tinyxml2::XMLText* text;
 
     root = doc.NewElement("MPD");
@@ -82,8 +86,10 @@ void Mpd::writeToDisk(const char* fileName)
     doc.InsertFirstChild(root);
 
     el = doc.NewElement("ProgramInformation");
+    title = doc.NewElement("Title");
     text = doc.NewText("Demo DASH");
-    el->InsertFirstChild(text);
+    title->InsertFirstChild(text);
+    el->InsertFirstChild(title);
     root->InsertEndChild(el);
 
     el = doc.NewElement("Location");
@@ -102,8 +108,8 @@ void Mpd::writeToDisk(const char* fileName)
         period->InsertEndChild(el);
     }
 
-    root->InsertFirstChild(period);
-    doc.SaveFile("SavedData.xml");
+    root->InsertEndChild(period);
+    doc.SaveFile(fileName);
 }
 
 void Mpd::setLocation(std::string loc)
@@ -111,22 +117,82 @@ void Mpd::setLocation(std::string loc)
     location = loc;
 }
 
-AdaptationSet* Mpd::createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur, int fps)
+bool Mpd::updateAdaptationSetTimestamp(std::string id, int ts)
 {
-    AdaptationSet* adaptSet = NULL;
+    AdaptationSet* adSet;
 
-    adaptSet = new VideoAdaptationSet(timescale, segmentTempl, initTempl, segmentDur, fps);
+    adSet = getAdaptationSet(id);
 
-    return adaptSet;
+    if (!adSet) {
+        return false;
+    }
+
+    adSet->updateTimestamp(ts);
+    return true;
+}
+
+void Mpd::updateVideoAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+{
+    AdaptationSet* adSet;
+
+    adSet = getAdaptationSet(id);
+
+    if (!adSet) {
+        adSet = createVideoAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
+        addAdaptationSet(id, adSet);
+    }
+
+    adSet->update(timescale, segmentTempl, initTempl, segmentDur);
+}
+
+void Mpd::updateAudioAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+{
+    AdaptationSet* adSet;
+
+    adSet = getAdaptationSet(id);
+
+    if (!adSet) {
+        adSet = createAudioAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
+        addAdaptationSet(id, adSet);
+    }
+
+    adSet->update(timescale, segmentTempl, initTempl, segmentDur);
+}
+
+void Mpd::updateVideoRepresentation(std::string adSetId, std::string reprId, std::string codec, int width, int height, int bandwidth, int fps)
+{
+    AdaptationSet* adSet;
+
+    adSet = getAdaptationSet(adSetId);
+
+    if (!adSet) {
+        return;
+    }
+
+    adSet->updateVideoRepresentation(reprId, codec, width, height, bandwidth, fps);
+}
+
+void Mpd::updateAudioRepresentation(std::string adSetId, std::string reprId, std::string codec, int sampleRate, int bandwidth, int channels)
+{
+    AdaptationSet* adSet;
+
+    adSet = getAdaptationSet(adSetId);
+
+    if (!adSet) {
+        return;
+    }
+
+    adSet->updateAudioRepresentation(reprId, codec, sampleRate, bandwidth, channels);
+}
+
+AdaptationSet* Mpd::createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+{
+    return new VideoAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
 }
 
 AdaptationSet* Mpd::createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
 {
-    AdaptationSet* adaptSet = NULL;
-
-    adaptSet = new AudioAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
-
-    return adaptSet;
+    return new AudioAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
 }
 
 bool Mpd::addAdaptationSet(std::string id, AdaptationSet* adaptationSet)
@@ -174,12 +240,19 @@ void AdaptationSet::updateTimestamp(int ts)
     timestamps.push_back(ts);
 }
 
+void AdaptationSet::update(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
+{
+    timescale = segTimescale;
+    segTemplate = segTempl;
+    initTemplate = initTempl;
+    segmentDuration = segDur;
+}
 
-VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur, int fps)
+VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
 : AdaptationSet(segTimescale, segTempl, initTempl, segDur)
 {
     mimeType = "video/mp4";
-    frameRate = fps;
+    frameRate = 0;
     maxWidth = 0;
     maxHeight = 0;
     par = "";
@@ -189,16 +262,29 @@ VideoAdaptationSet::~VideoAdaptationSet()
 { 
 }
 
-bool VideoAdaptationSet::addVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth)
+VideoRepresentation* VideoAdaptationSet::getRepresentation(std::string id)
+{
+     if (representations.count(id) <= 0) {
+        return NULL;
+    }
+
+    return representations[id];
+}
+
+
+void VideoAdaptationSet::updateVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth, int fps)
 {
     VideoRepresentation* vRepr;
 
-    if (representations.count(id) > 0) {
-        return false;
+    vRepr = getRepresentation(id);
+
+    if (!vRepr) {
+        vRepr = createRepresentation(codec, width, height, bandwidth, fps);
+        addRepresentation(id, vRepr);
+        return;
     }
 
-    vRepr = new VideoRepresentation(codec, width, height, bandwidth);
-    representations[id] = vRepr;
+    vRepr->update(codec, width, height, bandwidth);
 
     if (maxWidth < width) {
         maxWidth = width;
@@ -208,7 +294,23 @@ bool VideoAdaptationSet::addVideoRepresentation(std::string id, std::string code
         maxHeight = height;
     }
 
+    frameRate = fps;
     //TODO: calculate par
+}
+
+VideoRepresentation* VideoAdaptationSet::createRepresentation(std::string codec, int width, int height, int bandwidth, int fps)
+{
+    return new VideoRepresentation(codec, width, height, bandwidth); 
+}
+
+
+bool VideoAdaptationSet::addRepresentation(std::string id, VideoRepresentation* repr)
+{
+    if (representations.count(id) > 0) {
+        return false;
+    }
+
+    representations[id] = repr;
     return true;
 }
 
@@ -222,7 +324,7 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     adaptSet->SetAttribute("mimeType", mimeType.c_str());
     adaptSet->SetAttribute("maxWidth", maxWidth);
     adaptSet->SetAttribute("maxHeight", maxHeight);
-    adaptSet->SetAttribute("par", par.c_str());
+    // adaptSet->SetAttribute("par", par.c_str());
     adaptSet->SetAttribute("frameRate", frameRate);
     adaptSet->SetAttribute("segmentAlignment", segmentAlignment);
     adaptSet->SetAttribute("startWithSAP", startWithSAP);
@@ -253,23 +355,10 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
         repr->SetAttribute("height", r.second->getHeight());
         repr->SetAttribute("sar", r.second->getSAR().c_str());
         repr->SetAttribute("bandwidth", r.second->getBandwidth());
-        segmentTemplate->InsertEndChild(repr);
+        adaptSet->InsertEndChild(repr);
     }
 
     adaptSet->InsertEndChild(segmentTemplate);
-}
-
-VideoRepresentation::VideoRepresentation(std::string vCodec, int vWidth, int vHeight, int vBandwidth)
-{
-    codec = vCodec;
-    width = vWidth;
-    height = vHeight;
-    bandwidth = vBandwidth;
-    sar = "1:1";
-}
-
-VideoRepresentation::~VideoRepresentation()
-{
 }
 
 AudioAdaptationSet::AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
@@ -285,16 +374,43 @@ AudioAdaptationSet::~AudioAdaptationSet()
 { 
 }
 
-bool AudioAdaptationSet::addAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels)
+AudioRepresentation* AudioAdaptationSet::getRepresentation(std::string id)
 {
-    AudioRepresentation* aRepr;
+     if (representations.count(id) <= 0) {
+        return NULL;
+    }
 
+    return representations[id];
+}
+
+void AudioAdaptationSet::updateAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels)
+{
+    AudioRepresentation* repr;
+
+    repr = getRepresentation(id);
+
+    if (!repr) {
+        repr = createRepresentation(codec, sampleRate, bandwidth, channels);
+        addRepresentation(id, repr);
+        return;
+    }
+
+    repr->update(codec, sampleRate, bandwidth, channels);
+}
+
+AudioRepresentation* AudioAdaptationSet::createRepresentation(std::string codec, int sampleRate, int bandwidth, int channels)
+{
+    return new AudioRepresentation(codec, sampleRate, bandwidth, channels);
+}
+
+
+bool AudioAdaptationSet::addRepresentation(std::string id, AudioRepresentation* repr)
+{
     if (representations.count(id) > 0) {
         return false;
     }
 
-    aRepr = new AudioRepresentation(codec, sampleRate, bandwidth, channels);
-    representations[id] = aRepr;
+    representations[id] = repr;
     return true;
 }
 
@@ -353,6 +469,28 @@ void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     adaptSet->InsertEndChild(segmentTemplate);
 }
 
+VideoRepresentation::VideoRepresentation(std::string vCodec, int vWidth, int vHeight, int vBandwidth)
+{
+    codec = vCodec;
+    width = vWidth;
+    height = vHeight;
+    bandwidth = vBandwidth;
+    sar = "1:1";
+}
+
+VideoRepresentation::~VideoRepresentation()
+{
+}
+
+void VideoRepresentation::update(std::string vCodec, int vWidth, int vHeight, int vBandwidth)
+{
+    codec = vCodec;
+    width = vWidth;
+    height = vHeight;
+    bandwidth = vBandwidth;
+    sar = "1:1";
+}
+
 AudioRepresentation::AudioRepresentation(std::string aCodec, int aSampleRate, int aBandwidth, int channels)
 {
     codec = aCodec;
@@ -365,3 +503,12 @@ AudioRepresentation::AudioRepresentation(std::string aCodec, int aSampleRate, in
 AudioRepresentation::~AudioRepresentation()
 {
 }
+
+void AudioRepresentation::update(std::string aCodec, int aSampleRate, int aBandwidth, int channels)
+{
+    codec = aCodec;
+    sampleRate = aSampleRate;
+    bandwidth = aBandwidth;
+    audioChannelConfigValue = channels;
+}
+
