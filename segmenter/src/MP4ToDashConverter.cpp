@@ -59,6 +59,21 @@ int MP4ToDashConverter::getSeqNumberFromPath(std::string filePath)
     return seqNumber;
 }
 
+std::string getRepresentationIdFromPath(std::string filePath)
+{
+    size_t e;
+    std::string cut;
+    std::string id;
+
+    e = filePath.find_last_of("_");
+    cut = filePath.substr(0,e);
+    
+    e = cut.find_last_of("_");
+    id = cut.substr(e + 1, cut.length() - e);
+
+    return id;
+}
+
 std::string MP4ToDashConverter::getVideoInitPath(std::string filePath)
 {
     std::string path;
@@ -120,6 +135,9 @@ void MP4ToDashConverter::produceFile(std::string filePath)
     Frame* frame;
     int gotFrame = 0;
     int seqNumber = -1;
+    std::string representationId;
+    int bandwidth;
+    //NOTE: hardcoded 
     std::string mpdPath = destinationPath + "/test.mpd";
     mpdManager->getMpd()->setLocation("http://192.168.10.116/test/dash/test.mpd");
     mpdManager->getMpd()->setMinimumUpdatePeriod(10);
@@ -128,10 +146,8 @@ void MP4ToDashConverter::produceFile(std::string filePath)
     mpdManager->getMpd()->setTimeShiftBufferDepth(30);
 
     seqNumber = getSeqNumberFromPath(filePath);
-    //TODO:getRepresentationIDFromPath
-    int bandwidth = 500000;
-    std::string reprId = "500";
-
+    representationId = getRepresentationIdFromPath(filePath);
+    bandwidth = atoi(representationId.c_str())*1000;
 
     if (!demux || !vSeg || !aSeg || !vSegment || !aSegment) {
         std::cerr << "Error constructing objects" << std::endl;
@@ -168,11 +184,12 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             exit(1);
         }
 
+        //NOTE: hardcoded segment name and codec 
         mpdManager->getMpd()->updateVideoAdaptationSet(V_ADAPT_SET_ID, demux->getVideoTimeBase(), 
                                                        "segmentsTest_segNum_$RepresentationID$_$Time$.m4v", 
                                                        "segmentsTest_segNum_$RepresentationID$_init.m4v",
                                                        demux->getVideoDuration());
-        mpdManager->getMpd()->updateVideoRepresentation(V_ADAPT_SET_ID, reprId, "avc1.42c01e", 
+        mpdManager->getMpd()->updateVideoRepresentation(V_ADAPT_SET_ID, representationId, "avc1.42c01e", 
                                   demux->getWidth(), demux->getHeight(), bandwidth, demux->getFPS());
         vSegment->writeToDisk(getVideoInitPath(filePath));
         mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
@@ -198,10 +215,11 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             exit(1);
         }
         
+        //NOTE: hardcoded segment name and codec 
         mpdManager->getMpd()->updateAudioAdaptationSet(A_ADAPT_SET_ID, demux->getAudioTimeBase(), 
                                                        ""/*std::string segmentTempl*/, ""/*std::string initTempl*/, 
                                                        demux->getAudioDuration());
-        mpdManager->getMpd()->updateAudioRepresentation(A_ADAPT_SET_ID, "id", "codec", 
+        mpdManager->getMpd()->updateAudioRepresentation(A_ADAPT_SET_ID, representationId, "codec", 
                                        demux->getAudioSampleRate(), 0, demux->getAudioChannels());
         mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
         aSegment->clear();
