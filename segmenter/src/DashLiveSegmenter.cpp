@@ -54,14 +54,16 @@ int main(int argc, char* argv[])
 {
     std::string watchPath;
     std::string destinationPath;
+    std::string mpdLocation;
     
-    if (argc != 3) {
+    if (argc != 4) {
         std::cerr << "Error invalid number of parameters" << std::endl;
         return 1;
     }
     
     watchPath = argv[1];
     destinationPath = argv[2];
+    mpdLocation = argv[3];
     
     if (! testFolder(watchPath)){
         std::cerr << "Invalid watch path" << std::endl;
@@ -73,7 +75,7 @@ int main(int argc, char* argv[])
         return 1;
     }
     
-    converter = new MP4ToDashConverter(destinationPath);
+    converter = new MP4ToDashConverter(destinationPath, mpdLocation);
     
     CloseWriteWatcher *watch = new CloseWriteWatcher();
     

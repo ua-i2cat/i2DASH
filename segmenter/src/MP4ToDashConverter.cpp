@@ -25,7 +25,7 @@
 #include <string>
 #include <cstdio>
 
-MP4ToDashConverter::MP4ToDashConverter(std::string destination)
+MP4ToDashConverter::MP4ToDashConverter(std::string destination, std::string mpdLocation)
 {
     demux = new Demuxer();
     vSeg = new DashVideoSegmenter();
@@ -34,6 +34,11 @@ MP4ToDashConverter::MP4ToDashConverter(std::string destination)
     aSegment = new DashSegment(aSeg->getMaxSegmentLength());
     mpdManager = new MpdManager();
     destinationPath = destination;
+
+    mpdManager->getMpd()->setLocation(mpdLocation);
+    mpdPath = destinationPath + getMpdNameFromLocation(mpdLocation);
+    mpdManager->getMpd()->setMinBufferTime(MIN_BUFFER_TIME);
+    mpdManager->getMpd()->setSuggestedPresentationDelay(PRESENTATION_DELAY);
 }
 
 MP4ToDashConverter::~MP4ToDashConverter()
@@ -59,7 +64,7 @@ int MP4ToDashConverter::getSeqNumberFromPath(std::string filePath)
     return seqNumber;
 }
 
-std::string getRepresentationIdFromPath(std::string filePath)
+std::string MP4ToDashConverter::getRepresentationIdFromPath(std::string filePath)
 {
     size_t e;
     std::string cut;
@@ -73,6 +78,16 @@ std::string getRepresentationIdFromPath(std::string filePath)
 
     return id;
 }
+
+std::string MP4ToDashConverter::getMpdNameFromLocation(std::string location)
+{
+    std::string name;
+
+    size_t e = location.find_last_of("/");
+    name = location.substr(e, location.length() - e);
+    return name;
+}
+
 
 std::string MP4ToDashConverter::getVideoInitPath(std::string filePath)
 {
@@ -137,11 +152,6 @@ void MP4ToDashConverter::produceFile(std::string filePath)
     int seqNumber = -1;
     std::string representationId;
     int bandwidth;
-    //NOTE: hardcoded 
-    std::string mpdPath = destinationPath + "/test.mpd";
-    mpdManager->getMpd()->setLocation("http://192.168.10.116/test/dash/test.mpd");
-    mpdManager->getMpd()->setMinBufferTime(MIN_BUFFER_TIME);
-    mpdManager->getMpd()->setSuggestedPresentationDelay(PRESENTATION_DELAY);
 
     seqNumber = getSeqNumberFromPath(filePath);
     representationId = getRepresentationIdFromPath(filePath);
