@@ -313,6 +313,7 @@ void MP4ToDashConverter::produceFile(std::string filePath)
                                                        demux->getAudioDuration());
         mpdManager->getMpd()->updateAudioRepresentation(A_ADAPT_SET_ID, representationId, AUDIO_CODEC, 
                                        demux->getAudioSampleRate(), 0, demux->getAudioChannels());
+        aSegment->writeToDisk(getAudioInitPath(filePath));
         mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
         aSegment->clear();
     }
