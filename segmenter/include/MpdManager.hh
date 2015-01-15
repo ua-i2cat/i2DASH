@@ -40,7 +40,7 @@ public:
     MpdManager();
     virtual ~MpdManager();
 
-    Mpd* getMpd();
+    Mpd* getMpd(){return mpd;};
 
 private:
     Mpd* mpd;
@@ -54,6 +54,10 @@ public:
 
     void writeToDisk(const char* fileName);
     void setLocation(std::string loc);
+    void setMinimumUpdatePeriod(int seconds);
+    void setMinBufferTime(int seconds);
+    void setSuggestedPresentationDelay(int seconds);
+    void setTimeShiftBufferDepth(int seconds);
     AdaptationSet* createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur, int fps);
     AdaptationSet* createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur);
     bool addAdaptationSet(std::string id, AdaptationSet* adaptationSet);

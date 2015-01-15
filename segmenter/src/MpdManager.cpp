@@ -31,6 +31,34 @@ MpdManager::~MpdManager()
 {
 }
 
+Mpd::Mpd()
+{
+}
+
+Mpd::~Mpd()
+{
+}
+
+void Mpd::setMinimumUpdatePeriod(int seconds)
+{
+    minimumUpdatePeriod = "PT" + std::to_string(seconds) + ".0S";
+}
+
+void Mpd::setMinBufferTime(int seconds)
+{
+    minBufferTime = "PT" + std::to_string(seconds) + ".0S";
+}
+
+void Mpd::setSuggestedPresentationDelay(int seconds)
+{
+    suggestedPresentationDelay = "PT" + std::to_string(seconds) + ".0S";
+}
+
+void Mpd::setTimeShiftBufferDepth(int seconds)
+{
+    timeShiftBufferDepth = "PT" + std::to_string(seconds) + ".0S";
+}
+
 void Mpd::writeToDisk(const char* fileName)
 {
     tinyxml2::XMLDocument doc;
