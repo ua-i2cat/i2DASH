@@ -32,6 +32,7 @@ MP4ToDashConverter::MP4ToDashConverter(std::string destination)
     aSeg = new DashAudioSegmenter();
     vSegment = new DashSegment(vSeg->getMaxSegmentLength());
     aSegment = new DashSegment(aSeg->getMaxSegmentLength());
+    //new MPDmanager
     destinationPath = destination;
 }
 
@@ -42,6 +43,7 @@ MP4ToDashConverter::~MP4ToDashConverter()
     delete aSeg;
     delete vSegment;
     delete aSegment;
+    //delte mpdmanager
 }
 
 int MP4ToDashConverter::getSeqNumberFromPath(std::string filePath)
@@ -115,14 +117,14 @@ void MP4ToDashConverter::produceFile(std::string filePath)
 {   
     AVCCFrame* videoFrame;
     AACFrame* audioFrame;
-    DashSegment* segment = new DashSegment(vSeg->getMaxSegmentLength());
     Frame* frame;
     int gotFrame = 0;
     int seqNumber = -1;
 
     seqNumber = getSeqNumberFromPath(filePath);
+    //getRepresentationIDFromPath
 
-    if (!demux || !vSeg || !aSeg || !segment) {
+    if (!demux || !vSeg || !aSeg || !vSegment || !aSegment) {
         std::cerr << "Error constructing objects" << std::endl;
         exit(1);
     }
@@ -156,8 +158,11 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             std::cerr << "Error constructing video init" << std::endl;
             exit(1);
         }
-        
+
+        //Update/New adaptation set
+        //Update/New representation
         vSegment->writeToDisk(getVideoInitPath(filePath));
+        //mpd write to disk
         vSegment->clear();
     }
 
@@ -180,7 +185,10 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             exit(1);
         }
         
+        //Update/New adaptation set
+        //Update/New representation
         aSegment->writeToDisk(getAudioInitPath(filePath));
+        //mpd write to disk
         aSegment->clear();
     }
 
@@ -191,22 +199,30 @@ void MP4ToDashConverter::produceFile(std::string filePath)
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL) {
             if (vSeg->addToSegment(videoFrame, vSegment)) {
                 vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
+                //update timestamp(id, vSegment->getTimestamp())
+                //mpd write to disk
             }
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL) {
             if (aSeg->addToSegment(audioFrame, aSegment)) {
                 aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
+                //update timestamp(id, aSegment->getTimestamp())
+                //mpd write to disk
             }
         }
     }
 
     if (demux->hasVideo() && vSeg->finishSegment(vSegment)) {
         vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
+        //update timestamp(id, vSegment->getTimestamp())
+        //mpd write to disk
     }
 
     if (demux->hasAudio() && aSeg->finishSegment(aSegment)) {
         aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
+        //update timestamp(id, vSegment->getTimestamp())
+        //mpd write to disk
     }
     
     if (std::remove(filePath.c_str()) != 0){
