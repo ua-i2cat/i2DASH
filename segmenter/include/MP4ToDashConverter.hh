@@ -31,6 +31,8 @@
 
 #define V_ADAPT_SET_ID "0"
 #define A_ADAPT_SET_ID "1"
+#define MIN_BUFFER_TIME 2
+#define PRESENTATION_DELAY 3
 
 class MP4ToDashConverter {
 public:
