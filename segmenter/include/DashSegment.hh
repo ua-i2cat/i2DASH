@@ -58,7 +58,8 @@ public:
     void setDataLength(size_t length);
 
     /**
-    * @return Segment sequence number
+    * It sets the sequence number of the segment
+    * @params seqNum is the sequence number to set
     */ 
     void setSeqNumber(size_t seqNum);
     
@@ -68,12 +69,13 @@ public:
     size_t getSeqNumber(){return seqNumber;};
 
     /**
-    * @return Segment sequence number
+    * @return Segment segment timestamp
     */ 
     size_t getTimestamp(){return timestamp;};
 
     /**
-    * @return Segment sequence number
+    * It sets the segment timestamp
+    * @params ts is the timestamp to set
     */ 
     void setTimestamp(size_t ts);
 
