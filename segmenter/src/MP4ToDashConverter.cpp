@@ -51,6 +51,87 @@ MP4ToDashConverter::~MP4ToDashConverter()
     delete mpdManager;
 }
 
+std::string MP4ToDashConverter::getVideoSegTemplateFromPath(std::string filePath)
+{
+    size_t e;
+    std::string base;
+    std::string cut;
+    std::string templ;
+
+    e = filePath.find_last_of("/");
+    base = filePath.substr(e + 1, filePath.length() - e);
+    
+    e = base.find_last_of("_");
+    cut = base.substr(0, e);
+
+    e = cut.find_last_of("_");
+    templ = cut.substr(0, e);
+    
+    templ += "_$RepresentationID$_$Time$.m4v";
+    return templ;
+}
+
+std::string MP4ToDashConverter::getAudioSegTemplateFromPath(std::string filePath)
+{
+    size_t e;
+    std::string base;
+    std::string cut;
+    std::string templ;
+
+    e = filePath.find_last_of("/");
+    base = filePath.substr(e + 1, filePath.length() - e);
+    
+    e = base.find_last_of("_");
+    cut = base.substr(0, e);
+
+    e = cut.find_last_of("_");
+    templ = cut.substr(0, e);
+    
+    templ += "_$RepresentationID$_$Time$.m4a";
+    return templ;
+}
+
+std::string MP4ToDashConverter::getVideoInitTemplateFromPath(std::string filePath)
+{
+    size_t e;
+    std::string base;
+    std::string cut;
+    std::string templ;
+
+    e = filePath.find_last_of("/");
+    base = filePath.substr(e + 1, filePath.length() - e);
+    
+    e = base.find_last_of("_");
+    cut = base.substr(0, e);
+
+    e = cut.find_last_of("_");
+    templ = cut.substr(0, e);
+    
+    templ += "_$RepresentationID$_init.m4v";
+    return templ;
+}
+
+std::string MP4ToDashConverter::getAudioInitTemplateFromPath(std::string filePath)
+{
+    size_t e;
+    std::string base;
+    std::string cut;
+    std::string templ;
+
+    e = filePath.find_last_of("/");
+    base = filePath.substr(e + 1, filePath.length() - e);
+    
+    e = base.find_last_of("_");
+    cut = base.substr(0, e);
+
+    e = cut.find_last_of("_");
+    templ = cut.substr(0, e);
+    
+    templ += "_$RepresentationID$_init.m4a";
+    return templ;
+}
+
+
 int MP4ToDashConverter::getSeqNumberFromPath(std::string filePath)
 {
     int seqNumber = -1;
@@ -194,12 +275,11 @@ void MP4ToDashConverter::produceFile(std::string filePath)
 
         mpdManager->getMpd()->setMinimumUpdatePeriod(demux->getVideoDuration()/demux->getVideoTimeBase());
         mpdManager->getMpd()->setTimeShiftBufferDepth((demux->getVideoDuration()/demux->getVideoTimeBase())*MAX_SEGMENTS_IN_MPD);
-        //NOTE: hardcoded segment name and codec 
-        mpdManager->getMpd()->updateVideoAdaptationSet(V_ADAPT_SET_ID, demux->getVideoTimeBase(), 
-                                                       "segmentsTest_segNum_$RepresentationID$_$Time$.m4v", 
-                                                       "segmentsTest_segNum_$RepresentationID$_init.m4v",
+        mpdManager->getMpd()->updateVideoAdaptationSet(V_ADAPT_SET_ID, demux->getVideoTimeBase(),
+                                                       getVideoSegTemplateFromPath(filePath),
+                                                       getVideoInitTemplateFromPath(filePath), 
                                                        demux->getVideoDuration());
-        mpdManager->getMpd()->updateVideoRepresentation(V_ADAPT_SET_ID, representationId, "avc1.42c01e", 
+        mpdManager->getMpd()->updateVideoRepresentation(V_ADAPT_SET_ID, representationId, VIDEO_CODEC, 
                                   demux->getWidth(), demux->getHeight(), bandwidth, demux->getFPS());
         vSegment->writeToDisk(getVideoInitPath(filePath));
         mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
@@ -227,11 +307,11 @@ void MP4ToDashConverter::produceFile(std::string filePath)
         
         mpdManager->getMpd()->setMinimumUpdatePeriod(demux->getVideoDuration()/demux->getVideoTimeBase());
         mpdManager->getMpd()->setTimeShiftBufferDepth((demux->getVideoDuration()/demux->getVideoTimeBase())*MAX_SEGMENTS_IN_MPD);
-        //NOTE: hardcoded segment name and codec 
-        mpdManager->getMpd()->updateAudioAdaptationSet(A_ADAPT_SET_ID, demux->getAudioTimeBase(), 
-                                                       ""/*std::string segmentTempl*/, ""/*std::string initTempl*/, 
+        mpdManager->getMpd()->updateAudioAdaptationSet(A_ADAPT_SET_ID, demux->getAudioTimeBase(),
+                                                       getAudioSegTemplateFromPath(filePath),
+                                                       getAudioInitTemplateFromPath(filePath),  
                                                        demux->getAudioDuration());
-        mpdManager->getMpd()->updateAudioRepresentation(A_ADAPT_SET_ID, representationId, "codec", 
+        mpdManager->getMpd()->updateAudioRepresentation(A_ADAPT_SET_ID, representationId, AUDIO_CODEC, 
                                        demux->getAudioSampleRate(), 0, demux->getAudioChannels());
         mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
         aSegment->clear();
