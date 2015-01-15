@@ -36,12 +36,15 @@
 
 class MP4ToDashConverter {
 public:
-    MP4ToDashConverter(std::string destination);
+    MP4ToDashConverter(std::string destination, std::string mpdLocation);
     ~MP4ToDashConverter();
     
     void produceFile(std::string filePath);
     
 private:
+
+    std::string getRepresentationIdFromPath(std::string filePath);
+    std::string getMpdNameFromLocation(std::string location);
     int getSeqNumberFromPath(std::string filePath);
     std::string getVideoInitPath(std::string filePath);
     std::string getAudioInitPath(std::string filePath);
@@ -56,6 +59,7 @@ private:
     MpdManager* mpdManager;
     
     std::string destinationPath;
+    std::string mpdPath;
 };
 
 #endif
