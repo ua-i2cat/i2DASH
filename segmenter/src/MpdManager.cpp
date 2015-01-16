@@ -57,16 +57,15 @@ void MpdManager::writeToDisk(const char* fileName)
     tinyxml2::XMLElement* title;
     tinyxml2::XMLText* text;
 
-    //TODO: set hardcodedd values to defines
     root = doc.NewElement("MPD");
-    root->SetAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-    root->SetAttribute("xmlns", "urn:mpeg:dash:schema:mpd:2011");
-    root->SetAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-    root->SetAttribute("xsi:schemaLocation", "urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd");
-    root->SetAttribute("profiles", "urn:mpeg:dash:profile:isoff-live:2011");
-    root->SetAttribute("type", "dynamic");
+    root->SetAttribute("xmlns:xsi", XMLNS_XSI);
+    root->SetAttribute("xmlns", XMLNS);
+    root->SetAttribute("xmlns:xlink", XMLNS_XLINK);
+    root->SetAttribute("xsi:schemaLocation", XSI_SCHEMA_LOCATION);
+    root->SetAttribute("profiles", PROFILES);
+    root->SetAttribute("type", TYPE_DYNAMIC);
     root->SetAttribute("minimumUpdatePeriod", minimumUpdatePeriod.c_str());
-    root->SetAttribute("availabilityStartTime", "2014-10-29T03:07:39");
+    root->SetAttribute("availabilityStartTime", AVAILABILITY_START_TIME);
     root->SetAttribute("timeShiftBufferDepth", timeShiftBufferDepth.c_str());
     root->SetAttribute("minBufferTime", minBufferTime.c_str());
     doc.InsertFirstChild(root);
@@ -84,8 +83,8 @@ void MpdManager::writeToDisk(const char* fileName)
     root->InsertEndChild(el);
 
     period = doc.NewElement("Period");
-    period->SetAttribute("id", 0);
-    period->SetAttribute("start", "PT0.0S");
+    period->SetAttribute("id", PERIOD_ID);
+    period->SetAttribute("start", PERIOD_START);
 
     for (auto ad : adaptationSets) {
         el = doc.NewElement("AdaptationSet");
@@ -124,7 +123,7 @@ void MpdManager::updateVideoAdaptationSet(std::string id, int timescale, std::st
     adSet = getAdaptationSet(id);
 
     if (!adSet) {
-        adSet = createVideoAdaptationSet(timescale, segmentTempl, initTempl);
+        adSet = new VideoAdaptationSet(timescale, segmentTempl, initTempl);
         addAdaptationSet(id, adSet);
     }
 
@@ -138,7 +137,7 @@ void MpdManager::updateAudioAdaptationSet(std::string id, int timescale, std::st
     adSet = getAdaptationSet(id);
 
     if (!adSet) {
-        adSet = createAudioAdaptationSet(timescale, segmentTempl, initTempl);
+        adSet = new AudioAdaptationSet(timescale, segmentTempl, initTempl);
         addAdaptationSet(id, adSet);
     }
 
@@ -173,18 +172,6 @@ void MpdManager::updateAudioRepresentation(std::string adSetId, std::string repr
     adSet->updateAudioRepresentation(reprId, codec, sampleRate, bandwidth, channels);
 }
 
-//TODO:: check if necessary
-AdaptationSet* MpdManager::createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl)
-{
-    return new VideoAdaptationSet(timescale, segmentTempl, initTempl);
-}
-
-//TODO:: check if necessary
-AdaptationSet* MpdManager::createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl)
-{
-    return new AudioAdaptationSet(timescale, segmentTempl, initTempl);
-}
-
 bool MpdManager::addAdaptationSet(std::string id, AdaptationSet* adaptationSet)
 {
     if (adaptationSets.count(id) > 0) {
@@ -201,16 +188,15 @@ AdaptationSet* MpdManager::getAdaptationSet(std::string id)
     return adaptationSets.count(id) <= 0 ? NULL : adaptationSets[id];
 }
 
-//TODO:: hardcodeds to defines
 AdaptationSet::AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl)
 {
     timescale = segTimescale;
     segTemplate = segTempl;
     initTemplate = initTempl;
-    segmentAlignment = true;
-    startWithSAP = 1;
-    subsegmentAlignment = true;
-    subsegmentStartsWithSAP = 1;
+    segmentAlignment = SEGMENT_ALIGNMENT;
+    startWithSAP = START_WITH_SAP;
+    subsegmentAlignment = SUBSEGMENT_ALIGNMENT;
+    subsegmentStartsWithSAP = SUBSEGMENT_STARTS_WITH_SAP;
 }
 
 AdaptationSet::~AdaptationSet()
@@ -240,11 +226,10 @@ void AdaptationSet::update(int segTimescale, std::string segTempl, std::string i
     initTemplate = initTempl;
 }
 
-//TODO:: hardcodeds to defines
 VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl)
 : AdaptationSet(segTimescale, segTempl, initTempl)
 {
-    mimeType = "video/mp4";
+    mimeType = VIDEO_MIME_TYPE;
     frameRate = 0;
     maxWidth = 0;
     maxHeight = 0;
@@ -267,7 +252,7 @@ void VideoAdaptationSet::updateVideoRepresentation(std::string id, std::string c
     vRepr = getRepresentation(id);
 
     if (!vRepr) {
-        vRepr = createRepresentation(codec, width, height, bandwidth, fps);
+        vRepr = new VideoRepresentation(codec, width, height, bandwidth);
         addRepresentation(id, vRepr);
     } else {
         vRepr->update(codec, width, height, bandwidth);
@@ -282,12 +267,6 @@ void VideoAdaptationSet::updateVideoRepresentation(std::string id, std::string c
     }
 
     frameRate = fps;
-}
-
-//TODO: check if necessary
-VideoRepresentation* VideoAdaptationSet::createRepresentation(std::string codec, int width, int height, int bandwidth, int fps)
-{
-    return new VideoRepresentation(codec, width, height, bandwidth); 
 }
 
 bool VideoAdaptationSet::addRepresentation(std::string id, VideoRepresentation* repr)
@@ -345,14 +324,13 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     }
 }
 
-//TODO: hardcodeds to defines
 AudioAdaptationSet::AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl)
 : AdaptationSet(segTimescale, segTempl, initTempl)
 {
-    mimeType = "audio/mp4";
-    lang = "eng";
-    roleSchemeIdUri = "urn:mpeg:dash:role:2011";
-    roleValue = "main";
+    mimeType = AUDIO_MIME_TYPE;
+    lang = AUDIO_LANG;
+    roleSchemeIdUri = AUDIO_ROLE_SCHEME_ID_URI;
+    roleValue = AUDIO_ROLE_VALUE;
 }
 
 AudioAdaptationSet::~AudioAdaptationSet()
@@ -371,20 +349,13 @@ void AudioAdaptationSet::updateAudioRepresentation(std::string id, std::string c
     repr = getRepresentation(id);
 
     if (!repr) {
-        repr = createRepresentation(codec, sampleRate, bandwidth, channels);
+        repr = new AudioRepresentation(codec, sampleRate, bandwidth, channels);
         addRepresentation(id, repr);
         return;
     }
 
     repr->update(codec, sampleRate, bandwidth, channels);
 }
-
-//TODO:: check if necessary
-AudioRepresentation* AudioAdaptationSet::createRepresentation(std::string codec, int sampleRate, int bandwidth, int channels)
-{
-    return new AudioRepresentation(codec, sampleRate, bandwidth, channels);
-}
-
 
 bool AudioAdaptationSet::addRepresentation(std::string id, AudioRepresentation* repr)
 {
@@ -450,14 +421,13 @@ void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     }
 }
 
-//TODO: harcdoded to define
 VideoRepresentation::VideoRepresentation(std::string vCodec, int vWidth, int vHeight, int vBandwidth)
 {
     codec = vCodec;
     width = vWidth;
     height = vHeight;
     bandwidth = vBandwidth;
-    sar = "1:1";
+    sar = SAR;
 }
 
 VideoRepresentation::~VideoRepresentation()
@@ -472,13 +442,12 @@ void VideoRepresentation::update(std::string vCodec, int vWidth, int vHeight, in
     bandwidth = vBandwidth;
 }
 
-//TODO: harcdoded to define
 AudioRepresentation::AudioRepresentation(std::string aCodec, int aSampleRate, int aBandwidth, int channels)
 {
     codec = aCodec;
     sampleRate = aSampleRate;
     bandwidth = aBandwidth;
-    audioChannelConfigSchemeIdUri = "urn:mpeg:dash:23003:3:audio_channel_configuration:2011";
+    audioChannelConfigSchemeIdUri = AUDIO_CHANNEL_CONFIG_SCHEME_ID_URI;
     audioChannelConfigValue = channels;
 }
 
