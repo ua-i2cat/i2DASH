@@ -25,7 +25,7 @@
 #include <deque>
 #include <tinyxml2.h>
 
-#define MAX_SEGMENTS_IN_MPD 3
+#define MAX_SEGMENTS_IN_MPD 6
 
 class Mpd;
 class AdaptationSet;
@@ -58,16 +58,16 @@ public:
     void setMinBufferTime(int seconds);
     void setSuggestedPresentationDelay(int seconds);
     void setTimeShiftBufferDepth(int seconds);
-    void updateVideoAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl, int segmentDur);
-    void updateAudioAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl, int segmentDur);
-    bool updateAdaptationSetTimestamp(std::string id, int ts);
+    void updateVideoAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl);
+    void updateAudioAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl);
+    bool updateAdaptationSetTimestamp(std::string id, int ts, int duration);
     void updateVideoRepresentation(std::string adSetId, std::string reprId, std::string codec, int width, int height, int bandwidth, int fps);
     void updateAudioRepresentation(std::string adSetId, std::string reprId, std::string codec, int sampleRate, int bandwidth, int channels);
 
 private:
     bool addAdaptationSet(std::string id, AdaptationSet* adaptationSet);
-    AdaptationSet* createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur);
-    AdaptationSet* createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur);
+    AdaptationSet* createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl);
+    AdaptationSet* createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl);
     AdaptationSet* getAdaptationSet(std::string id);
 
     std::string minimumUpdatePeriod;
@@ -82,13 +82,13 @@ private:
 class AdaptationSet
 {
 public:
-    AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur);
+    AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl);
     virtual ~AdaptationSet();
     virtual void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet) = 0;
     virtual void updateVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth, int fps){};
     virtual void updateAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels){};
-    void update(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur);
-    void updateTimestamp(int ts);
+    void update(int timescale, std::string segmentTempl, std::string initTempl);
+    void updateTimestamp(int ts, int duration);
 
 protected:
     bool segmentAlignment;
@@ -99,14 +99,13 @@ protected:
     int timescale;
     std::string segTemplate;
     std::string initTemplate;
-    int segmentDuration;
-    std::deque<int> timestamps;
+    std::deque<std::pair<int,int> > timestamps;
 };
 
 class VideoAdaptationSet : public AdaptationSet 
 {
 public:
-    VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur);
+    VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl);
     virtual ~VideoAdaptationSet();
     void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet);
     void updateVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth, int fps);
@@ -125,7 +124,7 @@ private:
 class AudioAdaptationSet : public AdaptationSet 
 {
 public:
-    AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur);
+    AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl);
     virtual ~AudioAdaptationSet();
     void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet);
     void updateAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels);

@@ -33,8 +33,6 @@
 #define A_ADAPT_SET_ID "1"
 #define VIDEO_CODEC "avc1.42c01e"
 #define AUDIO_CODEC "mp4a.40.2"
-#define MIN_BUFFER_TIME 2
-#define PRESENTATION_DELAY 3
 
 class MP4ToDashConverter {
 public:
