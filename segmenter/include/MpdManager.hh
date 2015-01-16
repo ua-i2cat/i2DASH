@@ -27,7 +27,6 @@
 
 #define MAX_SEGMENTS_IN_MPD 6
 
-class Mpd;
 class AdaptationSet;
 class VideoAdaptationSet;
 class AudioAdaptationSet;
@@ -40,23 +39,10 @@ public:
     MpdManager();
     virtual ~MpdManager();
 
-    Mpd* getMpd(){return mpd;};
-
-private:
-    Mpd* mpd;
-};
-
-class Mpd
-{
-public:
-    Mpd();
-    virtual ~Mpd();
-
     void writeToDisk(const char* fileName);
     void setLocation(std::string loc);
     void setMinimumUpdatePeriod(int seconds);
     void setMinBufferTime(int seconds);
-    void setSuggestedPresentationDelay(int seconds);
     void setTimeShiftBufferDepth(int seconds);
     void updateVideoAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl);
     void updateAudioAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl);
@@ -84,6 +70,7 @@ class AdaptationSet
 public:
     AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl);
     virtual ~AdaptationSet();
+    //TODO: think about creating a commonToMpd and a virtual child specific ToMpd
     virtual void toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*& adaptSet) = 0;
     virtual void updateVideoRepresentation(std::string id, std::string codec, int width, int height, int bandwidth, int fps){};
     virtual void updateAudioRepresentation(std::string id, std::string codec, int sampleRate, int bandwidth, int channels){};
@@ -139,6 +126,9 @@ private:
     std::string roleSchemeIdUri;
     std::string roleValue;
 };
+
+//TODO: think about creating a parent class Representation for VideoRepresentation and Audiorepresentation 
+//      because both classes share a lot of code.
 
 class VideoRepresentation
 {

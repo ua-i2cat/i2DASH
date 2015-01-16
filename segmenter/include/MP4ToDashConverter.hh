@@ -42,7 +42,6 @@ public:
     void produceFile(std::string filePath);
     
 private:
-
     std::string getVideoSegTemplateFromPath(std::string filePath);
     std::string getAudioSegTemplateFromPath(std::string filePath);
     std::string getVideoInitTemplateFromPath(std::string filePath);
