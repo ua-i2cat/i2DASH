@@ -26,6 +26,29 @@
 #include <tinyxml2.h>
 
 #define MAX_SEGMENTS_IN_MPD 6
+#define XMLNS_XSI "http://www.w3.org/2001/XMLSchema-instance"
+#define XMLNS "urn:mpeg:dash:schema:mpd:2011"
+#define XMLNS_XLINK "http://www.w3.org/1999/xlink"
+#define XSI_SCHEMA_LOCATION "urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+#define PROFILES "urn:mpeg:dash:profile:isoff-live:2011"
+#define AVAILABILITY_START_TIME "2014-10-29T03:07:39"
+#define TYPE_DYNAMIC "dynamic"
+#define PERIOD_ID 0
+#define PERIOD_START "PT0.0S"
+#define SEGMENT_ALIGNMENT true
+#define START_WITH_SAP 1
+#define SUBSEGMENT_ALIGNMENT true
+#define SUBSEGMENT_STARTS_WITH_SAP 1
+#define VIDEO_MIME_TYPE "video/mp4"
+#define AUDIO_MIME_TYPE "audio/mp4"
+#define AUDIO_LANG "eng"
+#define AUDIO_ROLE_SCHEME_ID_URI "urn:mpeg:dash:role:2011"
+#define AUDIO_ROLE_VALUE "main"
+#define SAR "1:1"
+#define AUDIO_CHANNEL_CONFIG_SCHEME_ID_URI "urn:mpeg:dash:23003:3:audio_channel_configuration:2011"
+
+
+
 
 class AdaptationSet;
 class VideoAdaptationSet;
@@ -52,8 +75,6 @@ public:
 
 private:
     bool addAdaptationSet(std::string id, AdaptationSet* adaptationSet);
-    AdaptationSet* createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl);
-    AdaptationSet* createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl);
     AdaptationSet* getAdaptationSet(std::string id);
 
     std::string minimumUpdatePeriod;
@@ -99,7 +120,6 @@ public:
 
 private:
     VideoRepresentation* getRepresentation(std::string id);
-    VideoRepresentation* createRepresentation(std::string codec, int width, int height, int bandwidth, int fps);
     bool addRepresentation(std::string id, VideoRepresentation* repr);
     
     std::map<std::string, VideoRepresentation*> representations;
@@ -118,7 +138,6 @@ public:
 
 private:
     AudioRepresentation* getRepresentation(std::string id);
-    AudioRepresentation* createRepresentation(std::string codec, int sampleRate, int bandwidth, int channels);
     bool addRepresentation(std::string id, AudioRepresentation* repr);
     
     std::map<std::string, AudioRepresentation*> representations;
