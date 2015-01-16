@@ -81,7 +81,6 @@ void Mpd::writeToDisk(const char* fileName)
     root->SetAttribute("minimumUpdatePeriod", minimumUpdatePeriod.c_str());
     root->SetAttribute("availabilityStartTime", "2014-10-29T03:07:39");
     root->SetAttribute("timeShiftBufferDepth", timeShiftBufferDepth.c_str());
-    root->SetAttribute("suggestedPresentationDelay", suggestedPresentationDelay.c_str());
     root->SetAttribute("minBufferTime", minBufferTime.c_str());
     doc.InsertFirstChild(root);
 
@@ -117,7 +116,7 @@ void Mpd::setLocation(std::string loc)
     location = loc;
 }
 
-bool Mpd::updateAdaptationSetTimestamp(std::string id, int ts)
+bool Mpd::updateAdaptationSetTimestamp(std::string id, int ts, int duration)
 {
     AdaptationSet* adSet;
 
@@ -127,36 +126,36 @@ bool Mpd::updateAdaptationSetTimestamp(std::string id, int ts)
         return false;
     }
 
-    adSet->updateTimestamp(ts);
+    adSet->updateTimestamp(ts, duration);
     return true;
 }
 
-void Mpd::updateVideoAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+void Mpd::updateVideoAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl)
 {
     AdaptationSet* adSet;
 
     adSet = getAdaptationSet(id);
 
     if (!adSet) {
-        adSet = createVideoAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
+        adSet = createVideoAdaptationSet(timescale, segmentTempl, initTempl);
         addAdaptationSet(id, adSet);
     }
 
-    adSet->update(timescale, segmentTempl, initTempl, segmentDur);
+    adSet->update(timescale, segmentTempl, initTempl);
 }
 
-void Mpd::updateAudioAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+void Mpd::updateAudioAdaptationSet(std::string id, int timescale, std::string segmentTempl, std::string initTempl)
 {
     AdaptationSet* adSet;
 
     adSet = getAdaptationSet(id);
 
     if (!adSet) {
-        adSet = createAudioAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
+        adSet = createAudioAdaptationSet(timescale, segmentTempl, initTempl);
         addAdaptationSet(id, adSet);
     }
 
-    adSet->update(timescale, segmentTempl, initTempl, segmentDur);
+    adSet->update(timescale, segmentTempl, initTempl);
 }
 
 void Mpd::updateVideoRepresentation(std::string adSetId, std::string reprId, std::string codec, int width, int height, int bandwidth, int fps)
@@ -185,14 +184,14 @@ void Mpd::updateAudioRepresentation(std::string adSetId, std::string reprId, std
     adSet->updateAudioRepresentation(reprId, codec, sampleRate, bandwidth, channels);
 }
 
-AdaptationSet* Mpd::createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+AdaptationSet* Mpd::createVideoAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl)
 {
-    return new VideoAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
+    return new VideoAdaptationSet(timescale, segmentTempl, initTempl);
 }
 
-AdaptationSet* Mpd::createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl, int segmentDur)
+AdaptationSet* Mpd::createAudioAdaptationSet(int timescale, std::string segmentTempl, std::string initTempl)
 {
-    return new AudioAdaptationSet(timescale, segmentTempl, initTempl, segmentDur);
+    return new AudioAdaptationSet(timescale, segmentTempl, initTempl);
 }
 
 bool Mpd::addAdaptationSet(std::string id, AdaptationSet* adaptationSet)
@@ -215,12 +214,11 @@ AdaptationSet* Mpd::getAdaptationSet(std::string id)
     return adaptationSets[id];
 }
 
-AdaptationSet::AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
+AdaptationSet::AdaptationSet(int segTimescale, std::string segTempl, std::string initTempl)
 {
     timescale = segTimescale;
     segTemplate = segTempl;
     initTemplate = initTempl;
-    segmentDuration = segDur;
     segmentAlignment = true;
     startWithSAP = 1;
     subsegmentAlignment = true;
@@ -231,10 +229,10 @@ AdaptationSet::~AdaptationSet()
 { 
 }
 
-void AdaptationSet::updateTimestamp(int ts)
+void AdaptationSet::updateTimestamp(int ts, int duration)
 {
     for (auto listTs : timestamps){
-        if (listTs == ts) {
+        if (listTs.first == ts) {
             return;
         }
     }
@@ -243,19 +241,19 @@ void AdaptationSet::updateTimestamp(int ts)
         timestamps.pop_front();
     }
 
-    timestamps.push_back(ts);
+    timestamps.push_back(std::pair<int,int>(ts, duration));
+
 }
 
-void AdaptationSet::update(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
+void AdaptationSet::update(int segTimescale, std::string segTempl, std::string initTempl)
 {
     timescale = segTimescale;
     segTemplate = segTempl;
     initTemplate = initTempl;
-    segmentDuration = segDur;
 }
 
-VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
-: AdaptationSet(segTimescale, segTempl, initTempl, segDur)
+VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl)
+: AdaptationSet(segTimescale, segTempl, initTempl)
 {
     mimeType = "video/mp4";
     frameRate = 0;
@@ -342,8 +340,8 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
 
     for (auto ts : timestamps) {
         s = doc.NewElement("S");
-        s->SetAttribute("t", ts);
-        s->SetAttribute("d", segmentDuration);
+        s->SetAttribute("t", ts.first);
+        s->SetAttribute("d", ts.second);
         segmentTimeline->InsertEndChild(s);
     }
 
@@ -362,8 +360,8 @@ void VideoAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
     }
 }
 
-AudioAdaptationSet::AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl, int segDur)
-: AdaptationSet(segTimescale, segTempl, initTempl, segDur)
+AudioAdaptationSet::AudioAdaptationSet(int segTimescale, std::string segTempl, std::string initTempl)
+: AdaptationSet(segTimescale, segTempl, initTempl)
 {
     mimeType = "audio/mp4";
     lang = "eng";
@@ -445,8 +443,8 @@ void AudioAdaptationSet::toMpd(tinyxml2::XMLDocument& doc, tinyxml2::XMLElement*
 
     for (auto ts : timestamps) {
         s = doc.NewElement("S");
-        s->SetAttribute("t", ts);
-        s->SetAttribute("d", segmentDuration);
+        s->SetAttribute("t", ts.first);
+        s->SetAttribute("d", ts.second);
         segmentTimeline->InsertEndChild(s);
     }
 
