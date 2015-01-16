@@ -35,7 +35,8 @@ MP4ToDashConverter::MP4ToDashConverter(std::string destination, std::string mpdL
     mpdManager = new MpdManager();
     destinationPath = destination;
 
-    mpdManager->getMpd()->setLocation(mpdLocation);
+    //TODO: change to set mpd destination function
+    mpdManager->setLocation(mpdLocation);
     mpdPath = destinationPath + getMpdNameFromLocation(mpdLocation);
 }
 
@@ -56,16 +57,21 @@ std::string MP4ToDashConverter::getVideoSegTemplateFromPath(std::string filePath
     std::string cut;
     std::string templ;
 
-    e = filePath.find_last_of("/");
-    base = filePath.substr(e + 1, filePath.length() - e);
-    
-    e = base.find_last_of("_");
-    cut = base.substr(0, e);
+    try {
+        e = filePath.find_last_of("/");
+        base = filePath.substr(e + 1, filePath.length() - e);
+        
+        e = base.find_last_of("_");
+        cut = base.substr(0, e);
 
-    e = cut.find_last_of("_");
-    templ = cut.substr(0, e);
-    
-    templ += "_$RepresentationID$_$Time$.m4v";
+        e = cut.find_last_of("_");
+        templ = cut.substr(0, e);
+
+        templ += "_$RepresentationID$_$Time$.m4v";
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
+    }
+
     return templ;
 }
 
@@ -134,6 +140,7 @@ int MP4ToDashConverter::getSeqNumberFromPath(std::string filePath)
 {
     int seqNumber = -1;
 
+    //TODO:: guard code for find
     size_t b = filePath.find_last_of("_");
     size_t e = filePath.find_last_of(".");
 
@@ -236,19 +243,14 @@ void MP4ToDashConverter::produceFile(std::string filePath)
     representationId = getRepresentationIdFromPath(filePath);
     bandwidth = atoi(representationId.c_str())*1000;
 
-    if (!demux || !vSeg || !aSeg || !vSegment || !aSegment) {
-        std::cerr << "Error constructing objects" << std::endl;
-        exit(1);
-    }
-    
     if (!demux->openInput(filePath)){
         std::cerr << "Error openInput" << std::endl;
-        exit(1);
+        return;
     }
     
     if (!demux->findStreams()){
         std::cerr << "Error findStreams" << std::endl;
-        exit(1);
+        return;
     }
 
     if (demux->hasVideo()) {
@@ -256,32 +258,35 @@ void MP4ToDashConverter::produceFile(std::string filePath)
                         demux->getVideoSampleDuration(), 
                         demux->getWidth(), demux->getHeight(), demux->getFPS())) {
             std::cerr << "Error initializing Video Segmenter" << std::endl;
-            exit(1);
+            return;
         }
+
+
        
-        if (vSegment->isEmpty()) {
-            vSegment->setSeqNumber(seqNumber);
-        } else {
+        if (!vSegment->isEmpty()) {
             std::cerr << "Error no empty segment" << std::endl;
-            exit(1);
+            return;
         }
+        
+        vSegment->setSeqNumber(seqNumber);
         
         if (!vSeg->generateInit(demux->getVideoExtraData(), demux->getVideoExtraDataLength(), vSegment)) {
             std::cerr << "Error constructing video init" << std::endl;
-            exit(1);
+            return;
         }
 
-
-        mpdManager->getMpd()->setMinBufferTime((demux->getVideoDuration()/demux->getVideoTimeBase())*(MAX_SEGMENTS_IN_MPD/2));
-        mpdManager->getMpd()->setMinimumUpdatePeriod(demux->getVideoDuration()/demux->getVideoTimeBase());
-        mpdManager->getMpd()->setTimeShiftBufferDepth((demux->getVideoDuration()/demux->getVideoTimeBase())*MAX_SEGMENTS_IN_MPD);
-        mpdManager->getMpd()->updateVideoAdaptationSet(V_ADAPT_SET_ID, demux->getVideoTimeBase(),
+        mpdManager->setMinBufferTime((demux->getVideoDuration()/demux->getVideoTimeBase())*(MAX_SEGMENTS_IN_MPD/2));
+        mpdManager->setMinimumUpdatePeriod(demux->getVideoDuration()/demux->getVideoTimeBase());
+        mpdManager->setTimeShiftBufferDepth((demux->getVideoDuration()/demux->getVideoTimeBase())*MAX_SEGMENTS_IN_MPD);
+        mpdManager->updateVideoAdaptationSet(V_ADAPT_SET_ID, demux->getVideoTimeBase(),
                                                        getVideoSegTemplateFromPath(filePath),
                                                        getVideoInitTemplateFromPath(filePath));
-        mpdManager->getMpd()->updateVideoRepresentation(V_ADAPT_SET_ID, representationId, VIDEO_CODEC, 
+        mpdManager->updateVideoRepresentation(V_ADAPT_SET_ID, representationId, VIDEO_CODEC, 
                                   demux->getWidth(), demux->getHeight(), bandwidth, demux->getFPS());
+        
+        //TODO:: think about comparing existing init with this one in order to optimize hdd writing
         vSegment->writeToDisk(getVideoInitPath(filePath));
-        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
+        mpdManager->writeToDisk(mpdPath.c_str());
         vSegment->clear();
     }
 
@@ -289,31 +294,33 @@ void MP4ToDashConverter::produceFile(std::string filePath)
         if (!aSeg->init(demux->getAudioDuration(), demux->getAudioTimeBase(), demux->getAudioSampleDuration(), 
                         demux->getAudioChannels(), demux->getAudioSampleRate(), demux->getAudioBitsPerSample())) {
             std::cerr << "Error initializing Audio Segmenter" << std::endl;
-            exit(1);
+            return;
         }
 
-        if (aSegment->isEmpty()) {
-            aSegment->setSeqNumber(seqNumber);
-        } else {
+        if (!aSegment->isEmpty()) {
             std::cerr << "Error no empty segment" << std::endl;
-            exit(1);
+            return;
         }
+
+        aSegment->setSeqNumber(seqNumber);
         
         if (!aSeg->generateInit(demux->getAudioExtraData(), demux->getAudioExtraDataLength(), aSegment)) {
             std::cerr << "Error constructing audio DashSegment objects" << std::endl;
-            exit(1);
+            return;
         }
         
-        mpdManager->getMpd()->setMinBufferTime((demux->getAudioDuration()/demux->getAudioTimeBase())*(MAX_SEGMENTS_IN_MPD/2));
-        mpdManager->getMpd()->setMinimumUpdatePeriod(demux->getAudioDuration()/demux->getAudioTimeBase());
-        mpdManager->getMpd()->setTimeShiftBufferDepth((demux->getAudioDuration()/demux->getAudioTimeBase())*MAX_SEGMENTS_IN_MPD);
-        mpdManager->getMpd()->updateAudioAdaptationSet(A_ADAPT_SET_ID, demux->getAudioTimeBase(),
+        mpdManager->setMinBufferTime((demux->getAudioDuration()/demux->getAudioTimeBase())*(MAX_SEGMENTS_IN_MPD/2));
+        mpdManager->setMinimumUpdatePeriod(demux->getAudioDuration()/demux->getAudioTimeBase());
+        mpdManager->setTimeShiftBufferDepth((demux->getAudioDuration()/demux->getAudioTimeBase())*MAX_SEGMENTS_IN_MPD);
+        mpdManager->updateAudioAdaptationSet(A_ADAPT_SET_ID, demux->getAudioTimeBase(),
                                                        getAudioSegTemplateFromPath(filePath),
                                                        getAudioInitTemplateFromPath(filePath));
-        mpdManager->getMpd()->updateAudioRepresentation(A_ADAPT_SET_ID, representationId, AUDIO_CODEC, 
+        mpdManager->updateAudioRepresentation(A_ADAPT_SET_ID, representationId, AUDIO_CODEC, 
                                        demux->getAudioSampleRate(), 0, demux->getAudioChannels());
+        
+        //TODO:: think about comparing existing init with this one in order to optimize hdd writing
         aSegment->writeToDisk(getAudioInitPath(filePath));
-        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
+        mpdManager->writeToDisk(mpdPath.c_str());
         aSegment->clear();
     }
 
@@ -322,48 +329,52 @@ void MP4ToDashConverter::produceFile(std::string filePath)
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL && vSeg->addToSegment(videoFrame, vSegment)) {
+            //TODO:: put this into a method
             vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
             
-            if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp(), demux->getVideoDuration())) {
+            if (!mpdManager->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp(), demux->getVideoDuration())) {
                 std::cerr << "Error updating video timestamp. Adaptation set does not exist" << std::endl;
             }
 
-            mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
+            mpdManager->writeToDisk(mpdPath.c_str());
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL && aSeg->addToSegment(audioFrame, aSegment)) {
+            //TODO:: put this into a method
             aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
 
-            if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp(), demux->getAudioDuration())) {
+            if (!mpdManager->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp(), demux->getAudioDuration())) {
                 std::cerr << "Error updating audio timestamp. Adaptation set does not exist" << std::endl;
             }
 
-            mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
+            mpdManager->writeToDisk(mpdPath.c_str());
         }
     }
 
     if (demux->hasVideo() && vSeg->finishSegment(vSegment)) {
+        //TODO:: put this into a method
         vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
         
-        if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp(), demux->getVideoDuration())) {
+        if (!mpdManager->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp(), demux->getVideoDuration())) {
             std::cerr << "Error updating video timestamp. Adaptation set does not exist" << std::endl;
         }
         
-        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
+        mpdManager->writeToDisk(mpdPath.c_str());
     }
 
     if (demux->hasAudio() && aSeg->finishSegment(aSegment)) {
+        //TODO:: put this into a method
         aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
         
-        if (!mpdManager->getMpd()->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp(), demux->getAudioDuration())) {
+        if (!mpdManager->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp(), demux->getAudioDuration())) {
             std::cerr << "Error updating audio timestamp. Adaptation set does not exist" << std::endl;
         }
         
-        mpdManager->getMpd()->writeToDisk(mpdPath.c_str());
+        mpdManager->writeToDisk(mpdPath.c_str());
     }
     
     if (std::remove(filePath.c_str()) != 0){
-        std::cout << "Coudn't delete file: " << filePath << std::endl;
+        std::cerr << "Coudn't delete file: " << filePath << std::endl;
     }
     
     demux->closeInput();

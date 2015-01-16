@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
     watch->startWatching(run);
     
     delete watch;
+    delete converter;
     
     return 0;
 };
