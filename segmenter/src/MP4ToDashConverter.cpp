@@ -82,16 +82,21 @@ std::string MP4ToDashConverter::getAudioSegTemplateFromPath(std::string filePath
     std::string cut;
     std::string templ;
 
-    e = filePath.find_last_of("/");
-    base = filePath.substr(e + 1, filePath.length() - e);
-    
-    e = base.find_last_of("_");
-    cut = base.substr(0, e);
+    try {
+        e = filePath.find_last_of("/");
+        base = filePath.substr(e + 1, filePath.length() - e);
+        
+        e = base.find_last_of("_");
+        cut = base.substr(0, e);
 
-    e = cut.find_last_of("_");
-    templ = cut.substr(0, e);
-    
-    templ += "_$RepresentationID$_$Time$.m4a";
+        e = cut.find_last_of("_");
+        templ = cut.substr(0, e);
+        
+        templ += "_$RepresentationID$_$Time$.m4a";
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
+    }
+
     return templ;
 }
 
@@ -102,16 +107,21 @@ std::string MP4ToDashConverter::getVideoInitTemplateFromPath(std::string filePat
     std::string cut;
     std::string templ;
 
-    e = filePath.find_last_of("/");
-    base = filePath.substr(e + 1, filePath.length() - e);
-    
-    e = base.find_last_of("_");
-    cut = base.substr(0, e);
+    try {
+        e = filePath.find_last_of("/");
+        base = filePath.substr(e + 1, filePath.length() - e);
+        
+        e = base.find_last_of("_");
+        cut = base.substr(0, e);
 
-    e = cut.find_last_of("_");
-    templ = cut.substr(0, e);
+        e = cut.find_last_of("_");
+        templ = cut.substr(0, e);
     
-    templ += "_$RepresentationID$_init.m4v";
+        templ += "_$RepresentationID$_init.m4v";
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
+    }
+
     return templ;
 }
 
@@ -122,16 +132,21 @@ std::string MP4ToDashConverter::getAudioInitTemplateFromPath(std::string filePat
     std::string cut;
     std::string templ;
 
-    e = filePath.find_last_of("/");
-    base = filePath.substr(e + 1, filePath.length() - e);
-    
-    e = base.find_last_of("_");
-    cut = base.substr(0, e);
+    try {
+        e = filePath.find_last_of("/");
+        base = filePath.substr(e + 1, filePath.length() - e);
+        
+        e = base.find_last_of("_");
+        cut = base.substr(0, e);
 
-    e = cut.find_last_of("_");
-    templ = cut.substr(0, e);
-    
-    templ += "_$RepresentationID$_init.m4a";
+        e = cut.find_last_of("_");
+        templ = cut.substr(0, e);
+        
+        templ += "_$RepresentationID$_init.m4a";
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
+    }
+
     return templ;
 }
 
@@ -140,12 +155,15 @@ int MP4ToDashConverter::getSeqNumberFromPath(std::string filePath)
 {
     int seqNumber = -1;
 
-    //TODO:: guard code for find
-    size_t b = filePath.find_last_of("_");
-    size_t e = filePath.find_last_of(".");
+    try {
+        size_t b = filePath.find_last_of("_");
+        size_t e = filePath.find_last_of(".");
 
-    std::string stringSequenceNumber = filePath.substr(b+1,e-b-1);
-    seqNumber = stoi(stringSequenceNumber);
+        std::string stringSequenceNumber = filePath.substr(b+1,e-b-1);
+        seqNumber = stoi(stringSequenceNumber);
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
+    }
 
     return seqNumber;
 }
@@ -156,11 +174,15 @@ std::string MP4ToDashConverter::getRepresentationIdFromPath(std::string filePath
     std::string cut;
     std::string id;
 
-    e = filePath.find_last_of("_");
-    cut = filePath.substr(0,e);
-    
-    e = cut.find_last_of("_");
-    id = cut.substr(e + 1, cut.length() - e);
+    try {
+        e = filePath.find_last_of("_");
+        cut = filePath.substr(0,e);
+        
+        e = cut.find_last_of("_");
+        id = cut.substr(e + 1, cut.length() - e);
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
+    }
 
     return id;
 }
@@ -168,9 +190,15 @@ std::string MP4ToDashConverter::getRepresentationIdFromPath(std::string filePath
 std::string MP4ToDashConverter::getMpdNameFromLocation(std::string location)
 {
     std::string name;
+    size_t e;
 
-    size_t e = location.find_last_of("/");
-    name = location.substr(e, location.length() - e);
+    try {
+        e = location.find_last_of("/");
+        name = location.substr(e, location.length() - e);
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
+    }
+
     return name;
 }
 
@@ -178,11 +206,17 @@ std::string MP4ToDashConverter::getMpdNameFromLocation(std::string location)
 std::string MP4ToDashConverter::getVideoInitPath(std::string filePath)
 {
     std::string path;
-    size_t e = filePath.find_last_of("_");
-    path = filePath.substr(0,e) + "_init.m4v";
-    e = path.find_last_of("/");
-    if (e != std::string::npos){
-        path = destinationPath + path.substr(e);
+    size_t e;
+
+    try {
+        e = filePath.find_last_of("_");
+        path = filePath.substr(0,e) + "_init.m4v";
+        e = path.find_last_of("/");
+        if (e != std::string::npos) {
+            path = destinationPath + path.substr(e);
+        }
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
     }
 
     return path;
@@ -191,11 +225,17 @@ std::string MP4ToDashConverter::getVideoInitPath(std::string filePath)
 std::string MP4ToDashConverter::getAudioInitPath(std::string filePath)
 {
     std::string path;
-    size_t e = filePath.find_last_of("_");
-    path = filePath.substr(0,e) + "_init.m4a";
-    e = path.find_last_of("/");
-    if (e != std::string::npos){
-        path = destinationPath + path.substr(e);
+    size_t e;
+
+    try {
+        e = filePath.find_last_of("_");
+        path = filePath.substr(0,e) + "_init.m4a";
+        e = path.find_last_of("/");
+        if (e != std::string::npos){
+            path = destinationPath + path.substr(e);
+        }
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
     }
 
     return path;
@@ -204,12 +244,19 @@ std::string MP4ToDashConverter::getAudioInitPath(std::string filePath)
 std::string MP4ToDashConverter::getVideoPath(std::string filePath, size_t ts)
 {
     std::string path;
-    std::string timestamp = std::to_string(ts);
-    size_t e = filePath.find_last_of("_");
-    path = filePath.substr(0,e) + "_" + timestamp + ".m4v";
-    e = path.find_last_of("/");
-    if (e != std::string::npos){
-        path = destinationPath + path.substr(e);
+    std::string timestamp;
+    size_t e;
+
+    try {
+        timestamp = std::to_string(ts);
+        e = filePath.find_last_of("_");
+        path = filePath.substr(0,e) + "_" + timestamp + ".m4v";
+        e = path.find_last_of("/");
+        if (e != std::string::npos){
+            path = destinationPath + path.substr(e);
+        }
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
     }
 
     return path;
@@ -219,14 +266,42 @@ std::string MP4ToDashConverter::getAudioPath(std::string filePath, size_t ts)
 {
     std::string path;
     std::string timestamp = std::to_string(ts);
-    size_t e = filePath.find_last_of("_");
-    path = filePath.substr(0,e) + "_" + timestamp + ".m4a";
-    e = path.find_last_of("/");
-    if (e != std::string::npos){
-        path = destinationPath + path.substr(e);
+    size_t e;
+
+    try {
+        e = filePath.find_last_of("_");
+        path = filePath.substr(0,e) + "_" + timestamp + ".m4a";
+        e = path.find_last_of("/");
+        if (e != std::string::npos){
+            path = destinationPath + path.substr(e);
+        }
+    } catch ( const std::out_of_range& oor ) {
+        std::cerr << "Out of Range error: " << oor.what() << std::endl;
     }
 
     return path;
+}
+
+void MP4ToDashConverter::closeVideoSegment(std::string filePath)
+{
+    vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
+           
+    if (!mpdManager->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp(), demux->getVideoDuration())) {
+        std::cerr << "Error updating video timestamp. Adaptation set does not exist" << std::endl;
+    }
+
+    mpdManager->writeToDisk(mpdPath.c_str());
+}
+
+void MP4ToDashConverter::closeAudioSegment(std::string filePath)
+{
+    aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
+
+    if (!mpdManager->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp(), demux->getAudioDuration())) {
+        std::cerr << "Error updating audio timestamp. Adaptation set does not exist" << std::endl;
+    }
+
+    mpdManager->writeToDisk(mpdPath.c_str());
 }
 
 void MP4ToDashConverter::produceFile(std::string filePath)
@@ -260,8 +335,6 @@ void MP4ToDashConverter::produceFile(std::string filePath)
             std::cerr << "Error initializing Video Segmenter" << std::endl;
             return;
         }
-
-
        
         if (!vSegment->isEmpty()) {
             std::cerr << "Error no empty segment" << std::endl;
@@ -329,48 +402,20 @@ void MP4ToDashConverter::produceFile(std::string filePath)
         frame = demux->readFrame(gotFrame);
 
         if ((videoFrame = dynamic_cast<AVCCFrame*>(frame)) != NULL && vSeg->addToSegment(videoFrame, vSegment)) {
-            //TODO:: put this into a method
-            vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
-            
-            if (!mpdManager->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp(), demux->getVideoDuration())) {
-                std::cerr << "Error updating video timestamp. Adaptation set does not exist" << std::endl;
-            }
-
-            mpdManager->writeToDisk(mpdPath.c_str());
+            closeVideoSegment(filePath);
         }
 
         if ((audioFrame = dynamic_cast<AACFrame*>(frame)) != NULL && aSeg->addToSegment(audioFrame, aSegment)) {
-            //TODO:: put this into a method
-            aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
-
-            if (!mpdManager->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp(), demux->getAudioDuration())) {
-                std::cerr << "Error updating audio timestamp. Adaptation set does not exist" << std::endl;
-            }
-
-            mpdManager->writeToDisk(mpdPath.c_str());
+            closeAudioSegment(filePath);
         }
     }
 
     if (demux->hasVideo() && vSeg->finishSegment(vSegment)) {
-        //TODO:: put this into a method
-        vSegment->writeToDisk(getVideoPath(filePath, vSegment->getTimestamp()));
-        
-        if (!mpdManager->updateAdaptationSetTimestamp(V_ADAPT_SET_ID, vSegment->getTimestamp(), demux->getVideoDuration())) {
-            std::cerr << "Error updating video timestamp. Adaptation set does not exist" << std::endl;
-        }
-        
-        mpdManager->writeToDisk(mpdPath.c_str());
+        closeVideoSegment(filePath);
     }
 
     if (demux->hasAudio() && aSeg->finishSegment(aSegment)) {
-        //TODO:: put this into a method
-        aSegment->writeToDisk(getAudioPath(filePath, aSegment->getTimestamp()));
-        
-        if (!mpdManager->updateAdaptationSetTimestamp(A_ADAPT_SET_ID, aSegment->getTimestamp(), demux->getAudioDuration())) {
-            std::cerr << "Error updating audio timestamp. Adaptation set does not exist" << std::endl;
-        }
-        
-        mpdManager->writeToDisk(mpdPath.c_str());
+        closeAudioSegment(filePath);
     }
     
     if (std::remove(filePath.c_str()) != 0){

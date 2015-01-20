@@ -47,9 +47,6 @@
 #define SAR "1:1"
 #define AUDIO_CHANNEL_CONFIG_SCHEME_ID_URI "urn:mpeg:dash:23003:3:audio_channel_configuration:2011"
 
-
-
-
 class AdaptationSet;
 class VideoAdaptationSet;
 class AudioAdaptationSet;
