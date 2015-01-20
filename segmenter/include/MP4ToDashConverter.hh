@@ -54,6 +54,9 @@ private:
     std::string getAudioInitPath(std::string filePath);
     std::string getVideoPath(std::string filePath, size_t ts);
     std::string getAudioPath(std::string filePath, size_t ts);
+
+    void closeVideoSegment(std::string filePath);
+    void closeAudioSegment(std::string filePath);
     
     Demuxer* demux;
     DashVideoSegmenter* vSeg;
