@@ -75,7 +75,9 @@ int main(int argc, char* argv[])
         return 1;
     }
     
-    converter = new MP4ToDashConverter(destinationPath, mpdLocation);
+    converter = new MP4ToDashConverter(destinationPath);
+
+    converter->setMpdLocation(mpdLocation);
     
     CloseWriteWatcher *watch = new CloseWriteWatcher();
     

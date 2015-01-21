@@ -17,6 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *  Authors:  David Cassany <david.cassany@i2cat.net>
+ *            Marc Palau <marc.palau@i2cat.net>
  */
 
 #include "MP4ToDashConverter.hh"
@@ -25,7 +26,7 @@
 #include <string>
 #include <cstdio>
 
-MP4ToDashConverter::MP4ToDashConverter(std::string destination, std::string mpdLocation)
+MP4ToDashConverter::MP4ToDashConverter(std::string destination)
 {
     demux = new Demuxer();
     vSeg = new DashVideoSegmenter();
@@ -34,10 +35,7 @@ MP4ToDashConverter::MP4ToDashConverter(std::string destination, std::string mpdL
     aSegment = new DashSegment(aSeg->getMaxSegmentLength());
     mpdManager = new MpdManager();
     destinationPath = destination;
-
-    //TODO: change to set mpd destination function
-    mpdManager->setLocation(mpdLocation);
-    mpdPath = destinationPath + getMpdNameFromLocation(mpdLocation);
+    mpdPath = "";
 }
 
 MP4ToDashConverter::~MP4ToDashConverter()
@@ -49,6 +47,12 @@ MP4ToDashConverter::~MP4ToDashConverter()
     delete aSegment;
     delete mpdManager;
 }
+
+void MP4ToDashConverter::setMpdLocation(std::string mpdLocation)
+{
+    mpdManager->setLocation(mpdLocation);
+    mpdPath = destinationPath + getMpdNameFromLocation(mpdLocation);
+} 
 
 std::string MP4ToDashConverter::getVideoSegTemplateFromPath(std::string filePath)
 {
@@ -313,6 +317,11 @@ void MP4ToDashConverter::produceFile(std::string filePath)
     int seqNumber = -1;
     std::string representationId;
     int bandwidth;
+
+    if (mpdPath.empty()) {
+        std::cerr << "MPD path has not been set correctly. Impossible to produce DASH segment without a valid mpd location" << std::endl;
+        return;
+    }
 
     seqNumber = getSeqNumberFromPath(filePath);
     representationId = getRepresentationIdFromPath(filePath);
