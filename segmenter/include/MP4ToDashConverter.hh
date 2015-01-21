@@ -17,6 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *  Authors:  David Cassany <david.cassany@i2cat.net>
+ *            Marc Palau <marc.palau@i2cat.net>
  */
 
 #ifndef _MP4_TO_DASH_CONVERTER_HH
@@ -36,9 +37,10 @@
 
 class MP4ToDashConverter {
 public:
-    MP4ToDashConverter(std::string destination, std::string mpdLocation);
+    MP4ToDashConverter(std::string destination);
     ~MP4ToDashConverter();
-    
+
+    void setMpdLocation(std::string mpdLocation);
     void produceFile(std::string filePath);
     
 private:
