@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = dashSegmenter dashLiveSegmenter
-bin_PROGRAMS += demuxTest dashAudioSegmenterTest dashVideoSegmenterTest segmenterTestsDataGenerator 
+bin_PROGRAMS += demuxTest dashAudioSegmenterTest dashVideoSegmenterTest mpdManagerTest segmenterTestsDataGenerator 
  
 dashSegmenter_SOURCES = ../libi2dash/src/i2libdash.c ../libi2dash/src/i2libisoff.c ../libi2dash/src/h264_stream.c src/DashAudioSegmenter.cpp src/DashSegment.cpp src/DashSegmenter.cpp src/DashVideoSegmenter.cpp src/Demuxer.cpp src/Frame.cpp
 dashSegmenter_CPPFLAGS = -std=c++11 -D__STDC_CONSTANT_MACROS -Wall -Iinclude -I../libi2dash/include
