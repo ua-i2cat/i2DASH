@@ -70,6 +70,11 @@ public:
     void closeInput();
 
     /**
+    * @return True if input file is open
+    */
+    bool isInputOpen();
+
+    /**
     * Dump file format information to stdout
     */
     void dumpFormat();
@@ -108,7 +113,7 @@ public:
     * @return Estimated video sample duration in time base units
     */
     size_t getVideoSampleDuration();
-    
+       
     size_t getAudioSampleRate() {return audioStream->codec->sample_rate;};
     size_t getAudioChannels() {return audioStream->codec->channels;};
     size_t getAudioBitsPerSample();

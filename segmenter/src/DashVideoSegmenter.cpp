@@ -88,6 +88,7 @@ bool DashVideoSegmenter::addToSegment(AVCCFrame* frame, DashSegment* segment)
         return false;
     }
 
+    segment->setTimestamp(dashContext->ctxvideo->earliest_presentation_time);
     segment->setDataLength(segmentSize);
     return true;
 }
@@ -100,6 +101,7 @@ bool DashVideoSegmenter::finishSegment(DashSegment* segment)
         return false;
     }
 
+    segment->setTimestamp(dashContext->ctxvideo->earliest_presentation_time);
     segmentSize = finish_segment(VIDEO_TYPE, segment->getDataBuffer(), &dashContext);
 
     if (segmentSize <= I2ERROR_MAX) {

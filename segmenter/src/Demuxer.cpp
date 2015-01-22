@@ -91,6 +91,15 @@ void Demuxer::closeInput()
   
     fmtCtx = NULL;
     isOpen = false;
+    audioStream = NULL;
+    videoStream = NULL;
+    videoStreamIdx = -1;
+    audioStreamIdx = -1;
+}
+
+bool Demuxer::isInputOpen()
+{
+    return isOpen;
 }
 
 bool Demuxer::sourceExists(std::string filename)
@@ -137,7 +146,7 @@ bool Demuxer::findStreams()
 
 bool Demuxer::findVideoStream()
 {
-    size_t videoBitRate, width, height;
+    int videoBitRate, width, height;
     float fps;
     
     if (!isOpen){
@@ -180,7 +189,7 @@ bool Demuxer::findVideoStream()
 
 bool Demuxer::findAudioStream()
 {
-    size_t audioBitRate, channels, sampleRate, bitsPerSample;
+    int audioBitRate, channels, sampleRate, bitsPerSample;
     
     if (!isOpen){
         return false;
@@ -199,7 +208,7 @@ bool Demuxer::findAudioStream()
     sampleRate = audioStream->codec->sample_rate;
     bitsPerSample = av_get_bytes_per_sample(audioStream->codec->sample_fmt) * BITS_PER_BYTE; //Bytes to bits;
     
-    if (channels <= 0 || sampleRate <= 0 || sampleRate <= 0 || audioBitRate <= 0 || bitsPerSample <= 0) {
+    if (channels <= 0 || sampleRate <= 0 || audioBitRate <= 0 || bitsPerSample <= 0) {
         audioStreamIdx = -1;
         return false;
     }
