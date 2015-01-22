@@ -31,6 +31,9 @@ MpdManager::MpdManager()
 
 MpdManager::~MpdManager()
 {
+    for (auto ad : adaptationSets) {
+        delete ad.second;
+    }
 }
 
 void MpdManager::setMinimumUpdatePeriod(int seconds)
@@ -236,7 +239,10 @@ VideoAdaptationSet::VideoAdaptationSet(int segTimescale, std::string segTempl, s
 }
 
 VideoAdaptationSet::~VideoAdaptationSet()
-{ 
+{
+    for (auto repr : representations) {
+        delete repr.second;
+    }
 }
 
 VideoRepresentation* VideoAdaptationSet::getRepresentation(std::string id)
@@ -334,7 +340,10 @@ AudioAdaptationSet::AudioAdaptationSet(int segTimescale, std::string segTempl, s
 }
 
 AudioAdaptationSet::~AudioAdaptationSet()
-{ 
+{
+    for (auto repr : representations) {
+        delete repr.second;
+    }
 }
 
 AudioRepresentation* AudioAdaptationSet::getRepresentation(std::string id)
