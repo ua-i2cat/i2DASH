@@ -174,9 +174,7 @@ void generateInitTestSuite::tearDown()
 
 void generateInitTestSuite::generateInit()
 {
-    std::string dummyPath("");
-    int dummySeqNumber = 0;
-    DashSegment* initSegment = new DashSegment(dummyPath, aSeg->getMaxSegmentLength(), dummySeqNumber);
+    DashSegment* initSegment = new DashSegment(aSeg->getMaxSegmentLength());
 
     int diff = 0;
 
@@ -207,15 +205,13 @@ void generateSegmentTestSuite::setUp()
         return;
     }
     
-    std::string dummyPath("");
-    int dummySeqNumber = 0;
     int maxData = aSeg->getMaxSegmentLength();
     unsigned char* dummyBuffer = new unsigned char[maxData];
     
     CPPUNIT_ASSERT(dummyBuffer != NULL);
 
     frame = new AACFrame();
-    segment = new DashSegment(dummyPath, maxData, dummySeqNumber);
+    segment = new DashSegment(maxData);
 
     CPPUNIT_ASSERT(frame != NULL);
     CPPUNIT_ASSERT(segment != NULL);

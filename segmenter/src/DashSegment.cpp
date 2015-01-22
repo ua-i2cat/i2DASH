@@ -22,9 +22,12 @@
 #include <fstream>
 #include <iostream>
 
-DashSegment::DashSegment(std::string outputFile, size_t maxSize, size_t seqNum) : dataLength(0), seqNumber(seqNum), path(outputFile)
+DashSegment::DashSegment(size_t maxSize)
 {
     data = new unsigned char[maxSize];
+    timestamp = 0;
+    dataLength = 0;
+    seqNumber = 0;
 }
 
 DashSegment::~DashSegment()
@@ -32,12 +35,17 @@ DashSegment::~DashSegment()
     delete[] data;
 }
 
+void DashSegment::setSeqNumber(size_t seqNum)
+{
+    seqNumber = seqNum;
+}
+
 void DashSegment::setDataLength(size_t length)
 {
     dataLength = length;
 }
 
-void DashSegment::writeToDisk()
+void DashSegment::writeToDisk(std::string path)
 {
     const char* p = path.c_str();
     std::ofstream file(p, std::ofstream::binary);
@@ -45,4 +53,14 @@ void DashSegment::writeToDisk()
     file.close();
 }
 
-    
+void DashSegment::setTimestamp(size_t ts)
+{
+    timestamp = ts;
+}
+
+void DashSegment::clear()
+{
+    timestamp = 0;
+    dataLength = 0;
+    seqNumber = 0;
+}
